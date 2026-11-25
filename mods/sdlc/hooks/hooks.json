@@ -1,4 +1,4 @@
 {
   "description": "sdlc hooks module",
-  "modules": ["./register.ts"]
+  "modules": ["./register.js"]
 }

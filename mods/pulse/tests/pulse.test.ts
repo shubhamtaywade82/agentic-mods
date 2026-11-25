@@ -1,7 +1,7 @@
 // Unit tests for pulse's pure lib. Run by `claude plugin test`.
 
 import { expect, test } from 'claude-code/testing'
-import { ToolStats, contextLine, pressureBand, report, spinnerSuffix } from '../hooks/lib/stats'
+import { ToolStats, contextLine, pressureBand, report, spinnerSuffix } from '../src/lib/stats'
 
 // ------------------------------------------------------------------ stats
 

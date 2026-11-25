@@ -10,8 +10,8 @@ import {
   holdForSecretDiff,
   isHistoryMutating,
   isHistoryRead,
-} from '../hooks/lib/gate'
-import { redactResult, scan } from '../hooks/lib/secrets'
+} from '../src/lib/gate'
+import { redactResult, scan } from '../src/lib/secrets'
 
 // ---------------------------------------------------------------- gate types
 

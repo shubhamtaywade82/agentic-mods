@@ -1,7 +1,7 @@
 // Unit tests for design-patterns' pure lib. Run by `claude plugin test`.
 
 import { expect, test } from 'claude-code/testing'
-import { PATTERNS, byCategory, findPattern, renderAnswer } from '../hooks/lib/index'
+import { PATTERNS, byCategory, findPattern, renderAnswer } from '../src/lib/index'
 
 // ------------------------------------------------------------------- index
 

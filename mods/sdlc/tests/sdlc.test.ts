@@ -1,7 +1,7 @@
 // Unit tests for sdlc's pure lib. Run by `claude plugin test`.
 
 import { expect, test } from 'claude-code/testing'
-import { COMMANDS, LIFECYCLE, buildCommandPrompt, slugify } from '../hooks/lib/commands'
+import { COMMANDS, LIFECYCLE, buildCommandPrompt, slugify } from '../src/lib/commands'
 
 // ---------------------------------------------------------------- registry
 

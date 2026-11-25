@@ -1,4 +1,4 @@
 {
   "description": "guardian hooks module",
-  "modules": ["./register.ts"]
+  "modules": ["./register.js"]
 }

@@ -2,7 +2,7 @@
 
 import { expect, test } from 'claude-code/testing'
 import { InMemoryTrace, renderTree } from '@agentic-mods/core'
-import { fileTouchFromTool, summarize, traceSpinnerSuffix, toolLabel } from '../hooks/lib/summary'
+import { fileTouchFromTool, summarize, traceSpinnerSuffix, toolLabel } from '../src/lib/summary'
 
 // ------------------------------------------------------- InMemoryTrace core
 

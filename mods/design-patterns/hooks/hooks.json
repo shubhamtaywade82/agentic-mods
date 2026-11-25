@@ -1,4 +1,4 @@
 {
   "description": "design-patterns hooks module",
-  "modules": ["./register.ts"]
+  "modules": ["./register.js"]
 }

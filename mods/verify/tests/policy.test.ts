@@ -15,7 +15,7 @@ import {
   renderOutcome,
   renderStatus,
   runChecks,
-} from '../hooks/lib/policy'
+} from '../src/lib/policy'
 
 // --------------------------------------------------------------- classifier
 

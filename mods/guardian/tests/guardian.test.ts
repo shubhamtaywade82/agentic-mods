@@ -1,8 +1,8 @@
 // Unit tests for guardian's pure libs. Run by `claude plugin test`.
 
 import { expect, test } from 'claude-code/testing'
-import { checkCommand, denyMessage } from '../hooks/lib/blast'
-import { denyReason, hasHighSignal, redact, scan, summarize } from '../hooks/lib/secrets'
+import { checkCommand, denyMessage } from '../src/lib/blast'
+import { denyReason, hasHighSignal, redact, scan, summarize } from '../src/lib/secrets'
 
 // ------------------------------------------------------------------ blast
 

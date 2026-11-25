@@ -3,8 +3,8 @@
 // also be type-checked standalone with a pinned tsc.
 
 import { expect, test } from 'claude-code/testing'
-import { AttemptCounter, LABELS } from '../hooks/lib/counter'
-import { formatUsage } from '../hooks/lib/usage'
+import { AttemptCounter, LABELS } from '../src/lib/counter'
+import { formatUsage } from '../src/lib/usage'
 
 // ---------------------------------------------------------------- counter
 
