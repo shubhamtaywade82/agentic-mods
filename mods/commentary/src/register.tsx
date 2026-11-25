@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import { analyzeCommand } from '@agentic-mods/core'
+import { analyzeCommand, registerCommand } from '@agentic-mods/core'
 
 import type { Voice } from '../types'
 
@@ -47,7 +47,7 @@ const latest = atom({ plugin: 'commentary', key: 'latest' } as const, '', { shap
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'commentary',
       description: 'Commentary voice: /commentary sport|monologue|off',
     })

@@ -1,10 +1,11 @@
 import type { On } from 'claude-code'
 import { COMMANDS, buildCommandPrompt } from './lib/commands'
+import { registerCommand } from '@agentic-mods/core'
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     for (const c of COMMANDS) {
-      await $.command.register({ name: c.name, description: c.description })
+      await registerCommand($, { name: c.name, description: c.description })
     }
     return next(e)
   })

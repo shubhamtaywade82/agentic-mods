@@ -4,7 +4,7 @@
 import { expect, test } from 'claude-code/testing'
 
 const traceInput = {
-  command: 'trace',
+  command: 'trace-tree',
   args: '',
   origin: { kind: 'plugin', name: 'trace' },
   presentation: { isFullscreen: false, columns: 80 },
@@ -17,7 +17,7 @@ const summaryInput = {
   presentation: { isFullscreen: false, columns: 80 },
 } as const
 
-test('/trace shows the main agent after session start', async ($) => {
+test('/trace-tree shows the main agent after session start', async ($) => {
   const answer = await $.command.run(traceInput)
   expect(answer.text).toContain('main')
 })
@@ -51,4 +51,25 @@ test('a tool that finished stays completed after the turn ends', async ($, on) =
   const answer = await $.command.run(summaryInput)
   expect(answer.text).toContain('1 completed')
   expect(answer.text).not.toContain('cancelled')
+})
+
+test('a command name taken by another plugin does not stop the other commands registering', async ($, on) => {
+  const registered: string[] = []
+  const toasts: string[] = []
+  on('command.register', (_$, e) => {
+    const name = (e as unknown as { name: string }).name
+    if (name === 'trace-tree')
+      throw new Error('"/trace-tree" refused: it is the plugin\'s /other:trace-tree')
+    registered.push(name)
+    return { value: { command: name } }
+  })
+  on('ui.toast', (_$, e) => {
+    toasts.push(String((e as { text?: unknown }).text))
+    return { value: undefined }
+  })
+  on('session.start', () => ({ cwd: '/repo' }))
+
+  await $.session.start({ cwd: '/repo' } as never)
+  expect(registered).toContain('trace-summary')
+  expect(toasts.join(' ')).toContain('/trace-tree')
 })

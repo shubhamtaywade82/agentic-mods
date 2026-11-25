@@ -1,7 +1,12 @@
 import { atom, read } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { assessReadiness, describeEvidence, type ReadinessInput } from '@agentic-mods/core'
+import {
+  assessReadiness,
+  describeEvidence,
+  type ReadinessInput,
+  registerCommand,
+} from '@agentic-mods/core'
 import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { ContractStatus } from '../../change-contract/types'
 import type { ReviewGate } from '../../review-tracker/types'
@@ -50,7 +55,7 @@ async function inputOf($: EngineInterface): Promise<ReadinessInput> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'pr-ready',
       description:
         'Readiness verdict for the change; /pr-ready description drafts the PR verification section',

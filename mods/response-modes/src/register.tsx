@@ -1,4 +1,5 @@
 import type { EngineInterface, On } from 'claude-code'
+import { registerCommand } from '@agentic-mods/core'
 
 type Style = 'tldr' | 'simple'
 
@@ -29,7 +30,7 @@ async function setStyle($: EngineInterface, style: Style | null): Promise<{ text
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     for (const [name, description] of COMMANDS) {
-      await $.command.register({ name, description })
+      await registerCommand($, { name, description })
     }
     // $.store outlives the session; the style is meant to last one session, and a hot reload
     // re-runs session.start, so clear it only when the session id changes.

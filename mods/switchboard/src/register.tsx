@@ -1,6 +1,6 @@
 import type { EngineInterface, On } from 'claude-code'
 
-import { type Claim, claimPath, pruneClaims } from '@agentic-mods/core'
+import { type Claim, claimPath, pruneClaims, registerCommand } from '@agentic-mods/core'
 
 const TTL_MS = 30 * 60 * 1000
 
@@ -26,7 +26,7 @@ async function claimFile($: EngineInterface, path: string): Promise<void> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'switchboard',
       description: 'List file claims across sessions, or /switchboard send <session> <text>',
     })

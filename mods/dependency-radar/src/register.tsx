@@ -8,6 +8,7 @@ import {
   parseManifest,
   stateRelativePath,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { RadarStatus } from '../types'
 
@@ -91,7 +92,7 @@ async function readScan($: EngineInterface): Promise<string> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'radar',
       description: 'Read the recorded dependency scan: /radar scan',
     })

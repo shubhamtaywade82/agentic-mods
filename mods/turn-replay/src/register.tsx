@@ -1,7 +1,13 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { appendCapped, diffLines, summarizeDiff, trimContext } from '@agentic-mods/core'
+import {
+  appendCapped,
+  diffLines,
+  summarizeDiff,
+  trimContext,
+  registerCommand,
+} from '@agentic-mods/core'
 import type { ReplayChange, ReplayState } from '../types'
 
 const PANE = 'turn-replay'
@@ -42,7 +48,7 @@ async function recordChange(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'replay',
       description: 'Step through the file changes of the session: /replay [number]',
     })

@@ -13,6 +13,7 @@ import {
   stateRelativePath,
   auditLine,
   appendJsonLine,
+  registerCommand,
 } from '@agentic-mods/core'
 
 const PLUGIN = 'command-guard'
@@ -120,7 +121,7 @@ async function protectedDenial(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'guard',
       description: "Show command-guard's settings, config problems and blocks this session",
     })

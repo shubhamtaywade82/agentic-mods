@@ -166,6 +166,31 @@ function openAgent(trace2, parentId, subagentType, description) {
   return trace2.open({ kind: "agent", label, parentId });
 }
 
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
+// packages/core/src/config.ts
+var CONFIG_PATH = `${STATE_DIR}/config.json`;
+
+// packages/core/src/hash.ts
+var encoder = new TextEncoder();
+
 // mods/trace/src/register.tsx
 var trace = new InMemoryTrace();
 var openTools = /* @__PURE__ */ new Set();
@@ -178,11 +203,11 @@ function strField(e, key) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({
-      name: "trace",
+    await registerCommand($, {
+      name: "trace-tree",
       description: "Show the hierarchical execution tree for this session"
     });
-    await $.command.register({
+    await registerCommand($, {
       name: "trace-summary",
       description: "One-line summary of the execution tree (counts, running nodes)"
     });
@@ -236,7 +261,7 @@ function register(on) {
   on("ui.render", { component: "Spinner" }, async (_$, e, next) => {
     return next({ ...e, props: { ...e.props, suffix: traceSpinnerSuffix(summarize(trace)) } });
   });
-  on("command.run", { command: "trace" }, async () => {
+  on("command.run", { command: "trace-tree" }, async () => {
     if (!trace.get("main")) {
       mainId = trace.open({ kind: "main", label: "main", parentId: null });
     }

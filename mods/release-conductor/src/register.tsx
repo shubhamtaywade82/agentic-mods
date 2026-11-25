@@ -10,6 +10,7 @@ import {
   type ReadinessInput,
   workingTreeChanges,
   type GitRunner,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { ContractStatus } from '../../change-contract/types'
@@ -94,12 +95,15 @@ async function fileItem($: EngineInterface, path: string, label: string, detail:
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'release', description: 'Release readiness: /release check' })
+    await registerCommand($, {
+      name: 'release-gate',
+      description: 'Release readiness: /release-gate check',
+    })
     return next(e)
   })
 
-  on('command.run', { command: 'release' }, async ($, e) => {
-    if (e.args.trim() !== 'check') return { text: 'Usage: /release check' }
+  on('command.run', { command: 'release-gate' }, async ($, e) => {
+    if (e.args.trim() !== 'check') return { text: 'Usage: /release-gate check' }
     const [ev, ct, rv, ar, mg, rd, bd] = await Promise.all([
       read($, evidence),
       read($, contract),

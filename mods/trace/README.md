@@ -6,7 +6,7 @@ This is the architectural piece `pulse` was too flat to provide — `pulse` coun
 
 ## Commands
 
-- `/trace` — full indented execution tree for the session
+- `/trace-tree` — full indented execution tree for the session
 - `/trace-summary` — one-line counts (running/completed/failed, agents, tools, files touched)
 - Spinner suffix shows `running / total nodes (agents, tools)` live
 

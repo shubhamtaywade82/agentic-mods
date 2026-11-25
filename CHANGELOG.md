@@ -30,6 +30,15 @@ Fixes from the review of the full catalog. Each fix has a test under the mod's `
 - `next-steps`: denied or failed edits counted as changes; only edits that ran count now.
 - `regression-orchestrator`: dropped a stored assessment that nothing read.
 
+### Changed
+
+- Found by the live smoke test: `/trace`, `/tdd` and `/release` are names that popular plugins and
+  skills already own, and the engine refused them. They are now `/trace-tree`, `/tdd-cycle` and
+  `/release-gate`.
+- Every mod registers its commands through core's `registerCommand`. A refused name used to throw
+  and skip the rest of `session.start`, losing the mod's other commands; it is now reported in a
+  toast and the remaining commands still register.
+
 ### Added
 
 - `pnpm smoke:live`: loads each mod with its dependencies into a headless Claude Code session in a

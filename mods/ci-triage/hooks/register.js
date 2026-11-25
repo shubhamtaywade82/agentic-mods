@@ -6,6 +6,22 @@ function normalizePath(input) {
   return path;
 }
 
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
 
@@ -119,7 +135,7 @@ function triageLog(text) {
 // mods/ci-triage/src/register.tsx
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: "ci",
       description: "Triage a CI log file: /ci triage <path to the downloaded log>"
     });

@@ -9,6 +9,7 @@ import {
   normalizePath,
   readJsonFile,
   worstVerdict,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { BudgetStatus } from '../types'
 
@@ -41,7 +42,7 @@ async function budgetsOf($: EngineInterface): Promise<Budget[] | { error: string
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'perf',
       description:
         'Check a measurement against budgets: /perf check <generic|vite-stats|jmh|pytest-benchmark|go-bench> <path>',

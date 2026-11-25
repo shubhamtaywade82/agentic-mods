@@ -8,6 +8,7 @@ import {
   narrateAgent,
   recordToolCall,
   spawnAgent,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { AgentRow } from '../types'
 
@@ -47,7 +48,7 @@ function totalToolCalls(): number {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'subagents',
       description: 'Show subagent activity in a pane (/subagents)',
     })

@@ -31,3 +31,24 @@ export function appendCapped<T>(list: readonly T[], item: T, cap: number): T[] {
   const next = [...list, item]
   return next.length > cap ? next.slice(next.length - cap) : next
 }
+
+type CommandSpec = { name: string; description: string }
+type CommandHost = {
+  command: { register(spec: CommandSpec): Promise<unknown> }
+  ui: { toast(text: string): unknown }
+}
+
+/**
+ * Registers a slash command and reports a refused name instead of throwing. The engine refuses a
+ * name another plugin or skill owns, and a throw would skip the rest of the session.start hook,
+ * losing the mod's other commands with it.
+ */
+export async function registerCommand(host: CommandHost, spec: CommandSpec): Promise<boolean> {
+  try {
+    await host.command.register(spec)
+    return true
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`)
+    return false
+  }
+}

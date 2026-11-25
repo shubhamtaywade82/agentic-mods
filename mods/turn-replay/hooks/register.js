@@ -5,9 +5,23 @@ import { atom, read, update } from "claude-code";
 var STATE_DIR = ".agentic-mods";
 
 // packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
 function appendCapped(list, item, cap) {
   const next = [...list, item];
   return next.length > cap ? next.slice(next.length - cap) : next;
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
 }
 
 // packages/core/src/config.ts
@@ -152,7 +166,7 @@ async function recordChange($, file, before, after) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: "replay",
       description: "Step through the file changes of the session: /replay [number]"
     });

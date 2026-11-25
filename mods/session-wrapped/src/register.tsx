@@ -1,6 +1,6 @@
 import type { EngineInterface, On } from 'claude-code'
 
-import { formatDuration } from '@agentic-mods/core'
+import { formatDuration, registerCommand } from '@agentic-mods/core'
 
 const COUNTERS = ['turns', 'tools', 'edits'] as const
 
@@ -21,7 +21,7 @@ export function register(on: On): void {
       await $.store.set('startedAt', await $.clock.now())
       for (const key of COUNTERS) await $.store.set(key, 0)
     }
-    await $.command.register({
+    await registerCommand($, {
       name: 'wrapped',
       description: 'Summarise this session: turns, tool calls, edits',
     })

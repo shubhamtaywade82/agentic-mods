@@ -7,6 +7,7 @@ import {
   MIGRATION_PATH,
   normalizePath,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { MigrationStatus } from '../types'
 
@@ -39,7 +40,7 @@ async function publish(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'migration',
       description: 'Check a migration file: /migration check <path>',
     })

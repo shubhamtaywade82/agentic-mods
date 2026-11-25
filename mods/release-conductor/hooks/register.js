@@ -39,6 +39,22 @@ function stateRelativePath(relative) {
   return `${STATE_DIR}/${path}`;
 }
 
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
 
@@ -172,11 +188,14 @@ async function fileItem($, path, label, detail) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "release", description: "Release readiness: /release check" });
+    await registerCommand($, {
+      name: "release-gate",
+      description: "Release readiness: /release-gate check"
+    });
     return next(e);
   });
-  on("command.run", { command: "release" }, async ($, e) => {
-    if (e.args.trim() !== "check") return { text: "Usage: /release check" };
+  on("command.run", { command: "release-gate" }, async ($, e) => {
+    if (e.args.trim() !== "check") return { text: "Usage: /release-gate check" };
     const [ev, ct, rv, ar, mg, rd, bd] = await Promise.all([
       read($, evidence),
       read($, contract),

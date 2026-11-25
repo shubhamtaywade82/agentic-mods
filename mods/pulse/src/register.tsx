@@ -1,15 +1,16 @@
 import type { On } from 'claude-code'
 import { ToolStats, report, spinnerSuffix } from './lib/stats'
+import { registerCommand } from '@agentic-mods/core'
 
 const stats = new ToolStats()
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'pulse-report',
       description: 'Show per-tool call tally and context pressure for this session',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'pulse-usage',
       description: 'Show a one-line context-window usage readout',
     })

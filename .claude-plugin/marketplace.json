@@ -262,7 +262,7 @@
     {
       "name": "trace",
       "source": "./mods/trace",
-      "description": "Execution observability mod: builds a bounded hierarchical runtime tree (main agent -> subagents -> tool calls) from session/turn/agent.spawn/tool events, and exposes /trace and /trace-summary commands",
+      "description": "Execution observability mod: builds a bounded hierarchical runtime tree (main agent -> subagents -> tool calls) from session/turn/agent.spawn/tool events, and exposes /trace-tree and /trace-summary commands",
       "version": "0.1.0"
     },
     {

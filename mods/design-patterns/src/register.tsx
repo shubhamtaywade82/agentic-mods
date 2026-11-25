@@ -1,9 +1,10 @@
 import type { On } from 'claude-code'
 import { renderAnswer } from './lib/index'
+import { registerCommand } from '@agentic-mods/core'
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'patterns',
       description:
         'Look up a GoF pattern, list a category, or describe a problem to get candidates',

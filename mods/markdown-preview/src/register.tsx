@@ -7,6 +7,7 @@ import {
   isProtectedPath,
   loadConfig,
   normalizePath,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { PreviewDocument } from '../types'
 
@@ -19,7 +20,7 @@ const document = atom({ plugin: 'markdown-preview', key: 'document' } as const, 
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'preview',
       description: 'Render a repository Markdown file in a pane: /preview <path>',
     })

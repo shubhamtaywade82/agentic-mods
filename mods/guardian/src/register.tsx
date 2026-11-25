@@ -10,6 +10,7 @@ import {
   holdForSecretDiff,
   isHistoryMutating,
 } from './lib/gate'
+import { registerCommand } from '@agentic-mods/core'
 
 interface Stats {
   commandsBlocked: number
@@ -109,7 +110,7 @@ async function gateHistoryCommand(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'guardian-report',
       description: 'Show what guardian has blocked, held or redacted this session',
     })

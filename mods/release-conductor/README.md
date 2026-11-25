@@ -4,7 +4,7 @@ Assembles release readiness from the evidence, review, architecture, migration, 
 
 ## Commands
 
-- `/release`
+- `/release-gate`
 
 ## Shared state
 

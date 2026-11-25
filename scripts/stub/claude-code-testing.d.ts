@@ -85,7 +85,11 @@ declare module 'claude-code/testing' {
   }
 
   type StubResult =
-    { result?: unknown; deny?: string } | { text: string } | { value: unknown } | void
+    | { result?: unknown; deny?: string }
+    | { text: string }
+    | { value: unknown }
+    | Record<string, unknown>
+    | void
 
   interface TestOn {
     (event: string, hook: ($: unknown, e: StubEvent, next?: unknown) => StubResult): void

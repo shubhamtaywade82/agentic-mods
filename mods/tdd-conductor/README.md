@@ -4,7 +4,7 @@ Runs the RED, GREEN and REFACTOR cycle. RED counts only when the test fails for 
 
 ## Commands
 
-- `/tdd`
+- `/tdd-cycle`
 
 ## Shared state
 

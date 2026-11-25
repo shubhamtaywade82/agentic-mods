@@ -8,6 +8,7 @@ import {
   type Lesson,
   type LessonAction,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 
 const FILE = 'ledger.json'
@@ -47,7 +48,7 @@ function nextId(lessons: readonly Lesson[]): string {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'lesson',
       description:
         'Repository lessons: /lesson propose <text> | <paths>, approve|reject|retire <id>, check',

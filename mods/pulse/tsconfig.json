@@ -4,5 +4,10 @@
     "src",
     "../../packages/tooling/engine-types/claude-code.d.ts",
     "../../packages/core/src"
-  ]
+  ],
+  "compilerOptions": {
+    "paths": {
+      "@agentic-mods/core": ["../../packages/core/src/index.ts"]
+    }
+  }
 }

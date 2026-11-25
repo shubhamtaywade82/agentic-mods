@@ -1,6 +1,22 @@
 // packages/core/src/paths.ts
 var STATE_DIR = ".agentic-mods";
 
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
 
@@ -32,7 +48,7 @@ function register(on) {
       await $.store.set("startedAt", await $.clock.now());
       for (const key of COUNTERS) await $.store.set(key, 0);
     }
-    await $.command.register({
+    await registerCommand($, {
       name: "wrapped",
       description: "Summarise this session: turns, tool calls, edits"
     });
