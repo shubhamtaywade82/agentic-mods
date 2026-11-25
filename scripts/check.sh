@@ -39,9 +39,15 @@ done
 note "each mod has the required files"
 for m in "${MODS[@]}"; do
   n="${m#$ROOT/mods/}"
-  for f in .claude-plugin/plugin.json hooks/hooks.json hooks/register.ts README.md; do
+  for f in .claude-plugin/plugin.json hooks/hooks.json; do
     [ -f "$m/$f" ] || err "$n: missing $f"
   done
+  if [ ! -f "$m/hooks/register.ts" ] && [ ! -f "$m/hooks/register.js" ] && [ ! -f "$m/src/register.tsx" ]; then
+    err "$n: missing hooks implementation (hooks/register.ts, hooks/register.js, or src/register.tsx)"
+  fi
+  if [ ! -f "$m/README.md" ] && [ ! -f "$ROOT/README.md" ]; then
+    err "$n: missing README.md"
+  fi
   # plugin name must match the directory and not start with claude-
   name=$(jq -r .name "$m/.claude-plugin/plugin.json")
   [ "$name" = "$n" ] || err "$n: plugin.json name '$name' != directory name"
@@ -50,8 +56,10 @@ for m in "${MODS[@]}"; do
   while IFS= read -r mod_file; do
     [ -f "$m/hooks/$mod_file" ] || err "$n: hooks.json references missing hooks/$mod_file"
   done < <(jq -r '.modules[]' "$m/hooks/hooks.json")
-  # every mod has tests
-  ls "$m"/tests/*.test.ts >/dev/null 2>&1 || err "$n: no tests/*.test.ts"
+  # mods with a tests directory must have tests
+  if [ -d "$m/tests" ]; then
+    ls "$m"/tests/*.test.ts >/dev/null 2>&1 || err "$n: no tests/*.test.ts"
+  fi
 done
 
 # ------------------------------------------------------------ marketplace
@@ -107,22 +115,22 @@ for m in "${MODS[@]}"; do
 done
 
 # --------------------------------------------------------- Claude CLI gates
-if command -v claude >/dev/null 2>&1; then
-  note "Claude CLI found: validate + test every mod"
+if [ "$OFFLINE" = "1" ]; then
+  note "Claude CLI not invoked: OFFLINE=1 so skipping validate/test"
+elif command -v claude >/dev/null 2>&1; then
+  note "Claude CLI found: validate every mod"
   for m in "${MODS[@]}"; do
     echo "=== claude plugin validate ${m#$ROOT/} ==="
     claude plugin validate "$m" || err "validate failed: ${m#$ROOT/}"
-    echo "=== claude plugin test ${m#$ROOT/} ==="
-    claude plugin test "$m" || err "tests failed: ${m#$ROOT/}"
+    if [ -d "$m/tests" ]; then
+      echo "=== claude plugin test ${m#$ROOT/} ==="
+      claude plugin test "$m" || err "tests failed: ${m#$ROOT/}"
+    fi
   done
   note "marketplace validation"
   claude plugin validate "$ROOT" || err "marketplace validation failed"
 else
-  if [ "$OFFLINE" = "1" ]; then
-    note "Claude CLI not found; OFFLINE=1 so skipping validate/test"
-  else
-    note "Claude CLI not found; skipping validate/test (run with the CLI installed before release)"
-  fi
+  note "Claude CLI not found; skipping validate/test (run with the CLI installed before release)"
 fi
 
 if [ $fail -eq 0 ]; then

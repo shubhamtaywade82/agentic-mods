@@ -49,6 +49,14 @@ export const NATIVE_MODS: readonly string[] = [
   'observability-verifier',
   'release-conductor',
   'ci-triage',
+  // local integrated mods
+  'design-patterns',
+  'guardian',
+  'mod-template',
+  'pulse',
+  'sdlc',
+  'trace',
+  'verify',
 ]
 
 export function isNativeMod(name: string): boolean {
