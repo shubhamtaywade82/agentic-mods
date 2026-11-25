@@ -12,6 +12,11 @@ A `/guardian-report` command summarizes what was blocked, held, approved and red
 
 **Failure mode is fail-closed:** if a guardian hook throws or times out, or the host cannot answer an approval prompt, the Bash/Write call is denied, not allowed through.
 
+## Combining with other guards
+
+guardian, `command-guard` and the vendored `sdlc-guard` each hold destructive commands for approval.
+Load one of them: with two, the same command asks twice, once per guard. The presets use `sdlc-guard`.
+
 ## Scope and honesty
 
 This is a pattern tripwire, not a shell parser, a sandbox, or a complete DLP product. It can miss secrets in unusual encodings and cannot reason about what a command _might_ do. Use it as one layer; keep your real controls (permissions, sandboxing, secret scanning in CI) in place.

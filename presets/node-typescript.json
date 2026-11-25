@@ -12,6 +12,10 @@
     "turn-replay",
     "next-steps",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "review-tracker",
+    "migration-sentinel",
+    "dependency-radar",
+    "performance-budget"
   ]
 }

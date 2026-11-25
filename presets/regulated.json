@@ -15,7 +15,20 @@
     "learning-ledger",
     "workflow-conductor",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "test-impact",
+    "architecture-guard",
+    "migration-sentinel",
+    "dependency-radar",
+    "performance-budget",
+    "specification-guard",
+    "change-planner",
+    "regression-orchestrator",
+    "tdd-conductor",
+    "defect-protocol",
+    "behavior-lock",
+    "contract-compatibility-guard",
+    "observability-verifier"
   ],
   "config": {
     "evidence": {

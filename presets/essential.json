@@ -8,6 +8,12 @@
     "task-orientation",
     "engineering-cockpit",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "test-impact",
+    "review-tracker",
+    "architecture-guard",
+    "migration-sentinel",
+    "dependency-radar",
+    "performance-budget"
   ]
 }

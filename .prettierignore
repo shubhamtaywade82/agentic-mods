@@ -4,3 +4,4 @@ packages/tooling/engine-types/
 .remember/
 registry/
 .claude-plugin/marketplace.json
+**/.claude-plugin/types/

@@ -14,6 +14,10 @@
     "markdown-preview",
     "boss-fight",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "review-tracker",
+    "migration-sentinel",
+    "dependency-radar",
+    "performance-budget"
   ]
 }
