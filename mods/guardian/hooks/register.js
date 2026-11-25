@@ -140,6 +140,41 @@ function summarize(findings) {
   for (const f of findings) out[f.kind] = (out[f.kind] ?? 0) + 1;
   return out;
 }
+function redactResult(result) {
+  if (result == null) return { result, findings: [] };
+  if (typeof result === "string") {
+    const findings = scan(result);
+    return { result: findings.length ? redact(result, findings) : result, findings };
+  }
+  if (Array.isArray(result)) {
+    const allFindings = [];
+    const out = result.map((item) => {
+      const r = redactResult(item);
+      allFindings.push(...r.findings);
+      return r.result;
+    });
+    return { result: out, findings: allFindings };
+  }
+  if (typeof result === "object") {
+    const obj = result;
+    const fields = ["stdout", "stderr", "text", "output", "content", "result"];
+    let touched = false;
+    const allFindings = [];
+    const out = { ...obj };
+    for (const f of fields) {
+      if (typeof obj[f] === "string") {
+        const r = redactResult(obj[f]);
+        if (r.findings.length > 0) {
+          out[f] = r.result;
+          allFindings.push(...r.findings);
+          touched = true;
+        }
+      }
+    }
+    return { result: touched ? out : result, findings: allFindings };
+  }
+  return { result, findings: [] };
+}
 
 // mods/guardian/src/lib/gate.ts
 function holdForBlast(command, match) {
@@ -213,8 +248,18 @@ var stats = {
 function mergeKinds(kinds) {
   for (const [k, n] of Object.entries(kinds)) stats.kinds[k] = (stats.kinds[k] ?? 0) + n;
 }
-async function requestApproval(_$, _command, _reason, _preview) {
-  return "deny";
+async function requestApproval($, command, reason, preview) {
+  try {
+    const answer = await $.ui.ask(`Run this command? ${command}
+Reason: ${reason}
+${preview}`, [
+      "Cancel",
+      "Proceed"
+    ]);
+    return answer === "Proceed" ? "approve" : "deny";
+  } catch {
+    return "deny";
+  }
 }
 async function gateHistoryCommand($, command) {
   let diffText;
@@ -270,6 +315,18 @@ function register(on) {
     });
     return next(e);
   });
+  on("tool.call", async (_$, e, next) => {
+    const ran = await next(e);
+    if (ran.deny !== void 0) return ran;
+    const scrubbed = redactResult(ran.result);
+    const scrubbedText = redactResult(ran.text);
+    const text = typeof scrubbedText.result === "string" ? scrubbedText.result : void 0;
+    const found = scrubbed.findings.length + scrubbedText.findings.length;
+    if (found === 0) return ran;
+    stats.resultsRedacted += found;
+    mergeKinds(summarize([...scrubbed.findings, ...scrubbedText.findings]));
+    return { ...ran, result: scrubbed.result, text };
+  });
   on("tool.call", { tool: "Bash" }, async ($, e, next) => {
     const command = typeof e.command === "string" ? e.command : "";
     const blast = checkCommand(command);
@@ -305,18 +362,30 @@ function register(on) {
   on("tool.call", { tool: "Write" }, async (_$, e, next) => {
     const content = typeof e.content === "string" ? e.content : "";
     const findings = scan(content);
-    if (findings.length > 0) {
-      if (hasHighSignal(findings)) {
-        stats.writesBlocked += 1;
-        return { deny: denyReason(findings) ?? "guardian: refusing this write" };
-      }
-      stats.secretsRedacted += findings.length;
-      mergeKinds(summarize(findings));
-      return next({ ...e, content: redact(content, findings) });
+    if (findings.length === 0) return next(e);
+    if (hasHighSignal(findings)) {
+      stats.writesBlocked += 1;
+      return { deny: denyReason(findings) ?? "guardian: refusing this write" };
     }
-    return next(e);
+    stats.secretsRedacted += findings.length;
+    mergeKinds(summarize(findings));
+    return next({ ...e, content: redact(content, findings) });
   }).catch(async (_$) => {
     return { deny: "guardian failed; refusing this write" };
+  });
+  on("tool.call", { tool: "Edit" }, async (_$, e, next) => {
+    const replacement = typeof e.new_string === "string" ? e.new_string : "";
+    const findings = scan(replacement);
+    if (findings.length === 0) return next(e);
+    if (hasHighSignal(findings)) {
+      stats.writesBlocked += 1;
+      return { deny: denyReason(findings) ?? "guardian: refusing this edit" };
+    }
+    stats.secretsRedacted += findings.length;
+    mergeKinds(summarize(findings));
+    return next({ ...e, new_string: redact(replacement, findings) });
+  }).catch(async (_$) => {
+    return { deny: "guardian failed; refusing this edit" };
   });
   on("command.run", { command: "guardian-report" }, async () => {
     const kinds = Object.entries(stats.kinds).map(([k, n]) => `${k} x${n}`).join(", ");

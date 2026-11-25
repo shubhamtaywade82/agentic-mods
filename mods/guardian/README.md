@@ -18,10 +18,10 @@ This is a pattern tripwire, not a shell parser, a sandbox, or a complete DLP pro
 
 ## Architecture
 
-- `hooks/lib/secrets.ts` — secret patterns, redaction, `redactResult`, summarize (pure)
-- `hooks/lib/blast.ts` — destructive-command rules (pure)
-- `hooks/lib/gate.ts` — approval tier, git-diff inspection, `diffStat` (pure)
-- `hooks/register.ts` — thin adapter wiring the libs to Claude Code events
+- `src/lib/secrets.ts` — secret patterns, redaction, `redactResult`, summarize (pure)
+- `src/lib/blast.ts` — destructive-command rules (pure)
+- `src/lib/gate.ts` — approval tier, git-diff inspection, `diffStat` (pure)
+- `src/register.tsx` — thin adapter wiring the libs to Claude Code events
 
 The libs have no Claude Code imports, so they type-check and unit-test without a session.
 

@@ -106,7 +106,7 @@ writeFileSync(
         'build (esbuild 0.28.2, bare-import check)',
         'claude plugin validate',
       ],
-      notChecked: ['runtime behaviour in the app', 'unit tests (deferred)'],
+      notChecked: ['runtime behaviour in the app', 'live-session behaviour beyond the harness'],
     },
     null,
     2,

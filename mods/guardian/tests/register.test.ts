@@ -14,8 +14,9 @@ const reportInput = {
 
 test('a destructive Bash command is denied and never runs', async ($, on) => {
   let ran = false
-  on('tool.call', () => {
-    ran = true
+  // The approval prompt is itself a tool call, so only count the Bash call.
+  on('tool.call', (_$, e) => {
+    if (e.tool === 'Bash') ran = true
     return { result: 'ok' }
   })
 
@@ -84,4 +85,32 @@ test('/guardian-report reflects what happened this session', async ($, on) => {
   const answer = await $.command.run(reportInput)
   expect(answer.text).toContain('guardian session report')
   expect(answer.text).toContain('blocked')
+})
+
+test('an Edit that inserts a private key is denied', async ($, on) => {
+  let ran = false
+  on('tool.call', () => {
+    ran = true
+    return { result: 'ok' }
+  })
+
+  const res = (await $.tool
+    .call({
+      tool: 'Edit',
+      file_path: 'key.txt',
+      old_string: 'x',
+      new_string: '-----BEGIN RSA PRIVATE KEY-----\nabc\n',
+    })
+    .catch((r: unknown) => r)) as { deny?: string }
+  expect(typeof res?.deny === 'string' && res.deny.includes('private-key')).toBe(true)
+  expect(ran).toBe(false)
+})
+
+test('a secret in a tool result is redacted before the model sees it', async ($, on) => {
+  on('tool.call', () => ({ result: 'token AKIAIOSFODNN7EXAMPLE here', isError: false }))
+
+  const res = (await $.tool.call({ tool: 'Bash', command: 'cat notes.txt' })) as {
+    result?: unknown
+  }
+  expect(String(res.result)).not.toContain('AKIAIOSFODNN7EXAMPLE')
 })

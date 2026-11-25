@@ -85,7 +85,11 @@ export function register(on: On): void {
 
   on('tool.call', async ($, e, next) => {
     if (e.agentId !== undefined) {
-      nodes = recordToolCall(nodes, e.agentId, null)
+      nodes = recordToolCall(
+        nodes,
+        e.agentId,
+        'file_path' in e && typeof e.file_path === 'string' ? e.file_path : null,
+      )
       const now = await $.clock.now()
       await update($, agents, () => rowsOf(now))
     }
