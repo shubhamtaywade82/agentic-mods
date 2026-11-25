@@ -1,0 +1,60 @@
+import { atom, read, update } from 'claude-code'
+import type { On } from 'claude-code'
+
+import type { Steps } from '../types'
+
+const IDLE: Steps = { texts: [] }
+const steps = atom({ plugin: 'next-steps', key: 'steps' } as const, IDLE, { shape: 'steps-1' })
+
+export function register(on: On): void {
+  on('session.start', async ($, e, next) => {
+    await $.command.register({ name: 'next', description: 'Show suggested next prompts' })
+    return next(e)
+  })
+
+  on('turn.start', async ($, e, next) => {
+    await $.store.set('edits', 0)
+    await update($, steps, () => IDLE)
+    return next(e)
+  })
+
+  on('tool.call', async ($, e, next) => {
+    if (e.tool === 'Edit' || e.tool === 'Write') {
+      await $.store.set('edits', Number((await $.store.get('edits')) ?? 0) + 1)
+    }
+    return next(e)
+  })
+
+  on('turn.complete', async ($, e, next) => {
+    if (e.reason !== 'answer') return next(e)
+    const edits = Number((await $.store.get('edits')) ?? 0)
+    const texts =
+      edits > 0
+        ? [
+            'Run /evidence run to refresh the required checks.',
+            'Run /test-impact to see which tests this change reaches.',
+            'Summarise what changed and what is still unverified.',
+          ]
+        : ['Summarise the open risks in this session.']
+    await update($, steps, () => ({ texts }))
+    return next(e)
+  })
+
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const current = await read($, steps)
+    if (current.texts.length === 0) return next(e)
+    const { Box, Button, Text } = $.ui.resolve(e)
+    return (
+      <Box>
+        <Text dimColor>Next: </Text>
+        {current.texts.map((text, index) => (
+          <Button
+            key={`step-${index}`}
+            label={text.length > 48 ? `${text.slice(0, 47)}…` : text}
+            onPress={() => $.prompt.suggest({ text })}
+          />
+        ))}
+      </Box>
+    )
+  })
+}

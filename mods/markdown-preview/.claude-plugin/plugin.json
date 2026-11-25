@@ -1,0 +1,6 @@
+{
+  "name": "markdown-preview",
+  "version": "0.1.0",
+  "description": "Renders a Markdown file from the repository in a pane, so READMEs, ADRs and reports can be read without leaving the session.",
+  "types": "./types/index.d.ts"
+}

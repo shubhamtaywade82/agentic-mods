@@ -1,0 +1,5 @@
+{
+  "name": "response-modes",
+  "version": "0.1.0",
+  "description": "Adds a concise or plain-language response style to the system prompt, switched with /tldr, /mode-simple and /mode-off."
+}

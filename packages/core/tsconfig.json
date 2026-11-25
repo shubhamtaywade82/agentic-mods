@@ -1,0 +1,4 @@
+{
+  "extends": "../../tsconfig.mod.json",
+  "include": ["src", "../tooling/engine-types/claude-code.d.ts"]
+}

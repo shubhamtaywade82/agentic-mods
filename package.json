@@ -1,0 +1,35 @@
+{
+  "name": "agentic-mods",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code function-hook mods for engineering workflows: safety, visibility, verification and governance.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@12.23.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "types:sync": "node packages/tooling/sync-engine-types.mjs",
+    "typecheck": "node packages/tooling/typecheck.mjs",
+    "build": "node packages/tooling/build-mods.mjs",
+    "validate": "node packages/tooling/validate-mods.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "registry": "node packages/tooling/generate-registry.mjs",
+    "deploy:dev": "node packages/tooling/deploy-dev.mjs",
+    "package": "node packages/tooling/package-mods.mjs",
+    "create-mod": "node packages/tooling/create-mod.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "esbuild": "0.28.2",
+    "eslint": "10.15.0",
+    "prettier": "3.10.1",
+    "typescript": "7.0.2",
+    "typescript-eslint": "8.74.0",
+    "zod": "4.6.7"
+  }
+}

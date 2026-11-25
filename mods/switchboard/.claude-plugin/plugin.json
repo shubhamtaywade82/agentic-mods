@@ -1,0 +1,5 @@
+{
+  "name": "switchboard",
+  "version": "0.1.0",
+  "description": "Warns when two sessions edit the same file at once, lists current file claims, and sends a message to another session only when the person asks."
+}

@@ -1,0 +1,6 @@
+{
+  "name": "incident-timeline",
+  "version": "0.1.0",
+  "description": "Records an incident as an append-only timeline, switches command-guard to its strict profile while it is open, and writes the postmortem.",
+  "types": "./types/index.d.ts"
+}

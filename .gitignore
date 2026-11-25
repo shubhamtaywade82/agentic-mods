@@ -1,0 +1,21 @@
+# dependencies and build output
+node_modules/
+dist/
+*.log
+
+# engine declarations, synced locally (never committed)
+packages/tooling/engine-types/
+
+# written by the engine beside a mod it loads (never committed)
+mods/*/.claude-plugin/types/
+
+# per-repository state written by the mods at run time
+.agentic-mods/state/
+.agentic-mods/audit/
+.agentic-mods/scans/
+.agentic-mods/perf/
+
+# editor and OS noise
+.DS_Store
+.vscode/
+.idea/
