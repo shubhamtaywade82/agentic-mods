@@ -1,0 +1,6 @@
+{
+  "name": "debug-timeline",
+  "version": "0.1.0",
+  "description": "Records the commands run during debugging, the hypotheses proposed and their outcomes, and flags repeated commands so circular investigation is visible.",
+  "types": "./types/index.d.ts"
+}

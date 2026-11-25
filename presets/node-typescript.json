@@ -1,0 +1,16 @@
+{
+  "id": "node-typescript",
+  "description": "Essential plus TypeScript test selection and import-layer checks.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "test-impact",
+    "architecture-guard",
+    "turn-replay",
+    "next-steps"
+  ]
+}

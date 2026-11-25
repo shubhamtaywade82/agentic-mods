@@ -88,6 +88,33 @@ export type ContractSpec = {
   mode: Mode
 }
 
+/**
+ * Parses `.agentic-mods/contract.json`. Returns null when the file is not a valid contract, so
+ * a broken file never silently widens scope: the caller falls back to configuration.
+ */
+export function parseContractJson(text: string): ContractSpec | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return null
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null
+  const record = parsed as Record<string, unknown>
+  const isStrings = (value: unknown): value is string[] =>
+    Array.isArray(value) && value.every(item => typeof item === 'string')
+  const mode = record['mode']
+  if (typeof record['objective'] !== 'string') return null
+  if (!isStrings(record['allowed']) || !isStrings(record['forbidden'])) return null
+  if (mode !== 'observe' && mode !== 'warn' && mode !== 'enforce') return null
+  return {
+    objective: record['objective'],
+    allowed: [...record['allowed']],
+    forbidden: [...record['forbidden']],
+    mode,
+  }
+}
+
 /** Decides whether a write to `path` is inside the contract. */
 export function contractDecision(contract: ContractSpec, path: string): Decision {
   const normalized = normalizePath(path)

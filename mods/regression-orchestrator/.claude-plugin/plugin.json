@@ -1,0 +1,6 @@
+{
+  "name": "regression-orchestrator",
+  "version": "0.1.0",
+  "description": "Scores the regression risk of the working tree, explains the score, and runs the configured scope for its level. Publishes the regression gate. Commands are configured per repository in .agentic-mods/regression.json.",
+  "types": "./types/index.d.ts"
+}

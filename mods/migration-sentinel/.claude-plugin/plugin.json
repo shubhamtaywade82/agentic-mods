@@ -1,0 +1,6 @@
+{
+  "name": "migration-sentinel",
+  "version": "0.1.0",
+  "description": "Reviews SQL migration edits for destructive and table-locking changes, records the verdict for release readiness, and never executes SQL.",
+  "types": "./types/index.d.ts"
+}

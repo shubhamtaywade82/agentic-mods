@@ -1,0 +1,6 @@
+{
+  "name": "evidence-gate",
+  "version": "0.1.0",
+  "description": "Runs the configured build, test, lint, type-check and security commands, records their exit codes against a fingerprint of the repository, and holds git commit, push and PR creation until the required checks are current.",
+  "types": "./types/index.d.ts"
+}

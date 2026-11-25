@@ -1,0 +1,12 @@
+{
+  "id": "tdd",
+  "description": "Red, green, refactor cycles with behavioral RED evidence.",
+  "start": "specify",
+  "stages": [
+    { "id": "specify", "name": "Specify behavior", "gate": "specification-gate", "artifact": "specify.md", "next": ["red"] },
+    { "id": "red", "name": "RED", "gate": "tdd-red-gate", "artifact": null, "next": ["green"] },
+    { "id": "green", "name": "GREEN", "gate": "tdd-green-gate", "artifact": null, "next": ["refactor", "complete"] },
+    { "id": "refactor", "name": "REFACTOR", "gate": "tdd-refactor-gate", "artifact": null, "next": ["red", "complete"] },
+    { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
+  ]
+}

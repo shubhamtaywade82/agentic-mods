@@ -1,0 +1,17 @@
+{
+  "id": "platform-engineering",
+  "description": "Infrastructure-heavy work: migrations, releases and contract checks.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "migration-sentinel",
+    "dependency-radar",
+    "release-conductor",
+    "contract-compatibility-guard",
+    "mod-firewall"
+  ]
+}

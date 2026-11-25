@@ -1,0 +1,13 @@
+{
+  "id": "hotfix",
+  "description": "Speed without skipping evidence. Gates may be deferred only with a recorded, approved exception.",
+  "start": "triage",
+  "stages": [
+    { "id": "triage", "name": "Triage", "gate": null, "artifact": "incident.md", "next": ["fix"] },
+    { "id": "fix", "name": "Minimal fix", "gate": "defect-fix-gate", "artifact": "root-cause.md", "next": ["verify"] },
+    { "id": "verify", "name": "Targeted checks", "gate": "verification-gate", "artifact": null, "next": ["release"] },
+    { "id": "release", "name": "Release", "gate": "release-gate", "artifact": "release.md", "next": ["observe"] },
+    { "id": "observe", "name": "Smoke checks", "gate": "observability-gate", "artifact": null, "next": ["complete"] },
+    { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
+  ]
+}

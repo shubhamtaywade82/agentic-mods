@@ -1,0 +1,6 @@
+{
+  "name": "contract-compatibility-guard",
+  "version": "0.1.0",
+  "description": "Runs the compatibility tools configured for this repository (OpenAPI diff, buf breaking, GraphQL inspector, Pact and similar) and records their results. It does not analyse schemas itself. Publishes the compatibility gate.",
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "backend",
+  "description": "Node/TypeScript plus schema, performance and dependency checks.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "test-impact",
+    "architecture-guard",
+    "turn-replay",
+    "next-steps",
+    "migration-sentinel",
+    "performance-budget",
+    "dependency-radar"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "learning-ledger",
+  "version": "0.1.0",
+  "description": "Keeps repository lessons as reviewable records. A lesson is proposed, then approved by the person, and goes stale when a file it cites changes."
+}

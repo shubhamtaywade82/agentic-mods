@@ -1,0 +1,6 @@
+{
+  "name": "test-impact",
+  "version": "0.1.0",
+  "description": "Maps changed JavaScript and TypeScript files to the tests that import them, flags changed code that no test reaches, and recommends the full suite for shared configuration. It selects tests and never runs them.",
+  "types": "./types/index.d.ts"
+}

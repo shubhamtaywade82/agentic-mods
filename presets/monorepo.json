@@ -1,0 +1,16 @@
+{
+  "id": "monorepo",
+  "description": "Many packages in one repository, with worktree collisions visible.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "test-impact",
+    "architecture-guard",
+    "worktree-orchestrator",
+    "switchboard"
+  ]
+}

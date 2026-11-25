@@ -1,0 +1,14 @@
+{
+  "id": "go",
+  "description": "Go modules with test selection and dependency diffs.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "test-impact",
+    "dependency-radar"
+  ]
+}

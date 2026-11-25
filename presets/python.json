@@ -1,0 +1,15 @@
+{
+  "id": "python",
+  "description": "Python projects with pytest selection, dependency diffs and migrations.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "test-impact",
+    "dependency-radar",
+    "migration-sentinel"
+  ]
+}

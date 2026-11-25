@@ -1,0 +1,16 @@
+{
+  "name": "engineering-cockpit",
+  "version": "0.1.0",
+  "description": "One pane with the verification state of the change: contract, impact, evidence, review, architecture, migration, dependencies, performance and release readiness. It reads what the other mods publish and changes nothing.",
+  "types": "./types/index.d.ts",
+  "dependencies": [
+    "evidence-gate",
+    "change-contract",
+    "test-impact",
+    "review-tracker",
+    "architecture-guard",
+    "migration-sentinel",
+    "dependency-radar",
+    "performance-budget"
+  ]
+}

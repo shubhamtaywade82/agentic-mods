@@ -1,0 +1,30 @@
+{
+  "id": "regulated",
+  "description": "Reviewed releases with an audit trail. Use enforce mode in .agentic-mods/config.json.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit",
+    "mod-firewall",
+    "review-tracker",
+    "pr-readiness",
+    "release-conductor",
+    "incident-timeline",
+    "learning-ledger",
+    "workflow-conductor"
+  ],
+  "config": {
+    "evidence": {
+      "gateMode": "enforce"
+    },
+    "contract": {
+      "mode": "enforce"
+    },
+    "firewall": {
+      "mode": "enforce"
+    }
+  }
+}

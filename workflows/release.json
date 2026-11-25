@@ -1,0 +1,10 @@
+{
+  "id": "release",
+  "description": "Release readiness: every release condition and the observability check.",
+  "start": "readiness",
+  "stages": [
+    { "id": "readiness", "name": "Readiness", "gate": "release-gate", "artifact": "release.md", "next": ["observe"] },
+    { "id": "observe", "name": "Observe", "gate": "observability-gate", "artifact": null, "next": ["complete"] },
+    { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
+  ]
+}

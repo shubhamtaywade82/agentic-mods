@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.mod.json",
+  "compilerOptions": {
+    "paths": {
+      "@agentic-mods/core": ["../../packages/core/src/index.ts"]
+    }
+  },
+  "include": [
+    "src",
+    "types",
+    "../../packages/tooling/engine-types/claude-code.d.ts",
+    "../../packages/core/src"
+  ]
+}

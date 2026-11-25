@@ -1,0 +1,12 @@
+{
+  "id": "essential",
+  "description": "Safety, verification and visibility for any repository.",
+  "mods": [
+    "command-guard",
+    "evidence-gate",
+    "change-contract",
+    "session-meter",
+    "task-orientation",
+    "engineering-cockpit"
+  ]
+}

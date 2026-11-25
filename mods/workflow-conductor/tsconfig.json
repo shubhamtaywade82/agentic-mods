@@ -1,0 +1,31 @@
+{
+  "extends": "../../tsconfig.mod.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "paths": {
+      "@agentic-mods/core": ["../../packages/core/src/index.ts"]
+    }
+  },
+  "include": [
+    "src",
+    "types",
+    "../../packages/tooling/engine-types/claude-code.d.ts",
+    "../../packages/core/src",
+    "../evidence-gate/types",
+    "../change-contract/types",
+    "../review-tracker/types",
+    "../architecture-guard/types",
+    "../migration-sentinel/types",
+    "../dependency-radar/types",
+    "../performance-budget/types",
+    "../specification-guard/types",
+    "../change-planner/types",
+    "../regression-orchestrator/types",
+    "../tdd-conductor/types",
+    "../defect-protocol/types",
+    "../behavior-lock/types",
+    "../contract-compatibility-guard/types",
+    "../observability-verifier/types",
+    "../release-conductor/types"
+  ]
+}
