@@ -1,7 +1,7 @@
 import { atom, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { stateRelativePath, truncate } from '@agentic-mods/core'
+import { readJsonFile, stateRelativePath, truncate } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 type Check = { name: string; url: string; expectStatus: number }
@@ -11,21 +11,22 @@ const gate = atom({ plugin: 'observability-verifier', key: 'gate' } as const, ID
   shape: 'gate-1',
 })
 
-async function checksOf($: EngineInterface): Promise<Check[]> {
-  try {
-    const parsed: unknown = JSON.parse(await $.fs.read(stateRelativePath('observability.json')))
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (item): item is Check =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof (item as Check).name === 'string' &&
-        typeof (item as Check).url === 'string' &&
-        typeof (item as Check).expectStatus === 'number',
-    )
-  } catch {
-    return []
-  }
+/** The configured checks, or why the file could not be used. */
+async function checksOf($: EngineInterface): Promise<Check[] | { error: string }> {
+  const file = await readJsonFile(
+    (path) => $.fs.read(path),
+    stateRelativePath('observability.json'),
+  )
+  if (file.kind === 'invalid') return { error: file.reason }
+  if (file.kind === 'missing' || !Array.isArray(file.value)) return []
+  return file.value.filter(
+    (item): item is Check =>
+      typeof item === 'object' &&
+      item !== null &&
+      typeof (item as Check).name === 'string' &&
+      typeof (item as Check).url === 'string' &&
+      typeof (item as Check).expectStatus === 'number',
+  )
 }
 
 export function register(on: On): void {
@@ -40,6 +41,7 @@ export function register(on: On): void {
   on('command.run', { command: 'observe' }, async ($, e) => {
     if (e.args.trim() !== 'check') return { text: 'Usage: /observe check' }
     const checks = await checksOf($)
+    if (!Array.isArray(checks)) return { text: checks.error }
     if (checks.length === 0) {
       return {
         text: 'No checks configured. Add a list of {name, url, expectStatus} to .agentic-mods/observability.json.',

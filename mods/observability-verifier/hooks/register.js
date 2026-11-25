@@ -30,6 +30,19 @@ function stateRelativePath(relative) {
 
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
+async function readJsonFile(read, path) {
+  let text;
+  try {
+    text = await read(path);
+  } catch {
+    return { kind: "missing" };
+  }
+  try {
+    return { kind: "ok", value: JSON.parse(text) };
+  } catch {
+    return { kind: "invalid", reason: `${path} is not valid JSON; fix or remove it` };
+  }
+}
 
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
@@ -46,15 +59,15 @@ var gate = atom({ plugin: "observability-verifier", key: "gate" }, IDLE, {
   shape: "gate-1"
 });
 async function checksOf($) {
-  try {
-    const parsed = JSON.parse(await $.fs.read(stateRelativePath("observability.json")));
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item) => typeof item === "object" && item !== null && typeof item.name === "string" && typeof item.url === "string" && typeof item.expectStatus === "number"
-    );
-  } catch {
-    return [];
-  }
+  const file = await readJsonFile(
+    (path) => $.fs.read(path),
+    stateRelativePath("observability.json")
+  );
+  if (file.kind === "invalid") return { error: file.reason };
+  if (file.kind === "missing" || !Array.isArray(file.value)) return [];
+  return file.value.filter(
+    (item) => typeof item === "object" && item !== null && typeof item.name === "string" && typeof item.url === "string" && typeof item.expectStatus === "number"
+  );
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
@@ -67,6 +80,7 @@ function register(on) {
   on("command.run", { command: "observe" }, async ($, e) => {
     if (e.args.trim() !== "check") return { text: "Usage: /observe check" };
     const checks = await checksOf($);
+    if (!Array.isArray(checks)) return { text: checks.error };
     if (checks.length === 0) {
       return {
         text: "No checks configured. Add a list of {name, url, expectStatus} to .agentic-mods/observability.json."

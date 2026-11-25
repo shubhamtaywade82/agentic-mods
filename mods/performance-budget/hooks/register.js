@@ -143,6 +143,19 @@ function normalizePath(input) {
 
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
+async function readJsonFile(read, path) {
+  let text;
+  try {
+    text = await read(path);
+  } catch {
+    return { kind: "missing" };
+  }
+  try {
+    return { kind: "ok", value: JSON.parse(text) };
+  } catch {
+    return { kind: "invalid", reason: `${path} is not valid JSON; fix or remove it` };
+  }
+}
 
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
@@ -160,15 +173,12 @@ var status = atom({ plugin: "performance-budget", key: "status" }, IDLE, {
   shape: "status-1"
 });
 async function budgetsOf($) {
-  try {
-    const parsed = JSON.parse(await $.fs.read(".agentic-mods/budgets.json"));
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item) => typeof item === "object" && item !== null && typeof item.name === "string" && typeof item.max === "number" && typeof item.unit === "string"
-    );
-  } catch {
-    return [];
-  }
+  const file = await readJsonFile((path) => $.fs.read(path), ".agentic-mods/budgets.json");
+  if (file.kind === "invalid") return { error: file.reason };
+  if (file.kind === "missing" || !Array.isArray(file.value)) return [];
+  return file.value.filter(
+    (item) => typeof item === "object" && item !== null && typeof item.name === "string" && typeof item.max === "number" && typeof item.unit === "string"
+  );
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
@@ -186,6 +196,7 @@ function register(on) {
     }
     const path = normalizePath(rest.join(" "));
     const budgets = await budgetsOf($);
+    if (!Array.isArray(budgets)) return { text: budgets.error };
     if (budgets.length === 0) {
       return { text: "No budgets: add .agentic-mods/budgets.json as a list of {name, max, unit}." };
     }

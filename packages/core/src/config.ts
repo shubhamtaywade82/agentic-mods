@@ -329,6 +329,27 @@ export const CONFIG_PATH = `${STATE_DIR}/config.json`
  * Loads `.agentic-mods/config.json` through an injected reader. A missing file is not an
  * error: defaults apply silently. Malformed JSON and invalid fields are reported in `errors`.
  */
+export type JsonFile =
+  { kind: 'missing' } | { kind: 'invalid'; reason: string } | { kind: 'ok'; value: unknown }
+
+/** Reads a JSON file as loadConfig does: an unreadable file is missing, an unparsable one is invalid. */
+export async function readJsonFile(
+  read: (path: string) => Promise<string>,
+  path: string,
+): Promise<JsonFile> {
+  let text: string
+  try {
+    text = await read(path)
+  } catch {
+    return { kind: 'missing' }
+  }
+  try {
+    return { kind: 'ok', value: JSON.parse(text) }
+  } catch {
+    return { kind: 'invalid', reason: `${path} is not valid JSON; fix or remove it` }
+  }
+}
+
 export async function loadConfig(read: (path: string) => Promise<string>): Promise<ConfigParse> {
   let text: string
   try {

@@ -4,6 +4,7 @@ import type { EngineInterface, On } from 'claude-code'
 import {
   assessRegression,
   type GitRunner,
+  readJsonFile,
   type RiskResult,
   stateRelativePath,
   workingTreeChanges,
@@ -22,27 +23,24 @@ function runnerOf($: EngineInterface): GitRunner {
   }
 }
 
-async function commandsOf($: EngineInterface): Promise<Record<string, string[]>> {
-  try {
-    const parsed = JSON.parse(await $.fs.read(stateRelativePath('regression.json'))) as {
-      commands?: unknown
-    }
-    const commands = parsed.commands
-    if (typeof commands !== 'object' || commands === null) return {}
-    const out: Record<string, string[]> = {}
-    for (const [name, argv] of Object.entries(commands)) {
-      if (
-        Array.isArray(argv) &&
-        argv.length > 0 &&
-        argv.every((item) => typeof item === 'string')
-      ) {
-        out[name] = [...(argv as string[])]
-      }
-    }
-    return out
-  } catch {
-    return {}
+/** Check name -> argv from regression.json, or why the file could not be used. */
+async function commandsOf(
+  $: EngineInterface,
+): Promise<{ ok: true; commands: Record<string, string[]> } | { ok: false; error: string }> {
+  const file = await readJsonFile((path) => $.fs.read(path), stateRelativePath('regression.json'))
+  if (file.kind === 'invalid') return { ok: false, error: file.reason }
+  if (file.kind === 'missing' || typeof file.value !== 'object' || file.value === null) {
+    return { ok: true, commands: {} }
   }
+  const commands = (file.value as { commands?: unknown }).commands
+  if (typeof commands !== 'object' || commands === null) return { ok: true, commands: {} }
+  const out: Record<string, string[]> = {}
+  for (const [name, argv] of Object.entries(commands)) {
+    if (Array.isArray(argv) && argv.length > 0 && argv.every((item) => typeof item === 'string')) {
+      out[name] = [...(argv as string[])]
+    }
+  }
+  return { ok: true, commands: out }
 }
 
 async function assess($: EngineInterface): Promise<RiskResult | null> {
@@ -66,14 +64,15 @@ export function register(on: On): void {
     if (subcommand === 'assess') {
       const risk = await assess($)
       if (risk === null) return { text: 'Not a git repository; the scope cannot be assessed.' }
-      await $.store.set('assessment', risk)
       return { text: [...risk.reasons, `required: ${risk.requires.join(', ')}`].join('\n') }
     }
 
     if (subcommand === 'run') {
-      const risk = (await assess($)) ?? null
+      const risk = await assess($)
       if (risk === null) return { text: 'Not a git repository; nothing was run.' }
-      const commands = await commandsOf($)
+      const configured = await commandsOf($)
+      if (!configured.ok) return { text: configured.error }
+      const commands = configured.commands
       const results: string[] = []
       let verdict: GateState['verdict'] = 'PASS'
       for (const name of risk.requires) {

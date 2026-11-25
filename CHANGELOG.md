@@ -25,6 +25,17 @@ Fixes from the review of the full catalog. Each fix has a test under the mod's `
 - `session-meter`: a crossed threshold toasted on every measurement; it now toasts once per crossing.
 - `worktree-orchestrator`: a failed `git status` showed as "0 uncommitted"; it now says unknown.
 - `pr-readiness`: the pane said "Release readiness". README paths now point at `src/`.
+- `observability-verifier`, `performance-budget`, `regression-orchestrator`: a malformed config file
+  read as "nothing configured". It is now reported as invalid JSON (shared `readJsonFile` in core).
+- `next-steps`: denied or failed edits counted as changes; only edits that ran count now.
+- `regression-orchestrator`: dropped a stored assessment that nothing read.
+
+### Added
+
+- `pnpm smoke:live`: loads each mod with its dependencies into a headless Claude Code session in a
+  throwaway repository, runs every command it registers, and fails when the hooks module did not
+  load, a hook was skipped, or a command answered nothing. Commands answered by mods need no model
+  call.
 
 ## 0.2.0 — production candidate
 

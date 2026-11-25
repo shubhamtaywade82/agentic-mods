@@ -13,10 +13,10 @@ function register(on) {
     return next(e);
   });
   on("tool.call", async ($, e, next) => {
-    if (e.tool === "Edit" || e.tool === "Write") {
-      await $.store.set("edits", Number(await $.store.get("edits") ?? 0) + 1);
-    }
-    return next(e);
+    const ran = await next(e);
+    const changedFile = (e.tool === "Edit" || e.tool === "Write") && !ran.deny && !ran.isError;
+    if (changedFile) await $.store.set("edits", Number(await $.store.get("edits") ?? 0) + 1);
+    return ran;
   });
   on("turn.complete", async ($, e, next) => {
     if (e.reason !== "answer") return next(e);

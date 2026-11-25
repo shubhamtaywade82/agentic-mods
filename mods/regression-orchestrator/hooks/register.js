@@ -30,6 +30,19 @@ function stateRelativePath(relative) {
 
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
+async function readJsonFile(read, path) {
+  let text;
+  try {
+    text = await read(path);
+  } catch {
+    return { kind: "missing" };
+  }
+  try {
+    return { kind: "ok", value: JSON.parse(text) };
+  } catch {
+    return { kind: "invalid", reason: `${path} is not valid JSON; fix or remove it` };
+  }
+}
 
 // packages/core/src/git.ts
 function parseStatusZ(output) {
@@ -143,20 +156,20 @@ function runnerOf($) {
   };
 }
 async function commandsOf($) {
-  try {
-    const parsed = JSON.parse(await $.fs.read(stateRelativePath("regression.json")));
-    const commands = parsed.commands;
-    if (typeof commands !== "object" || commands === null) return {};
-    const out = {};
-    for (const [name, argv] of Object.entries(commands)) {
-      if (Array.isArray(argv) && argv.length > 0 && argv.every((item) => typeof item === "string")) {
-        out[name] = [...argv];
-      }
-    }
-    return out;
-  } catch {
-    return {};
+  const file = await readJsonFile((path) => $.fs.read(path), stateRelativePath("regression.json"));
+  if (file.kind === "invalid") return { ok: false, error: file.reason };
+  if (file.kind === "missing" || typeof file.value !== "object" || file.value === null) {
+    return { ok: true, commands: {} };
   }
+  const commands = file.value.commands;
+  if (typeof commands !== "object" || commands === null) return { ok: true, commands: {} };
+  const out = {};
+  for (const [name, argv] of Object.entries(commands)) {
+    if (Array.isArray(argv) && argv.length > 0 && argv.every((item) => typeof item === "string")) {
+      out[name] = [...argv];
+    }
+  }
+  return { ok: true, commands: out };
 }
 async function assess($) {
   const changes = await workingTreeChanges(runnerOf($));
@@ -176,13 +189,14 @@ function register(on) {
     if (subcommand === "assess") {
       const risk = await assess($);
       if (risk === null) return { text: "Not a git repository; the scope cannot be assessed." };
-      await $.store.set("assessment", risk);
       return { text: [...risk.reasons, `required: ${risk.requires.join(", ")}`].join("\n") };
     }
     if (subcommand === "run") {
-      const risk = await assess($) ?? null;
+      const risk = await assess($);
       if (risk === null) return { text: "Not a git repository; nothing was run." };
-      const commands = await commandsOf($);
+      const configured = await commandsOf($);
+      if (!configured.ok) return { text: configured.error };
+      const commands = configured.commands;
       const results = [];
       let verdict = "PASS";
       for (const name of risk.requires) {

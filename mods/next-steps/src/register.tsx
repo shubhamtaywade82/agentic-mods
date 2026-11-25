@@ -19,10 +19,11 @@ export function register(on: On): void {
   })
 
   on('tool.call', async ($, e, next) => {
-    if (e.tool === 'Edit' || e.tool === 'Write') {
-      await $.store.set('edits', Number((await $.store.get('edits')) ?? 0) + 1)
-    }
-    return next(e)
+    const ran = await next(e)
+    // Count only edits that ran: a denied or failed one changed no file.
+    const changedFile = (e.tool === 'Edit' || e.tool === 'Write') && !ran.deny && !ran.isError
+    if (changedFile) await $.store.set('edits', Number((await $.store.get('edits')) ?? 0) + 1)
+    return ran
   })
 
   on('turn.complete', async ($, e, next) => {
