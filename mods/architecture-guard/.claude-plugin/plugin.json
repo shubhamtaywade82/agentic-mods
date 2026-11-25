@@ -2,5 +2,8 @@
   "name": "architecture-guard",
   "version": "0.1.0",
   "description": "Checks imports in edited TypeScript, JavaScript and Java files against the layer rules in configuration. Existing violations in the baseline are grandfathered; only new ones are warned about or refused.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

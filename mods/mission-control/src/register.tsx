@@ -47,11 +47,11 @@ function totalToolCalls(): number {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'agents', description: 'Show subagent activity in a pane' })
+    await $.command.register({ name: 'subagents', description: 'Show subagent activity in a pane (/subagents)' })
     return next(e)
   })
 
-  on('command.run', { command: 'agents' }, async $ => {
+  on('command.run', { command: 'subagents' }, async $ => {
     await $.ui.open({ id: PANE, title: 'Agents' })
     return { text: 'Agent activity pane opened.' }
   })

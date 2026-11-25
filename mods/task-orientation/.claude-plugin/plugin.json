@@ -2,5 +2,8 @@
   "name": "task-orientation",
   "version": "0.1.0",
   "description": "Keeps the goal, current task, blocker and next step visible in a pane, captured from the first prompt and set with commands.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

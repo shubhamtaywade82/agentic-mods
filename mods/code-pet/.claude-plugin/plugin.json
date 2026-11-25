@@ -2,6 +2,11 @@
   "name": "code-pet",
   "version": "0.1.0",
   "description": "A small status creature above the prompt whose mood follows the evidence state and how much tool activity the turn has had. It reads evidence-gate's published state and changes nothing.",
-  "dependencies": ["evidence-gate"],
-  "types": "./types/index.d.ts"
+  "dependencies": [
+    "evidence-gate"
+  ],
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

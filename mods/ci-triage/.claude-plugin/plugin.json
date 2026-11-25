@@ -1,5 +1,8 @@
 {
   "name": "ci-triage",
   "version": "0.1.0",
-  "description": "Classifies a CI failure log (compilation, unit, integration, flaky, infrastructure, credentials, lint, security, performance) and recommends the next action. It stops the loop when the cause is infrastructure or credentials, because more code edits cannot fix those."
+  "description": "Classifies a CI failure log (compilation, unit, integration, flaky, infrastructure, credentials, lint, security, performance) and recommends the next action. It stops the loop when the cause is infrastructure or credentials, because more code edits cannot fix those.",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

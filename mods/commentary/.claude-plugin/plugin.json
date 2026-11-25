@@ -2,5 +2,8 @@
   "name": "commentary",
   "version": "0.1.0",
   "description": "A one-line commentary above the prompt about the latest tool activity, in a sportscaster or monologue voice, chosen with /commentary. Templated: it makes no model calls.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

@@ -2,5 +2,8 @@
   "name": "change-contract",
   "version": "0.1.0",
   "description": "Holds the task's objective, allowed and forbidden paths. Writes outside the contract are warned about or refused, according to its mode.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

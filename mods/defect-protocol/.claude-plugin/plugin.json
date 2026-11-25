@@ -2,5 +2,8 @@
   "name": "defect-protocol",
   "version": "0.1.0",
   "description": "Tracks a defect from symptom to root cause to fix and regression test. A defect counts as reproduced only with a reproduction or a documented reason it cannot be reproduced. Publishes the defect gate.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

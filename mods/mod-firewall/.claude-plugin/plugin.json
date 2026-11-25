@@ -1,5 +1,8 @@
 {
   "name": "mod-firewall",
   "version": "0.1.0",
-  "description": "Watches network requests and process launches made by other mods, enforces an allowlist, and keeps an audit trail."
+  "description": "Watches network requests and process launches made by other mods, enforces an allowlist, and keeps an audit trail.",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

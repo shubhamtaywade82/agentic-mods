@@ -62,12 +62,12 @@ function verdictOf(plan) {
 function register(on) {
   on("session.start", async ($, e, next) => {
     await $.command.register({
-      name: "plan",
-      description: "Change plan: /plan set <objective> | <files> | <tests> | <risks>, /plan show, /plan contract"
+      name: "change-plan",
+      description: "Change plan: /change-plan set <objective> | <files> | <tests> | <risks>, /change-plan show, /change-plan contract"
     });
     return next(e);
   });
-  on("command.run", { command: "plan" }, async ($, e) => {
+  on("command.run", { command: "change-plan" }, async ($, e) => {
     const [subcommand = "show", ...rest] = e.args.trim().split(/\s+/).filter((word) => word.length > 0);
     if (subcommand === "set") {
       const [objective = "", files = "", tests = "", risks = ""] = rest.join(" ").split("|").map((part) => part.trim());
@@ -90,7 +90,7 @@ function register(on) {
       return { text: `Plan recorded: ${plan2.files.length} file(s), ${plan2.tests.length} test(s).` };
     }
     const plan = await loadPlan($);
-    if (plan === null) return { text: "No plan recorded. Use /plan set first." };
+    if (plan === null) return { text: "No plan recorded. Use /change-plan set first." };
     if (subcommand === "contract") {
       const contract = { objective: plan.objective, allowed: plan.files, forbidden: [], mode: "warn" };
       await $.fs.write(stateRelativePath("contract.json"), `${JSON.stringify(contract, null, 2)}

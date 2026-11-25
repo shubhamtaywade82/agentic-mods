@@ -20,5 +20,8 @@
     "contract-compatibility-guard",
     "observability-verifier",
     "release-conductor"
-  ]
+  ],
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

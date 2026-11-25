@@ -2,5 +2,10 @@
   "name": "command-guard",
   "version": "0.1.0",
   "description": "Holds destructive shell commands for a decision, refuses the unsafe ones outright, and keeps secret files out of edits and reads.",
-  "dependencies": ["incident-timeline"]
+  "dependencies": [
+    "incident-timeline"
+  ],
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

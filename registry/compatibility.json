@@ -1,0 +1,13 @@
+{
+  "claudeCode": "2.1.332",
+  "declarations": "plugin-authoring skill, types/claude-code.d.ts for 2.1.332",
+  "checks": [
+    "typecheck (TypeScript 7.0.2, strict)",
+    "build (esbuild 0.28.2, bare-import check)",
+    "claude plugin validate"
+  ],
+  "notChecked": [
+    "runtime behaviour in the app",
+    "unit tests (deferred)"
+  ]
+}

@@ -2,5 +2,8 @@
   "name": "turn-replay",
   "version": "0.1.0",
   "description": "Records every Edit and Write as a diff, grouped by turn, and shows them one at a time in a pane so a large change can be reviewed in steps.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

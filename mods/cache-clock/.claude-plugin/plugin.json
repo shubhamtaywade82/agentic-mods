@@ -2,5 +2,8 @@
   "name": "cache-clock",
   "version": "0.1.0",
   "description": "Shows how long the prompt cache from the last turn is expected to stay warm. It only displays the estimate and never sends requests to keep it warm.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

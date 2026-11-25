@@ -1,5 +1,8 @@
 {
   "name": "worktree-orchestrator",
   "version": "0.1.0",
-  "description": "Lists git worktrees with their branches and uncommitted changes, and reports files that are changed in more than one worktree. Read-only: it never creates, removes or merges worktrees."
+  "description": "Lists git worktrees with their branches and uncommitted changes, and reports files that are changed in more than one worktree. Read-only: it never creates, removes or merges worktrees.",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

@@ -2,5 +2,8 @@
   "name": "change-planner",
   "version": "0.1.0",
   "description": "Records the change plan (objective, files, tests, risks) and turns it into a change contract. Publishes the plan gate for the delivery workflows.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

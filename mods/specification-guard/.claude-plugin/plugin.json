@@ -2,5 +2,8 @@
   "name": "specification-guard",
   "version": "0.1.0",
   "description": "Checks acceptance criteria are written as Given/When/Then scenarios with the non-functional sections. Publishes the specification gate for the delivery workflows.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

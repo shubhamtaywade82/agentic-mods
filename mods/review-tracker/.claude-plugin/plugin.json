@@ -2,5 +2,8 @@
   "name": "review-tracker",
   "version": "0.1.0",
   "description": "Turns review findings into tracked records with a lifecycle and a required reason or evidence at each resolution. Unresolved high-severity findings fail the review gate.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

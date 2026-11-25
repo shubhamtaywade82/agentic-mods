@@ -1,5 +1,8 @@
 {
   "name": "session-wrapped",
   "version": "0.1.0",
-  "description": "Counts the session's turns, tool calls and file edits, and shows a text summary with /wrapped. It does not create images and writes nothing to disk."
+  "description": "Counts the session's turns, tool calls and file edits, and shows a text summary with /wrapped. It does not create images and writes nothing to disk.",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

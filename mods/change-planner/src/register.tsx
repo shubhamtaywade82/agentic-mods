@@ -35,13 +35,13 @@ function verdictOf(plan: Plan): GateState['verdict'] {
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
-      name: 'plan',
-      description: 'Change plan: /plan set <objective> | <files> | <tests> | <risks>, /plan show, /plan contract',
+      name: 'change-plan',
+      description: 'Change plan: /change-plan set <objective> | <files> | <tests> | <risks>, /change-plan show, /change-plan contract',
     })
     return next(e)
   })
 
-  on('command.run', { command: 'plan' }, async ($, e) => {
+  on('command.run', { command: 'change-plan' }, async ($, e) => {
     const [subcommand = 'show', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
 
     if (subcommand === 'set') {
@@ -65,7 +65,7 @@ export function register(on: On): void {
     }
 
     const plan = await loadPlan($)
-    if (plan === null) return { text: 'No plan recorded. Use /plan set first.' }
+    if (plan === null) return { text: 'No plan recorded. Use /change-plan set first.' }
 
     if (subcommand === 'contract') {
       const contract = { objective: plan.objective, allowed: plan.files, forbidden: [], mode: 'warn' }

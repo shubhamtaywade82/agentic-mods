@@ -2,5 +2,8 @@
   "name": "mission-control",
   "version": "0.1.0",
   "description": "Shows subagents as a tree: what each is doing, which files it touched, its tool calls, and a plain-language line per agent. Review agents are flagged. Templated from events, with no model calls.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }

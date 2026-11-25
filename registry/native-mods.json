@@ -1,0 +1,326 @@
+{
+  "mods": [
+    {
+      "name": "architecture-guard",
+      "version": "0.1.0",
+      "description": "Checks imports in edited TypeScript, JavaScript and Java files against the layer rules in configuration. Existing violations in the baseline are grandfathered; only new ones are warned about or refused.",
+      "types": "./types/index.d.ts",
+      "path": "mods/architecture-guard"
+    },
+    {
+      "name": "behavior-lock",
+      "version": "0.1.0",
+      "description": "Captures the exported surface of TypeScript or JavaScript files before a refactoring, then compares it afterwards. Removed or changed exports fail the gate; added exports are reported as additive. The surface is read as text, not type-checked.",
+      "types": "./types/index.d.ts",
+      "path": "mods/behavior-lock"
+    },
+    {
+      "name": "boss-fight",
+      "version": "0.1.0",
+      "description": "Shows the test check as a boss battle above the prompt: the boss stands while the test check fails and falls when it passes. It reads evidence-gate's published state and changes nothing.",
+      "dependencies": [
+        "evidence-gate"
+      ],
+      "path": "mods/boss-fight"
+    },
+    {
+      "name": "cache-clock",
+      "version": "0.1.0",
+      "description": "Shows how long the prompt cache from the last turn is expected to stay warm. It only displays the estimate and never sends requests to keep it warm.",
+      "types": "./types/index.d.ts",
+      "path": "mods/cache-clock"
+    },
+    {
+      "name": "change-contract",
+      "version": "0.1.0",
+      "description": "Holds the task's objective, allowed and forbidden paths. Writes outside the contract are warned about or refused, according to its mode.",
+      "types": "./types/index.d.ts",
+      "path": "mods/change-contract"
+    },
+    {
+      "name": "change-planner",
+      "version": "0.1.0",
+      "description": "Records the change plan (objective, files, tests, risks) and turns it into a change contract. Publishes the plan gate for the delivery workflows.",
+      "types": "./types/index.d.ts",
+      "path": "mods/change-planner"
+    },
+    {
+      "name": "ci-triage",
+      "version": "0.1.0",
+      "description": "Classifies a CI failure log (compilation, unit, integration, flaky, infrastructure, credentials, lint, security, performance) and recommends the next action. It stops the loop when the cause is infrastructure or credentials, because more code edits cannot fix those.",
+      "path": "mods/ci-triage"
+    },
+    {
+      "name": "code-pet",
+      "version": "0.1.0",
+      "description": "A small status creature above the prompt whose mood follows the evidence state and how much tool activity the turn has had. It reads evidence-gate's published state and changes nothing.",
+      "types": "./types/index.d.ts",
+      "dependencies": [
+        "evidence-gate"
+      ],
+      "path": "mods/code-pet"
+    },
+    {
+      "name": "command-guard",
+      "version": "0.1.0",
+      "description": "Holds destructive shell commands for a decision, refuses the unsafe ones outright, and keeps secret files out of edits and reads.",
+      "dependencies": [
+        "incident-timeline"
+      ],
+      "path": "mods/command-guard"
+    },
+    {
+      "name": "commentary",
+      "version": "0.1.0",
+      "description": "A one-line commentary above the prompt about the latest tool activity, in a sportscaster or monologue voice, chosen with /commentary. Templated: it makes no model calls.",
+      "types": "./types/index.d.ts",
+      "path": "mods/commentary"
+    },
+    {
+      "name": "contract-compatibility-guard",
+      "version": "0.1.0",
+      "description": "Runs the compatibility tools configured for this repository (OpenAPI diff, buf breaking, GraphQL inspector, Pact and similar) and records their results. It does not analyse schemas itself. Publishes the compatibility gate.",
+      "types": "./types/index.d.ts",
+      "path": "mods/contract-compatibility-guard"
+    },
+    {
+      "name": "debug-timeline",
+      "version": "0.1.0",
+      "description": "Records the commands run during debugging, the hypotheses proposed and their outcomes, and flags repeated commands so circular investigation is visible.",
+      "types": "./types/index.d.ts",
+      "path": "mods/debug-timeline"
+    },
+    {
+      "name": "defect-protocol",
+      "version": "0.1.0",
+      "description": "Tracks a defect from symptom to root cause to fix and regression test. A defect counts as reproduced only with a reproduction or a documented reason it cannot be reproduced. Publishes the defect gate.",
+      "types": "./types/index.d.ts",
+      "path": "mods/defect-protocol"
+    },
+    {
+      "name": "dependency-radar",
+      "version": "0.1.0",
+      "description": "Diffs direct dependencies when a manifest or lockfile is edited (added, removed, major-version changes), and reads scanner results saved under .agentic-mods/scans. It never contacts the network.",
+      "types": "./types/index.d.ts",
+      "path": "mods/dependency-radar"
+    },
+    {
+      "name": "engineering-cockpit",
+      "version": "0.1.0",
+      "description": "One pane with the verification state of the change: contract, impact, evidence, review, architecture, migration, dependencies, performance and release readiness. It reads what the other mods publish and changes nothing.",
+      "types": "./types/index.d.ts",
+      "dependencies": [
+        "evidence-gate",
+        "change-contract",
+        "test-impact",
+        "review-tracker",
+        "architecture-guard",
+        "migration-sentinel",
+        "dependency-radar",
+        "performance-budget"
+      ],
+      "path": "mods/engineering-cockpit"
+    },
+    {
+      "name": "evidence-gate",
+      "version": "0.1.0",
+      "description": "Runs the configured build, test, lint, type-check and security commands, records their exit codes against a fingerprint of the repository, and holds git commit, push and PR creation until the required checks are current.",
+      "types": "./types/index.d.ts",
+      "path": "mods/evidence-gate"
+    },
+    {
+      "name": "incident-timeline",
+      "version": "0.1.0",
+      "description": "Records an incident as an append-only timeline, switches command-guard to its strict profile while it is open, and writes the postmortem.",
+      "types": "./types/index.d.ts",
+      "path": "mods/incident-timeline"
+    },
+    {
+      "name": "learning-ledger",
+      "version": "0.1.0",
+      "description": "Keeps repository lessons as reviewable records. A lesson is proposed, then approved by the person, and goes stale when a file it cites changes.",
+      "path": "mods/learning-ledger"
+    },
+    {
+      "name": "markdown-preview",
+      "version": "0.1.0",
+      "description": "Renders a Markdown file from the repository in a pane, so READMEs, ADRs and reports can be read without leaving the session.",
+      "types": "./types/index.d.ts",
+      "path": "mods/markdown-preview"
+    },
+    {
+      "name": "migration-sentinel",
+      "version": "0.1.0",
+      "description": "Reviews SQL migration edits for destructive and table-locking changes, records the verdict for release readiness, and never executes SQL.",
+      "types": "./types/index.d.ts",
+      "path": "mods/migration-sentinel"
+    },
+    {
+      "name": "mission-control",
+      "version": "0.1.0",
+      "description": "Shows subagents as a tree: what each is doing, which files it touched, its tool calls, and a plain-language line per agent. Review agents are flagged. Templated from events, with no model calls.",
+      "types": "./types/index.d.ts",
+      "path": "mods/mission-control"
+    },
+    {
+      "name": "mod-firewall",
+      "version": "0.1.0",
+      "description": "Watches network requests and process launches made by other mods, enforces an allowlist, and keeps an audit trail.",
+      "path": "mods/mod-firewall"
+    },
+    {
+      "name": "next-steps",
+      "version": "0.1.0",
+      "description": "After a turn that changed files, offers up to three suggested next prompts in a row above the prompt. Taking one puts it in the prompt box for editing.",
+      "types": "./types/index.d.ts",
+      "path": "mods/next-steps"
+    },
+    {
+      "name": "observability-verifier",
+      "version": "0.1.0",
+      "description": "Checks the health endpoints configured in .agentic-mods/observability.json after a change, and publishes the observability gate. It makes GET requests only, through the host's network policy.",
+      "types": "./types/index.d.ts",
+      "path": "mods/observability-verifier"
+    },
+    {
+      "name": "performance-budget",
+      "version": "0.1.0",
+      "description": "Compares measurements from benchmark and bundle-size reports against the budgets in .agentic-mods/budgets.json. A missing measurement is UNKNOWN, never a pass.",
+      "types": "./types/index.d.ts",
+      "path": "mods/performance-budget"
+    },
+    {
+      "name": "pr-readiness",
+      "version": "0.1.0",
+      "description": "Combines scope, evidence, review and architecture into one readiness verdict, and drafts a pull-request verification section from recorded results only.",
+      "dependencies": [
+        "evidence-gate",
+        "change-contract",
+        "review-tracker",
+        "architecture-guard"
+      ],
+      "path": "mods/pr-readiness"
+    },
+    {
+      "name": "regression-orchestrator",
+      "version": "0.1.0",
+      "description": "Scores the regression risk of the working tree, explains the score, and runs the configured scope for its level. Publishes the regression gate. Commands are configured per repository in .agentic-mods/regression.json.",
+      "types": "./types/index.d.ts",
+      "path": "mods/regression-orchestrator"
+    },
+    {
+      "name": "release-conductor",
+      "version": "0.1.0",
+      "description": "Assembles release readiness from the evidence, review, architecture, migration, dependency and performance states, plus a changelog, a rollback note and the deployment assets the repository lists. Checks only: it never deploys.",
+      "types": "./types/index.d.ts",
+      "dependencies": [
+        "evidence-gate",
+        "change-contract",
+        "review-tracker",
+        "architecture-guard",
+        "migration-sentinel",
+        "dependency-radar",
+        "performance-budget"
+      ],
+      "path": "mods/release-conductor"
+    },
+    {
+      "name": "response-modes",
+      "version": "0.1.0",
+      "description": "Adds a concise or plain-language response style to the system prompt, switched with /tldr, /mode-simple and /mode-off.",
+      "path": "mods/response-modes"
+    },
+    {
+      "name": "review-tracker",
+      "version": "0.1.0",
+      "description": "Turns review findings into tracked records with a lifecycle and a required reason or evidence at each resolution. Unresolved high-severity findings fail the review gate.",
+      "types": "./types/index.d.ts",
+      "path": "mods/review-tracker"
+    },
+    {
+      "name": "session-meter",
+      "version": "0.1.0",
+      "description": "Shows context fill, session cost and rate-limit windows above the prompt, and warns when a threshold is crossed.",
+      "types": "./types/index.d.ts",
+      "path": "mods/session-meter"
+    },
+    {
+      "name": "session-wrapped",
+      "version": "0.1.0",
+      "description": "Counts the session's turns, tool calls and file edits, and shows a text summary with /wrapped. It does not create images and writes nothing to disk.",
+      "path": "mods/session-wrapped"
+    },
+    {
+      "name": "specification-guard",
+      "version": "0.1.0",
+      "description": "Checks acceptance criteria are written as Given/When/Then scenarios with the non-functional sections. Publishes the specification gate for the delivery workflows.",
+      "types": "./types/index.d.ts",
+      "path": "mods/specification-guard"
+    },
+    {
+      "name": "switchboard",
+      "version": "0.1.0",
+      "description": "Warns when two sessions edit the same file at once, lists current file claims, and sends a message to another session only when the person asks.",
+      "path": "mods/switchboard"
+    },
+    {
+      "name": "task-orientation",
+      "version": "0.1.0",
+      "description": "Keeps the goal, current task, blocker and next step visible in a pane, captured from the first prompt and set with commands.",
+      "types": "./types/index.d.ts",
+      "path": "mods/task-orientation"
+    },
+    {
+      "name": "tdd-conductor",
+      "version": "0.1.0",
+      "description": "Runs the RED, GREEN and REFACTOR cycle. RED counts only when the test fails for a behavioral reason. Production edits are refused outside the implementation and refactor phases, unless an exception is recorded. Publishes the TDD gate.",
+      "types": "./types/index.d.ts",
+      "path": "mods/tdd-conductor"
+    },
+    {
+      "name": "test-impact",
+      "version": "0.1.0",
+      "description": "Maps changed JavaScript and TypeScript files to the tests that import them, flags changed code that no test reaches, and recommends the full suite for shared configuration. It selects tests and never runs them.",
+      "types": "./types/index.d.ts",
+      "path": "mods/test-impact"
+    },
+    {
+      "name": "turn-replay",
+      "version": "0.1.0",
+      "description": "Records every Edit and Write as a diff, grouped by turn, and shows them one at a time in a pane so a large change can be reviewed in steps.",
+      "types": "./types/index.d.ts",
+      "path": "mods/turn-replay"
+    },
+    {
+      "name": "workflow-conductor",
+      "version": "0.1.0",
+      "description": "Runs a delivery workflow (feature, TDD, bug fix, regression, refactoring, pull request, release, hotfix, incident) stage by stage. A stage advances only when its gate's evidence is current, or an approved deferral is recorded. Artifacts and the decision log are written under .agentic-mods/tasks.",
+      "types": "./types/index.d.ts",
+      "dependencies": [
+        "evidence-gate",
+        "change-contract",
+        "review-tracker",
+        "architecture-guard",
+        "migration-sentinel",
+        "dependency-radar",
+        "performance-budget",
+        "specification-guard",
+        "change-planner",
+        "regression-orchestrator",
+        "tdd-conductor",
+        "defect-protocol",
+        "behavior-lock",
+        "contract-compatibility-guard",
+        "observability-verifier",
+        "release-conductor"
+      ],
+      "path": "mods/workflow-conductor"
+    },
+    {
+      "name": "worktree-orchestrator",
+      "version": "0.1.0",
+      "description": "Lists git worktrees with their branches and uncommitted changes, and reports files that are changed in more than one worktree. Read-only: it never creates, removes or merges worktrees.",
+      "path": "mods/worktree-orchestrator"
+    }
+  ]
+}

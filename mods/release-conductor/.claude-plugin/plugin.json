@@ -11,5 +11,8 @@
     "migration-sentinel",
     "dependency-radar",
     "performance-budget"
-  ]
+  ],
+  "author": {
+    "name": "shubhamtaywade82"
+  }
 }
