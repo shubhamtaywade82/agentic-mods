@@ -388,6 +388,15 @@ var NATIVE_MODS = [
 function isNativeMod(name) {
   return NATIVE_MODS.includes(name);
 }
+var VENDORED_PLUGINS = [
+  "sdlc-guard",
+  "secret-guard",
+  "model-router",
+  "run-observer"
+];
+function isTrustedMod(name) {
+  return isNativeMod(name) || VENDORED_PLUGINS.includes(name);
+}
 
 // mods/mod-firewall/src/register.tsx
 var PLUGIN = "mod-firewall";
@@ -413,7 +422,7 @@ async function audit($, record) {
   await $.fs.write(path, appendJsonLine(existing, auditLine(record, Date.now()), AUDIT_CAP));
 }
 async function decide($, kind, origin, target, allowed) {
-  if (origin === "engine" || isNativeMod(origin)) return null;
+  if (origin === "engine" || isTrustedMod(origin)) return null;
   const config = (await loadConfig((path) => $.fs.read(path))).value.firewall;
   const isAllowed = allowed.includes(target);
   await audit($, { plugin: PLUGIN, kind, origin, target, allowed: isAllowed, mode: config.mode });

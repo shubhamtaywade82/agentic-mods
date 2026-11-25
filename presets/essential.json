@@ -1,12 +1,13 @@
 {
   "id": "essential",
-  "description": "Safety, verification and visibility for any repository.",
+  "description": "Safety from sdlc-guard and secret-guard, plus verification and visibility.",
   "mods": [
-    "command-guard",
     "evidence-gate",
     "change-contract",
     "session-meter",
     "task-orientation",
-    "engineering-cockpit"
+    "engineering-cockpit",
+    "sdlc-guard",
+    "secret-guard"
   ]
 }

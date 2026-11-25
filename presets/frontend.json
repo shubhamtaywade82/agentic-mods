@@ -2,7 +2,6 @@
   "id": "frontend",
   "description": "Node/TypeScript plus Markdown preview and the test boss.",
   "mods": [
-    "command-guard",
     "evidence-gate",
     "change-contract",
     "session-meter",
@@ -13,6 +12,8 @@
     "turn-replay",
     "next-steps",
     "markdown-preview",
-    "boss-fight"
+    "boss-fight",
+    "sdlc-guard",
+    "secret-guard"
   ]
 }

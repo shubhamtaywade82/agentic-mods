@@ -2,13 +2,14 @@
   "id": "dotnet",
   "description": ".NET solutions with test selection and layer rules.",
   "mods": [
-    "command-guard",
     "evidence-gate",
     "change-contract",
     "session-meter",
     "task-orientation",
     "engineering-cockpit",
     "test-impact",
-    "architecture-guard"
+    "architecture-guard",
+    "sdlc-guard",
+    "secret-guard"
   ]
 }

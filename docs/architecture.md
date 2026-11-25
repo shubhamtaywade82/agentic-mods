@@ -50,3 +50,32 @@ the definitions are `workflows/*.json` and `gates/gates.json`.
 - **Native mods are trusted; others are checked.** The firewall consults `NATIVE_MODS`.
 - **Readiness has one definition.** `assessReadiness` in core is used by pr-readiness,
   release-conductor and the cockpit.
+
+## agentic-sdlc-kit integration
+
+The sibling repository `shubhamtaywade82/agentic-sdlc-kit` is the runtime-independent SDLC engine.
+This repository is the Claude Code distribution and UX layer. Dependency direction: the kit never
+depends on this repository.
+
+What is vendored today (`plugins/`, pinned in `plugins/PROVENANCE.json`, synced by
+`packages/tooling/sync-sdlc-kit.mjs`):
+
+- `sdlc-guard` — destructive-command governance (fail-closed approval).
+- `secret-guard` — secret detection in writes, staged diffs and tool output.
+- `model-router` — suggest-only model and effort routing for subagents.
+- `run-observer` — bounded run telemetry, stored locally.
+
+These are real Claude Code function-hook mods built against the same engine declarations. They pass
+`claude plugin validate`. Their tests are kept in the kit repository and are not run here.
+
+What is not yet shared:
+
+- The kit's workflow, TDD and planning engines (`packages/core` in the kit) are not used by this
+  repository. `workflow-conductor` and `tdd-conductor` reimplement the same ideas in the pure core
+  here. Migrating them to the kit's contracts is the next integration step.
+- The kit's `mod-sdk` helper names differ from the planning notes (there is no `defineMod`); any
+  bridge must use the names the package actually exports.
+
+Overlap decision: `sdlc-guard` and `secret-guard` replace `command-guard` in every preset, because
+two mods gating the same Bash calls would ask the person twice. `command-guard` remains in the repo
+for repositories that do not install the kit's plugins.

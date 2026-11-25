@@ -54,3 +54,18 @@ export const NATIVE_MODS: readonly string[] = [
 export function isNativeMod(name: string): boolean {
   return NATIVE_MODS.includes(name)
 }
+
+/**
+ * Runtime plugins vendored from agentic-sdlc-kit at a pinned commit (see plugins/PROVENANCE.json).
+ * They are trusted like native mods: they are reviewed upstream and in this repository.
+ */
+export const VENDORED_PLUGINS: readonly string[] = [
+  'sdlc-guard',
+  'secret-guard',
+  'model-router',
+  'run-observer',
+]
+
+export function isTrustedMod(name: string): boolean {
+  return isNativeMod(name) || VENDORED_PLUGINS.includes(name)
+}

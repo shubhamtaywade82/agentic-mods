@@ -321,6 +321,34 @@
       "version": "0.1.0",
       "description": "Lists git worktrees with their branches and uncommitted changes, and reports files that are changed in more than one worktree. Read-only: it never creates, removes or merges worktrees.",
       "path": "mods/worktree-orchestrator"
+    },
+    {
+      "name": "sdlc-guard",
+      "version": "0.9.1",
+      "description": "Runtime governance Mod: destructive-operation protection, approval gates, migration and deployment controls. Uses the M10 policy evaluator and action classification.",
+      "types": "./contract.d.ts",
+      "path": "plugins/sdlc-guard"
+    },
+    {
+      "name": "secret-guard",
+      "version": "0.9.1",
+      "description": "Secret protection Mod: detect and redact secrets in tool output, file writes, and git operations. Uses the M11 detector and redactor.",
+      "types": "./contract.d.ts",
+      "path": "plugins/secret-guard"
+    },
+    {
+      "name": "model-router",
+      "version": "0.9.1",
+      "description": "Model + effort routing Mod: classify task complexity and risk, select model and effort, preserve explicit user choices, escalate on verification failure.",
+      "types": "./contract.d.ts",
+      "path": "plugins/model-router"
+    },
+    {
+      "name": "run-observer",
+      "version": "0.9.1",
+      "description": "Execution observability Mod: collect session/turn/tool events, persist run reports, redact sensitive output, CLI-first observability via kit runs.",
+      "types": "./contract.d.ts",
+      "path": "plugins/run-observer"
     }
   ]
 }

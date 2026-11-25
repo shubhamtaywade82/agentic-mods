@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from 'node:path'
 import { z } from 'zod'
 import { listMods, readJson, ROOT, run } from './lib/repo.mjs'
+import { VENDORED } from './lib/vendored.mjs'
 
 const pluginManifest = z.object({
   name: z.string().regex(/^[a-z0-9-]{2,40}$/),
@@ -23,16 +24,18 @@ const preset = z.object({
 })
 
 const mods = listMods()
-const names = new Set(mods.map(mod => mod.name))
+const vendored = VENDORED.filter(name => existsSync(join(ROOT, 'plugins', name, '.claude-plugin', 'plugin.json')))
+const names = new Set([...mods.map(mod => mod.name), ...vendored])
 let allOk = true
 
-const manifests = mods.map(mod => {
-  const parsed = pluginManifest.safeParse(readJson(join(mod.dir, '.claude-plugin', 'plugin.json')))
+const sources = [...mods.map(mod => ({ name: mod.name, dir: mod.dir, base: 'mods' })), ...vendored.map(name => ({ name, dir: join(ROOT, 'plugins', name), base: 'plugins' }))]
+const manifests = sources.map(source => {
+  const parsed = pluginManifest.safeParse(readJson(join(source.dir, '.claude-plugin', 'plugin.json')))
   if (!parsed.success) {
     process.stdout.write(`${parsed.error.issues.map(issue => issue.message).join('; ')}\n`)
     allOk = false
   }
-  return { ...(parsed.success ? parsed.data : { name: mod.name, version: '?', description: '' }), path: `mods/${mod.name}` }
+  return { ...(parsed.success ? parsed.data : { name: source.name, version: '?', description: '' }), path: `${source.base}/${source.name}` }
 })
 
 const presetDir = join(ROOT, 'presets')

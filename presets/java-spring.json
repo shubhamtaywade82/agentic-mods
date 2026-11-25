@@ -2,7 +2,6 @@
   "id": "java-spring",
   "description": "Maven or Gradle projects with layer rules and migrations.",
   "mods": [
-    "command-guard",
     "evidence-gate",
     "change-contract",
     "session-meter",
@@ -12,6 +11,8 @@
     "architecture-guard",
     "migration-sentinel",
     "dependency-radar",
-    "performance-budget"
+    "performance-budget",
+    "sdlc-guard",
+    "secret-guard"
   ]
 }

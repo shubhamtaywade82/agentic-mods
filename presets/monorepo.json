@@ -2,7 +2,6 @@
   "id": "monorepo",
   "description": "Many packages in one repository, with worktree collisions visible.",
   "mods": [
-    "command-guard",
     "evidence-gate",
     "change-contract",
     "session-meter",
@@ -11,6 +10,8 @@
     "test-impact",
     "architecture-guard",
     "worktree-orchestrator",
-    "switchboard"
+    "switchboard",
+    "sdlc-guard",
+    "secret-guard"
   ]
 }

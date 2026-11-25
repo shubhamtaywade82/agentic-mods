@@ -120,3 +120,10 @@ Commands are argv arrays and run without a shell. Other state files live under `
 
 See `docs/mod-development.md` for the rules that the engine enforces and the checks in this repo.
 Security reports: `SECURITY.md`.
+
+## Vendored plugins from agentic-sdlc-kit
+
+Four runtime plugins come from `shubhamtaywade82/agentic-sdlc-kit`, pinned in `plugins/PROVENANCE.json`:
+`sdlc-guard`, `secret-guard`, `model-router` and `run-observer`. They are used as they are. Sync
+with `node packages/tooling/sync-sdlc-kit.mjs <clone>`. The presets use `sdlc-guard` and `secret-guard`
+in place of `command-guard`. See `docs/architecture.md`.

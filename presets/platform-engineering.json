@@ -2,7 +2,6 @@
   "id": "platform-engineering",
   "description": "Infrastructure-heavy work: migrations, releases and contract checks.",
   "mods": [
-    "command-guard",
     "evidence-gate",
     "change-contract",
     "session-meter",
@@ -12,6 +11,8 @@
     "dependency-radar",
     "release-conductor",
     "contract-compatibility-guard",
-    "mod-firewall"
+    "mod-firewall",
+    "sdlc-guard",
+    "secret-guard"
   ]
 }

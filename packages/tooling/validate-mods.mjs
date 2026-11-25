@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { listMods, ROOT, run } from './lib/repo.mjs'
+import { VENDORED } from './lib/vendored.mjs'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
@@ -23,6 +24,10 @@ function nativeNames() {
 const claude = process.env.CLAUDE_BIN ?? 'claude'
 let allOk = true
 
+const vendoredSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'core', 'src', 'native.ts'), 'utf8')
+const vendoredAfter = vendoredSource.slice(vendoredSource.indexOf('VENDORED_PLUGINS'))
+const vendoredListed = [...vendoredAfter.slice(vendoredAfter.indexOf('= ['), vendoredAfter.indexOf('\n]')).matchAll(/'([a-z0-9-]+)'/g)].map(match => match[1])
+allOk = run('vendored list matches lib/vendored.mjs', { ok: JSON.stringify(vendoredListed) === JSON.stringify(VENDORED) }) && allOk
 const folders = listMods().map(mod => mod.name)
 const listed = nativeNames()
 const missing = folders.filter(name => !listed.includes(name))
@@ -47,6 +52,19 @@ for (const mod of listMods()) {
   const ok = result.status === 0
   if (!ok) process.stdout.write(`${result.stdout}${result.stderr}`)
   allOk = run(`validate mods/${mod.name}`, { ok }) && allOk
+}
+
+// Vendored plugins load their TypeScript directly: validate them in place, with no build step.
+for (const name of VENDORED) {
+  const dir = join(ROOT, 'plugins', name)
+  if (!existsSync(join(dir, '.claude-plugin', 'plugin.json'))) {
+    allOk = run(`validate plugins/${name} (missing)`, { ok: false }) && allOk
+    continue
+  }
+  const result = spawnSync(claude, ['plugin', 'validate', dir], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 })
+  const ok = result.status === 0
+  if (!ok) process.stdout.write(`${result.stdout}${result.stderr}`)
+  allOk = run(`validate plugins/${name} (vendored)`, { ok }) && allOk
 }
 
 process.exit(allOk ? 0 : 1)

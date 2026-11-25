@@ -3,7 +3,7 @@ import type { EngineInterface, On } from 'claude-code'
 import {
   appendJsonLine,
   auditLine,
-  isNativeMod,
+  isTrustedMod,
   loadConfig,
   stateRelativePath,
   truncate,
@@ -43,7 +43,7 @@ async function decide(
   target: string,
   allowed: readonly string[],
 ): Promise<string | null> {
-  if (origin === 'engine' || isNativeMod(origin)) return null
+  if (origin === 'engine' || isTrustedMod(origin)) return null
   const config = (await loadConfig(path => $.fs.read(path))).value.firewall
   const isAllowed = allowed.includes(target)
   await audit($, { plugin: PLUGIN, kind, origin, target, allowed: isAllowed, mode: config.mode })
