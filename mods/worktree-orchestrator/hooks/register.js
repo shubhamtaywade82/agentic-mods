@@ -87,7 +87,10 @@ async function report($) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "worktrees", description: "List git worktrees and file collisions between them" });
+    await $.command.register({
+      name: "worktrees",
+      description: "List git worktrees and file collisions between them"
+    });
     return next(e);
   });
   on("command.run", { command: "worktrees" }, async ($) => ({ text: await report($) }));

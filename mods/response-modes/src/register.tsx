@@ -3,8 +3,7 @@ import type { On } from 'claude-code'
 type Style = 'tldr' | 'simple'
 
 const STYLE_TEXT: Readonly<Record<Style, string>> = {
-  tldr:
-    'Answer in at most five sentences. Lead with the decision or the result, then the one detail the reader needs.',
+  tldr: 'Answer in at most five sentences. Lead with the decision or the result, then the one detail the reader needs.',
   simple:
     'Write in plain language: short sentences, no unexplained jargon. Define a technical term in a few words the first time you use it.',
 }
@@ -23,17 +22,17 @@ export function register(on: On): void {
     return next(e)
   })
 
-  on('command.run', { command: 'tldr' }, async $ => {
+  on('command.run', { command: 'tldr' }, async ($) => {
     await $.store.set('style', 'tldr')
     return { text: 'Concise response style on.' }
   })
 
-  on('command.run', { command: 'mode-simple' }, async $ => {
+  on('command.run', { command: 'mode-simple' }, async ($) => {
     await $.store.set('style', 'simple')
     return { text: 'Plain-language response style on.' }
   })
 
-  on('command.run', { command: 'mode-off' }, async $ => {
+  on('command.run', { command: 'mode-off' }, async ($) => {
     await $.store.delete('style')
     return { text: 'Default response style restored.' }
   })

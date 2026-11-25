@@ -4,8 +4,8 @@ Checks the health endpoints configured in .agentic-mods/observability.json after
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command    | What it does                                 |
+| ---------- | -------------------------------------------- |
 | `/observe` | Health checks after a change: /observe check |
 
 ## Hooks

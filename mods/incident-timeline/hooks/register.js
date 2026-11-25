@@ -97,7 +97,8 @@ async function writeLine($, id, kind, text) {
 }
 async function openIncident($, parts) {
   const [id = "", ...titleWords] = parts;
-  if (!ID_PATTERN.test(id)) return "Usage: /incident open <id> <title>. The id is letters, digits, - or _.";
+  if (!ID_PATTERN.test(id))
+    return "Usage: /incident open <id> <title>. The id is letters, digits, - or _.";
   const state = await read($, incident);
   if (state.isOpen) return `Incident ${state.id} is already open. Close it first.`;
   await update($, incident, () => ({ isOpen: true, profile: "strict", id }));
@@ -107,7 +108,8 @@ async function openIncident($, parts) {
 }
 async function appendRow($, kind, body) {
   const state = await read($, incident);
-  if (!state.isOpen || state.id === null) return "No incident is open. Use /incident open <id> <title>.";
+  if (!state.isOpen || state.id === null)
+    return "No incident is open. Use /incident open <id> <title>.";
   if (body.length === 0) return "Nothing to record.";
   await writeLine($, state.id, kind, truncate(body, 2e3));
   return `Recorded ${kind} for ${state.id}.`;

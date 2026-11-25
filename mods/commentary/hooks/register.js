@@ -221,7 +221,9 @@ var DANGER_RULES = [
     id: "git-force-push",
     level: "confirm",
     reason: "rewrites remote history",
-    matches: (argv) => gitSubcommand(argv) === "push" && argv.some((token) => token === "--force" || token === "-f" || token.startsWith("--force-with-lease"))
+    matches: (argv) => gitSubcommand(argv) === "push" && argv.some(
+      (token) => token === "--force" || token === "-f" || token.startsWith("--force-with-lease")
+    )
   },
   {
     id: "git-hard-reset",
@@ -300,21 +302,41 @@ var LINES = {
   sport: {
     edit: ["And a change to the file, right on target!", "The editor goes to work on the file!"],
     command: ["The command is sent down the field!", "A shell command in the play!"],
-    git: ["Into the repository, the team is pushing forward!", "A git step, and the crowd is on its feet!"],
+    git: [
+      "Into the repository, the team is pushing forward!",
+      "A git step, and the crowd is on its feet!"
+    ],
     tool: ["Another tool call, quick and clean!", "A tool call from the bench!"]
   },
   monologue: {
-    edit: ["It changed the file. Was that the right file?", "An edit. Each one is a small commitment."],
-    command: ["It ran a command. What did it expect to learn?", "A command, run without a hypothesis."],
-    git: ["It touches the history now. Is the evidence current?", "A git step. Check the gate first."],
-    tool: ["A tool call. One more step in the same direction.", "Another call. Is the loop converging?"]
+    edit: [
+      "It changed the file. Was that the right file?",
+      "An edit. Each one is a small commitment."
+    ],
+    command: [
+      "It ran a command. What did it expect to learn?",
+      "A command, run without a hypothesis."
+    ],
+    git: [
+      "It touches the history now. Is the evidence current?",
+      "A git step. Check the gate first."
+    ],
+    tool: [
+      "A tool call. One more step in the same direction.",
+      "Another call. Is the loop converging?"
+    ]
   }
 };
-var voice = atom({ plugin: "commentary", key: "voice" }, "off", { shape: "voice-1" });
+var voice = atom({ plugin: "commentary", key: "voice" }, "off", {
+  shape: "voice-1"
+});
 var latest = atom({ plugin: "commentary", key: "latest" }, "", { shape: "latest-1" });
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "commentary", description: "Commentary voice: /commentary sport|monologue|off" });
+    await $.command.register({
+      name: "commentary",
+      description: "Commentary voice: /commentary sport|monologue|off"
+    });
     return next(e);
   });
   on("command.run", { command: "commentary" }, async ($, e) => {

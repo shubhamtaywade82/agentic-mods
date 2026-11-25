@@ -22,7 +22,9 @@ const FIELDS = [
 
 const IDLE: GateState = { verdict: 'UNKNOWN', phase: 'none', reason: 'no defect open' }
 const gate = atom({ plugin: 'defect-protocol', key: 'gate' } as const, IDLE, { shape: 'gate-1' })
-const defect = atom({ plugin: 'defect-protocol', key: 'defect' } as const, {} as Defect, { shape: 'defect-1' })
+const defect = atom({ plugin: 'defect-protocol', key: 'defect' } as const, {} as Defect, {
+  shape: 'defect-1',
+})
 
 type DefectGate = { gate: GateState; fields: Defect }
 
@@ -43,13 +45,17 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'defect',
-      description: 'Defect protocol: /defect open <title>, /defect set <field> <text>, /defect status',
+      description:
+        'Defect protocol: /defect open <title>, /defect set <field> <text>, /defect status',
     })
     return next(e)
   })
 
   on('command.run', { command: 'defect' }, async ($, e) => {
-    const [subcommand = 'status', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = 'status', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
     const current = await read($, defect)
 
     if (subcommand === 'open') {

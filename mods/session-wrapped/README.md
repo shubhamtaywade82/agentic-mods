@@ -4,8 +4,8 @@ Counts the session's turns, tool calls and file edits, and shows a text summary 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command    | What it does                                     |
+| ---------- | ------------------------------------------------ |
 | `/wrapped` | Summarise this session: turns, tool calls, edits |
 
 ## Hooks

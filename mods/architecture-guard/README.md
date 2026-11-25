@@ -4,8 +4,8 @@ Checks imports in edited TypeScript, JavaScript and Java files against the layer
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command         | What it does                                                                                 |
+| --------------- | -------------------------------------------------------------------------------------------- |
 | `/architecture` | Architecture layer checks: /architecture scan (records the baseline) or /architecture status |
 
 ## Hooks

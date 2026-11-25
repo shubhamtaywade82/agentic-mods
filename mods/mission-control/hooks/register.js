@@ -102,7 +102,10 @@ function totalToolCalls() {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "subagents", description: "Show subagent activity in a pane (/subagents)" });
+    await $.command.register({
+      name: "subagents",
+      description: "Show subagent activity in a pane (/subagents)"
+    });
     return next(e);
   });
   on("command.run", { command: "subagents" }, async ($) => {

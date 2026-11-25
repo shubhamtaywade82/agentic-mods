@@ -6,11 +6,11 @@ All telemetry is in-memory and resets when the mod reloads; nothing is written t
 
 ## What it tracks
 
-| Signal | Meaning |
-|---|---|
-| Tool-call attempts | Counted before `next(e)`, so denied/failed attempts are included |
-| Per-tool tally | Bounded to 50 distinct tools (totals stay exact; itemization is capped — the Mission Control rule against unbounded state) |
-| Context pressure | `tokens/window` mapped to bands: ok < 50% ≤ caution < 75% ≤ high < 90% ≤ critical |
+| Signal             | Meaning                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Tool-call attempts | Counted before `next(e)`, so denied/failed attempts are included                                                           |
+| Per-tool tally     | Bounded to 50 distinct tools (totals stay exact; itemization is capped — the Mission Control rule against unbounded state) |
+| Context pressure   | `tokens/window` mapped to bands: ok < 50% ≤ caution < 75% ≤ high < 90% ≤ critical                                          |
 
 ## Architecture
 

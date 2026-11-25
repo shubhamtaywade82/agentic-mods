@@ -5,7 +5,9 @@ import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { Mood } from '../types'
 
 const EVIDENCE_IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
-const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, { shape: 'status-1' })
+const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, {
+  shape: 'status-1',
+})
 const mood = atom({ plugin: 'code-pet', key: 'mood' } as const, 'idle' as Mood, { shape: 'mood-1' })
 
 const FACES: Readonly<Record<Mood, string>> = {
@@ -30,7 +32,13 @@ export function register(on: On): void {
     const calls = Number((await $.store.get('calls')) ?? 0)
     const state = await read($, evidence)
     const nextMood: Mood =
-      state.overall === 'FAIL' ? 'worried' : state.overall === 'PASS' ? 'content' : calls > 20 ? 'busy' : 'idle'
+      state.overall === 'FAIL'
+        ? 'worried'
+        : state.overall === 'PASS'
+          ? 'content'
+          : calls > 20
+            ? 'busy'
+            : 'idle'
     await update($, mood, () => nextMood)
     return next(e)
   })

@@ -148,9 +148,17 @@ var CONFIG_PATH = `${STATE_DIR}/config.json`;
 var encoder = new TextEncoder();
 
 // mods/performance-budget/src/register.tsx
-var FORMATS = ["generic", "vite-stats", "jmh", "pytest-benchmark", "go-bench"];
+var FORMATS = [
+  "generic",
+  "vite-stats",
+  "jmh",
+  "pytest-benchmark",
+  "go-bench"
+];
 var IDLE = { verdict: "UNKNOWN", rows: ["no measurement checked yet"] };
-var status = atom({ plugin: "performance-budget", key: "status" }, IDLE, { shape: "status-1" });
+var status = atom({ plugin: "performance-budget", key: "status" }, IDLE, {
+  shape: "status-1"
+});
 async function budgetsOf($) {
   try {
     const parsed = JSON.parse(await $.fs.read(".agentic-mods/budgets.json"));

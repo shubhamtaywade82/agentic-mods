@@ -53,7 +53,8 @@ ${stderr}`;
 function nextPhase(current, event) {
   switch (event) {
     case "red-verified":
-      if (current === "idle" || current === "refactor" || current === "complete") return { ok: true, phase: "red" };
+      if (current === "idle" || current === "refactor" || current === "complete")
+        return { ok: true, phase: "red" };
       return { ok: false, reason: `RED is not valid from ${current}` };
     case "green-verified":
       if (current === "red") return { ok: true, phase: "green" };
@@ -101,7 +102,8 @@ async function publish($, phase, verdict, reason) {
 }
 async function runTests($, testPath) {
   const command = await commandOf($);
-  if (command === null) return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.';
+  if (command === null)
+    return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.';
   const result = await $.process.run([...command, normalizePath(testPath)], { timeoutMs: 6e5 });
   return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
@@ -124,7 +126,9 @@ function register(on) {
     const [subcommand = "status", ...rest] = e.args.trim().split(/\s+/).filter((word) => word.length > 0);
     const phase = await phaseOf($);
     if (subcommand === "status") {
-      return { text: `TDD phase: ${phase}${await $.store.get("exception") === true ? " (exception recorded)" : ""}` };
+      return {
+        text: `TDD phase: ${phase}${await $.store.get("exception") === true ? " (exception recorded)" : ""}`
+      };
     }
     if (subcommand === "exception") {
       const reason = rest.join(" ").trim();
@@ -146,16 +150,22 @@ function register(on) {
       const kind = classifyFailure(run.stdout, run.stderr);
       if (run.exitCode === 0) {
         await publish($, phase, "UNKNOWN", "the test passed: RED needs a failing test");
-        return { text: "RED rejected: the test passed. Write a test that fails for the missing behavior." };
+        return {
+          text: "RED rejected: the test passed. Write a test that fails for the missing behavior."
+        };
       }
       if (kind !== "behavioral") {
         await publish($, phase, "UNKNOWN", `RED rejected: the failure is ${kind}, not behavioral`);
-        return { text: `RED rejected: the failure is ${kind}. Fix the environment or compile error first.` };
+        return {
+          text: `RED rejected: the failure is ${kind}. Fix the environment or compile error first.`
+        };
       }
       const transition = nextPhase(phase, "red-verified");
       if (!transition.ok) return { text: transition.reason };
       await publish($, transition.phase, "PASS", `RED verified: ${testPath}`);
-      return { text: `RED verified: ${testPath} fails for a behavioral reason. Implement the minimum to pass it.` };
+      return {
+        text: `RED verified: ${testPath} fails for a behavioral reason. Implement the minimum to pass it.`
+      };
     }
     if (subcommand === "green") {
       if (testPath === "") return { text: "Usage: /tdd green <test path>" };
@@ -173,8 +183,15 @@ function register(on) {
     if (subcommand === "refactor") {
       const transition = nextPhase(phase, "refactor");
       if (!transition.ok) return { text: transition.reason };
-      await publish($, transition.phase, "UNKNOWN", "REFACTOR started: run /tdd green <test> to confirm it stays green");
-      return { text: "REFACTOR started. Keep behavior unchanged; confirm with /tdd green <test path>." };
+      await publish(
+        $,
+        transition.phase,
+        "UNKNOWN",
+        "REFACTOR started: run /tdd green <test> to confirm it stays green"
+      );
+      return {
+        text: "REFACTOR started. Keep behavior unchanged; confirm with /tdd green <test path>."
+      };
     }
     if (subcommand === "complete") {
       const transition = nextPhase(phase, "complete");
@@ -182,16 +199,22 @@ function register(on) {
       await publish($, transition.phase, "PASS", "cycle complete");
       return { text: "Cycle complete." };
     }
-    return { text: "Usage: /tdd red|green|refactor|complete <test path> | /tdd exception <reason> | /tdd status" };
+    return {
+      text: "Usage: /tdd red|green|refactor|complete <test path> | /tdd exception <reason> | /tdd status"
+    };
   });
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     const denial = await guardProduction($, e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "tdd-conductor failed closed on Edit." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "tdd-conductor failed closed on Edit." }
+  );
   on("tool.call", { tool: "Write" }, async ($, e, next) => {
     const denial = await guardProduction($, e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "tdd-conductor failed closed on Write." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "tdd-conductor failed closed on Write." }
+  );
 }
 export {
   register

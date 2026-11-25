@@ -96,15 +96,23 @@ function assessRegression(changed, weights = DEFAULT_RISK_WEIGHTS) {
     reasons.push(`${weights[factor] >= 0 ? "+" : ""}${weights[factor]}  ${reason}`);
   };
   const paths = changed.map((path) => path.replace(/\\/g, "/"));
-  if (paths.some((path) => PATTERNS.publicApi.test(path))) add("publicApi", "public API or contract file changed");
-  if (paths.some((path) => SCHEMA_FILE.test(path))) add("schema", "database schema or migration changed");
-  if (paths.some((path) => PATTERNS.sharedLibrary.test(path))) add("sharedLibrary", "shared library code changed");
-  if (paths.some((path) => PATTERNS.auth.test(path))) add("auth", "authentication or authorization code changed");
-  if (paths.some((path) => PATTERNS.lockfile.test(path))) add("lockfile", "dependency lockfile changed");
-  if (paths.some((path) => PATTERNS.buildConfig.test(path))) add("buildConfig", "build configuration changed");
+  if (paths.some((path) => PATTERNS.publicApi.test(path)))
+    add("publicApi", "public API or contract file changed");
+  if (paths.some((path) => SCHEMA_FILE.test(path)))
+    add("schema", "database schema or migration changed");
+  if (paths.some((path) => PATTERNS.sharedLibrary.test(path)))
+    add("sharedLibrary", "shared library code changed");
+  if (paths.some((path) => PATTERNS.auth.test(path)))
+    add("auth", "authentication or authorization code changed");
+  if (paths.some((path) => PATTERNS.lockfile.test(path)))
+    add("lockfile", "dependency lockfile changed");
+  if (paths.some((path) => PATTERNS.buildConfig.test(path)))
+    add("buildConfig", "build configuration changed");
   if (paths.length > 20) add("manyFiles", `${paths.length} files changed`);
-  if (paths.length > 0 && paths.every((path) => TEST_FILE.test(path))) add("testsOnly", "only test files changed");
-  if (paths.length > 0 && paths.every((path) => DOC_FILE.test(path))) add("docsOnly", "only documentation changed");
+  if (paths.length > 0 && paths.every((path) => TEST_FILE.test(path)))
+    add("testsOnly", "only test files changed");
+  if (paths.length > 0 && paths.every((path) => DOC_FILE.test(path)))
+    add("docsOnly", "only documentation changed");
   const clamped = Math.max(0, Math.min(100, score));
   const level = riskLevelOf(clamped);
   const requires = requiredChecks(level);
@@ -125,7 +133,9 @@ function requiredChecks(level) {
 
 // mods/regression-orchestrator/src/register.tsx
 var IDLE = { verdict: "UNKNOWN", phase: "none", reason: "no regression scope run" };
-var gate = atom({ plugin: "regression-orchestrator", key: "gate" }, IDLE, { shape: "gate-1" });
+var gate = atom({ plugin: "regression-orchestrator", key: "gate" }, IDLE, {
+  shape: "gate-1"
+});
 function runnerOf($) {
   return async (argv) => {
     const result = await $.process.run(argv);
@@ -184,14 +194,18 @@ function register(on) {
         }
         const result = await $.process.run(argv, { timeoutMs: 6e5 });
         if (result.exitCode !== 0) verdict = "FAIL";
-        results.push(`${name}: ${result.exitCode === 0 ? "passed" : `failed (exit ${result.exitCode})`}`);
+        results.push(
+          `${name}: ${result.exitCode === 0 ? "passed" : `failed (exit ${result.exitCode})`}`
+        );
       }
       await update($, gate, () => ({
         verdict,
         phase: "ran",
         reason: `${risk.level} scope: ${risk.requires.length} check(s)`
       }));
-      return { text: [`regression ${risk.level} (score ${risk.score}): ${verdict}`, ...results].join("\n") };
+      return {
+        text: [`regression ${risk.level} (score ${risk.score}): ${verdict}`, ...results].join("\n")
+      };
     }
     return { text: "Usage: /regression assess | /regression run" };
   });

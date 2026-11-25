@@ -4,8 +4,8 @@ Records an incident as an append-only timeline, switches command-guard to its st
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command     | What it does                                                                |
+| ----------- | --------------------------------------------------------------------------- |
 | `/incident` | Open, log, mitigate, recover and close an incident, or write its postmortem |
 
 ## Hooks

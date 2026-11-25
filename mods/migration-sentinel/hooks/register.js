@@ -23,13 +23,33 @@ function truncate(text, max) {
 
 // packages/core/src/migrations.ts
 var RULES = [
-  { id: "drop-object", severity: "destructive", pattern: /\bDROP\s+(TABLE|COLUMN|SCHEMA|DATABASE)\b/i },
+  {
+    id: "drop-object",
+    severity: "destructive",
+    pattern: /\bDROP\s+(TABLE|COLUMN|SCHEMA|DATABASE)\b/i
+  },
   { id: "truncate", severity: "destructive", pattern: /\bTRUNCATE\b/i },
   { id: "rename", severity: "destructive", pattern: /\bRENAME\s+(COLUMN|TO)\b/i },
-  { id: "update-without-where", severity: "destructive", pattern: /\bUPDATE\s+\w+\s+SET\b(?![^;]*\bWHERE\b)/i },
-  { id: "not-null-without-default", severity: "review", pattern: /\bADD\s+COLUMN\s+(?![^;]*\bDEFAULT\b)[^;]*\bNOT\s+NULL\b/i },
-  { id: "set-not-null", severity: "review", pattern: /\bALTER\s+COLUMN\s+\S+\s+SET\s+NOT\s+NULL\b/i },
-  { id: "index-not-concurrent", severity: "review", pattern: /\bCREATE\s+(UNIQUE\s+)?INDEX\s+(?!CONCURRENTLY\b)/i }
+  {
+    id: "update-without-where",
+    severity: "destructive",
+    pattern: /\bUPDATE\s+\w+\s+SET\b(?![^;]*\bWHERE\b)/i
+  },
+  {
+    id: "not-null-without-default",
+    severity: "review",
+    pattern: /\bADD\s+COLUMN\s+(?![^;]*\bDEFAULT\b)[^;]*\bNOT\s+NULL\b/i
+  },
+  {
+    id: "set-not-null",
+    severity: "review",
+    pattern: /\bALTER\s+COLUMN\s+\S+\s+SET\s+NOT\s+NULL\b/i
+  },
+  {
+    id: "index-not-concurrent",
+    severity: "review",
+    pattern: /\bCREATE\s+(UNIQUE\s+)?INDEX\s+(?!CONCURRENTLY\b)/i
+  }
 ];
 function classifyMigrationSql(text) {
   const findings = [];
@@ -38,7 +58,12 @@ function classifyMigrationSql(text) {
     if (/reviewed:/i.test(line)) return;
     for (const rule of RULES) {
       if (rule.pattern.test(line)) {
-        findings.push({ severity: rule.severity, rule: rule.id, line: index + 1, text: line.trim().slice(0, 200) });
+        findings.push({
+          severity: rule.severity,
+          rule: rule.id,
+          line: index + 1,
+          text: line.trim().slice(0, 200)
+        });
       }
     }
   });
@@ -48,7 +73,9 @@ var MIGRATION_PATH = /(^|\/)(migrations?|db\/migrate|flyway|liquibase|alembic\/v
 
 // mods/migration-sentinel/src/register.tsx
 var IDLE = { verdict: "UNKNOWN", findings: [] };
-var status = atom({ plugin: "migration-sentinel", key: "status" }, IDLE, { shape: "status-1" });
+var status = atom({ plugin: "migration-sentinel", key: "status" }, IDLE, {
+  shape: "status-1"
+});
 function verdictOf(findings) {
   if (findings.some((item) => item.severity === "destructive")) return "FAIL";
   if (findings.length > 0) return "UNKNOWN";
@@ -82,7 +109,9 @@ function register(on) {
     const findings = classifyMigrationSql(await $.fs.read(path));
     await publish($, path, findings);
     if (findings.length === 0) return { text: `${path}: no destructive or locking patterns found.` };
-    return { text: findings.map((item) => `line ${item.line}: ${item.severity} ${item.rule}`).join("\n") };
+    return {
+      text: findings.map((item) => `line ${item.line}: ${item.severity} ${item.rule}`).join("\n")
+    };
   });
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     if (MIGRATION_PATH.test(e.file_path)) {

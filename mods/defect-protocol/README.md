@@ -4,8 +4,8 @@ Tracks a defect from symptom to root cause to fix and regression test. A defect 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command   | What it does                                                                      |
+| --------- | --------------------------------------------------------------------------------- |
 | `/defect` | Defect protocol: /defect open <title>, /defect set <field> <text>, /defect status |
 
 ## Hooks

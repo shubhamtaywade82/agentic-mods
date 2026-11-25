@@ -4,8 +4,8 @@ Captures the exported surface of TypeScript or JavaScript files before a refacto
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command | What it does                                   |
+| ------- | ---------------------------------------------- |
 | `/lock` | Behavior lock: /lock capture <name> <files...> | /lock compare <name> |
 
 ## Hooks

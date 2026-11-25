@@ -16,12 +16,12 @@ file kind follows, and how to verify and submit a change.
 
 Every mod must keep this separation:
 
-| Layer | Path | Rule |
-|---|---|---|
-| Adapter | `hooks/register.ts` | The ONLY file that imports `claude-code`. Thin: match events, call lib functions, shape results |
-| Logic | `hooks/lib/*.ts` | Pure TypeScript. No `claude-code` imports. Strict mode clean |
-| Reference | `skills/`, `references/` | Markdown Claude reads; SKILL.md entry point per skill |
-| Tests | `tests/*.test.ts` | Lib unit tests + session interception tests |
+| Layer     | Path                     | Rule                                                                                            |
+| --------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| Adapter   | `hooks/register.ts`      | The ONLY file that imports `claude-code`. Thin: match events, call lib functions, shape results |
+| Logic     | `hooks/lib/*.ts`         | Pure TypeScript. No `claude-code` imports. Strict mode clean                                    |
+| Reference | `skills/`, `references/` | Markdown Claude reads; SKILL.md entry point per skill                                           |
+| Tests     | `tests/*.test.ts`        | Lib unit tests + session interception tests                                                     |
 
 If you find yourself writing logic inside `register.ts`, move it to `lib/` and
 test it. The offline type-check (`tsc -p scripts/tsconfig.check.json`) covers

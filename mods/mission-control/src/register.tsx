@@ -47,11 +47,14 @@ function totalToolCalls(): number {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'subagents', description: 'Show subagent activity in a pane (/subagents)' })
+    await $.command.register({
+      name: 'subagents',
+      description: 'Show subagent activity in a pane (/subagents)',
+    })
     return next(e)
   })
 
-  on('command.run', { command: 'subagents' }, async $ => {
+  on('command.run', { command: 'subagents' }, async ($) => {
     await $.ui.open({ id: PANE, title: 'Agents' })
     return { text: 'Agent activity pane opened.' }
   })
@@ -101,7 +104,7 @@ export function register(on: On): void {
     }
     return (
       <Box flexDirection="column">
-        {rows.map(row => (
+        {rows.map((row) => (
           <Text key={row.id} dimColor={row.status !== 'running'}>
             {'  '.repeat(row.depth)}
             {row.isReview ? '[review] ' : ''}

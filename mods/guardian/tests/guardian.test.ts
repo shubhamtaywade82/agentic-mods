@@ -67,7 +67,9 @@ test('scan finds multiple distinct secrets of the same kind', () => {
 })
 
 test('scan does not match prose or short strings', () => {
-  expect(scan('the AKIA pattern is documented in AWS docs').filter((f) => f.kind === 'aws-access-key')).toEqual([])
+  expect(
+    scan('the AKIA pattern is documented in AWS docs').filter((f) => f.kind === 'aws-access-key'),
+  ).toEqual([])
   expect(scan('PASSWORD=short').filter((f) => f.kind === 'env-assignment')).toEqual([])
   expect(scan('')).toEqual([])
 })

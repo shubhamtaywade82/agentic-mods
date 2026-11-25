@@ -4,8 +4,8 @@ Renders a Markdown file from the repository in a pane, so READMEs, ADRs and repo
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command    | What it does                                                 |
+| ---------- | ------------------------------------------------------------ |
 | `/preview` | Render a repository Markdown file in a pane: /preview <path> |
 
 ## Hooks

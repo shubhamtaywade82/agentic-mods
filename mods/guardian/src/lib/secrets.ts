@@ -53,7 +53,11 @@ export const PATTERNS: readonly SecretPattern[] = [
   // AWS secret access keys assigned in env-style text (40 chars base64ish)
   { kind: 'aws-secret-key', regex: /\b[A-Za-z0-9/+=]{40}\b/g },
   // TOKEN=..., PASSWORD=..., SECRET=... assignments with a non-empty value
-  { kind: 'env-assignment', regex: /\b(?:API_KEY|TOKEN|PASSWORD|PASSWD|SECRET|ACCESS_KEY|PRIVATE_TOKEN)[A-Z_]*\s*[:=]\s*['"]?[^\s'"]{8,}/g },
+  {
+    kind: 'env-assignment',
+    regex:
+      /\b(?:API_KEY|TOKEN|PASSWORD|PASSWD|SECRET|ACCESS_KEY|PRIVATE_TOKEN)[A-Z_]*\s*[:=]\s*['"]?[^\s'"]{8,}/g,
+  },
 ] as const
 
 /** Kinds that indicate a near-certain real secret (not a maybe). */

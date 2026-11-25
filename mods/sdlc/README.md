@@ -4,11 +4,11 @@ A complete software development lifecycle kit as a Claude Code mod. It registers
 
 ## What you get
 
-| Layer | Contents |
-|---|---|
-| Commands | `/sdlc-init`, `/sdlc-feature`, `/sdlc-prd`, `/sdlc-spec`, `/sdlc-plan`, `/sdlc-tdd`, `/sdlc-review`, `/sdlc-debug`, `/sdlc-refactor`, `/sdlc-ship`, `/sdlc-audit` |
-| Skill | `skills/sdlc/` — workflows (00-08), stage prompts, document templates, checklists (code review, security/OWASP, performance, release, definition of done), sub-agent roles, and the seed `AGENTS.md` used by `/sdlc-init` |
-| Code | `hooks/lib/commands.ts` — pure command registry and prompt builders (unit-tested); `hooks/register.ts` — thin adapter |
+| Layer    | Contents                                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Commands | `/sdlc-init`, `/sdlc-feature`, `/sdlc-prd`, `/sdlc-spec`, `/sdlc-plan`, `/sdlc-tdd`, `/sdlc-review`, `/sdlc-debug`, `/sdlc-refactor`, `/sdlc-ship`, `/sdlc-audit`                                                         |
+| Skill    | `skills/sdlc/` — workflows (00-08), stage prompts, document templates, checklists (code review, security/OWASP, performance, release, definition of done), sub-agent roles, and the seed `AGENTS.md` used by `/sdlc-init` |
+| Code     | `hooks/lib/commands.ts` — pure command registry and prompt builders (unit-tested); `hooks/register.ts` — thin adapter                                                                                                     |
 
 ## Quick start
 

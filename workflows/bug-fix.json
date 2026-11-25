@@ -3,10 +3,34 @@
   "description": "Reproduce, fix with a regression test, verify, review.",
   "start": "reproduce",
   "stages": [
-    { "id": "reproduce", "name": "Reproduce", "gate": "defect-reproduction-gate", "artifact": "defect.md", "next": ["fix"] },
-    { "id": "fix", "name": "Fix", "gate": "defect-fix-gate", "artifact": "root-cause.md", "next": ["verify"] },
-    { "id": "verify", "name": "Verify", "gate": "verification-gate", "artifact": null, "next": ["review"] },
-    { "id": "review", "name": "Review", "gate": "review-gate", "artifact": null, "next": ["complete"] },
+    {
+      "id": "reproduce",
+      "name": "Reproduce",
+      "gate": "defect-reproduction-gate",
+      "artifact": "defect.md",
+      "next": ["fix"]
+    },
+    {
+      "id": "fix",
+      "name": "Fix",
+      "gate": "defect-fix-gate",
+      "artifact": "root-cause.md",
+      "next": ["verify"]
+    },
+    {
+      "id": "verify",
+      "name": "Verify",
+      "gate": "verification-gate",
+      "artifact": null,
+      "next": ["review"]
+    },
+    {
+      "id": "review",
+      "name": "Review",
+      "gate": "review-gate",
+      "artifact": null,
+      "next": ["complete"]
+    },
     { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
   ]
 }

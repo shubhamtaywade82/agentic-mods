@@ -72,7 +72,9 @@ function register(on) {
     if (subcommand === "set") {
       const [objective = "", files = "", tests = "", risks = ""] = rest.join(" ").split("|").map((part) => part.trim());
       if (objective === "" || files === "" || tests === "" || risks === "") {
-        return { text: "Usage: /plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>" };
+        return {
+          text: "Usage: /plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>"
+        };
       }
       const plan2 = {
         objective: truncate(objective, 300),
@@ -92,7 +94,12 @@ function register(on) {
     const plan = await loadPlan($);
     if (plan === null) return { text: "No plan recorded. Use /change-plan set first." };
     if (subcommand === "contract") {
-      const contract = { objective: plan.objective, allowed: plan.files, forbidden: [], mode: "warn" };
+      const contract = {
+        objective: plan.objective,
+        allowed: plan.files,
+        forbidden: [],
+        mode: "warn"
+      };
       await $.fs.write(stateRelativePath("contract.json"), `${JSON.stringify(contract, null, 2)}
 `);
       return { text: `Change contract written: ${plan.files.length} allowed path(s), mode warn.` };

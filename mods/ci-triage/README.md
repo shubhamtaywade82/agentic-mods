@@ -4,9 +4,9 @@ Classifies a CI failure log (compilation, unit, integration, flaky, infrastructu
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/ci` | Triage a CI log file: /ci triage <path to the downloaded log> |
+| Command | What it does                                                  |
+| ------- | ------------------------------------------------------------- |
+| `/ci`   | Triage a CI log file: /ci triage <path to the downloaded log> |
 
 ## Hooks
 

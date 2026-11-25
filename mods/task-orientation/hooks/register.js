@@ -19,11 +19,9 @@ function truncate(text, max) {
 // mods/task-orientation/src/register.tsx
 var PANE = "task-orientation";
 var IDLE = { goal: null, task: null, blocker: null, next: null };
-var orientation = atom(
-  { plugin: "task-orientation", key: "orientation" },
-  IDLE,
-  { shape: "orientation-1" }
-);
+var orientation = atom({ plugin: "task-orientation", key: "orientation" }, IDLE, {
+  shape: "orientation-1"
+});
 var COMMANDS = {
   goal: "goal",
   task: "task",
@@ -44,17 +42,26 @@ function register(on) {
     if (e.command === void 0) {
       const state = await read($, orientation);
       if (state.goal === null && e.text.trim().length > 0) {
-        await update($, orientation, (current) => ({ ...current, goal: truncate(e.text.trim(), 300) }));
+        await update($, orientation, (current) => ({
+          ...current,
+          goal: truncate(e.text.trim(), 300)
+        }));
       }
     }
     return next(e);
   });
   on("command.run", { command: "goal" }, async ($, e) => {
-    await update($, orientation, (current) => ({ ...current, goal: truncate(e.args.trim(), 300) || null }));
+    await update($, orientation, (current) => ({
+      ...current,
+      goal: truncate(e.args.trim(), 300) || null
+    }));
     return { text: "Goal updated." };
   });
   on("command.run", { command: "task" }, async ($, e) => {
-    await update($, orientation, (current) => ({ ...current, task: truncate(e.args.trim(), 300) || null }));
+    await update($, orientation, (current) => ({
+      ...current,
+      task: truncate(e.args.trim(), 300) || null
+    }));
     return { text: "Current task updated." };
   });
   on("command.run", { command: "blocker" }, async ($, e) => {
@@ -66,7 +73,10 @@ function register(on) {
     return { text: "Blocker updated." };
   });
   on("command.run", { command: "next" }, async ($, e) => {
-    await update($, orientation, (current) => ({ ...current, next: truncate(e.args.trim(), 300) || null }));
+    await update($, orientation, (current) => ({
+      ...current,
+      next: truncate(e.args.trim(), 300) || null
+    }));
     return { text: "Next step updated." };
   });
   on("command.run", { command: "orientation" }, async ($) => {

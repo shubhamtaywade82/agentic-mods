@@ -32,8 +32,8 @@ async function recordChange(
   const { added, removed } = summarizeDiff(full)
   const lines = trimContext(full, 2)
     .slice(0, MAX_LINES)
-    .map(op => ({ kind: op.kind, line: op.line.slice(0, MAX_LINE_LENGTH) }))
-  await update($, replay, current => {
+    .map((op) => ({ kind: op.kind, line: op.line.slice(0, MAX_LINE_LENGTH) }))
+  await update($, replay, (current) => {
     const nextId = (current.changes[current.changes.length - 1]?.id ?? 0) + 1
     const change: ReplayChange = { id: nextId, turn: current.turn, file, added, removed, lines }
     return { ...current, changes: appendCapped(current.changes, change, MAX_CHANGES) }
@@ -50,7 +50,7 @@ export function register(on: On): void {
   })
 
   on('turn.start', async ($, e, next) => {
-    await update($, replay, current => ({ ...current, turn: current.turn + 1 }))
+    await update($, replay, (current) => ({ ...current, turn: current.turn + 1 }))
     return next(e)
   })
 
@@ -76,10 +76,13 @@ export function register(on: On): void {
     const state = await read($, replay)
     const requested = Number.parseInt(e.args.trim(), 10)
     const last = Math.max(0, state.changes.length - 1)
-    const index = Number.isFinite(requested) && requested >= 1 ? Math.min(requested - 1, last) : last
+    const index =
+      Number.isFinite(requested) && requested >= 1 ? Math.min(requested - 1, last) : last
     await update($, cursor, () => index)
     await $.ui.open({ id: PANE, title: 'Turn replay' })
-    return { text: state.changes.length === 0 ? 'No edits recorded yet.' : `Showing change ${index + 1}.` }
+    return {
+      text: state.changes.length === 0 ? 'No edits recorded yet.' : `Showing change ${index + 1}.`,
+    }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
@@ -111,12 +114,12 @@ export function register(on: On): void {
           <Button
             key="previous"
             label="Previous"
-            onPress={() => update($, cursor, current => Math.max(0, current - 1))}
+            onPress={() => update($, cursor, (current) => Math.max(0, current - 1))}
           />
           <Button
             key="next"
             label="Next"
-            onPress={() => update($, cursor, current => Math.min(last, current + 1))}
+            onPress={() => update($, cursor, (current) => Math.min(last, current + 1))}
           />
         </Box>
       </Box>

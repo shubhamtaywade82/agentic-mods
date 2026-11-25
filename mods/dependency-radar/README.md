@@ -4,8 +4,8 @@ Diffs direct dependencies when a manifest or lockfile is edited (added, removed,
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command  | What it does                                   |
+| -------- | ---------------------------------------------- |
 | `/radar` | Read the recorded dependency scan: /radar scan |
 
 ## Hooks

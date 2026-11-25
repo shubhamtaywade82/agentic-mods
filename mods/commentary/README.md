@@ -4,9 +4,9 @@ A one-line commentary above the prompt about the latest tool activity, in a spor
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/commentary` | Commentary voice: /commentary sport|monologue|off |
+| Command       | What it does                        |
+| ------------- | ----------------------------------- |
+| `/commentary` | Commentary voice: /commentary sport | monologue | off |
 
 ## Hooks
 

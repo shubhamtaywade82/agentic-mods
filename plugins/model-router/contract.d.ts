@@ -23,15 +23,15 @@ declare module 'claude-code' {
       // host or installer can override before the first event.
       policy:
         | {
-            schemaVersion: 1;
-            id: string;
-            version: string;
-            rules: unknown[];
-            defaultModel: string;
-            defaultEffort: 'low' | 'medium' | 'high';
-            suggestOnly: boolean;
+            schemaVersion: 1
+            id: string
+            version: string
+            rules: unknown[]
+            defaultModel: string
+            defaultEffort: 'low' | 'medium' | 'high'
+            suggestOnly: boolean
           }
-        | undefined;
-    };
+        | undefined
+    }
   }
 }

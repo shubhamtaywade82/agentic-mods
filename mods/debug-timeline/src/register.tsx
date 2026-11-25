@@ -10,20 +10,31 @@ const REPEAT_WINDOW = 20
 const REPEAT_THRESHOLD = 3
 
 const IDLE: TimelineState = { entries: [], repeated: [] }
-const timeline = atom({ plugin: 'debug-timeline', key: 'timeline' } as const, IDLE, { shape: 'timeline-1' })
+const timeline = atom({ plugin: 'debug-timeline', key: 'timeline' } as const, IDLE, {
+  shape: 'timeline-1',
+})
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'hypothesis', description: 'Record a debugging hypothesis: /hypothesis <text>' })
-    await $.command.register({ name: 'result', description: 'Record a hypothesis outcome: /result <id> confirmed|rejected <evidence>' })
-    await $.command.register({ name: 'timeline', description: 'Show the debugging timeline in a pane' })
+    await $.command.register({
+      name: 'hypothesis',
+      description: 'Record a debugging hypothesis: /hypothesis <text>',
+    })
+    await $.command.register({
+      name: 'result',
+      description: 'Record a hypothesis outcome: /result <id> confirmed|rejected <evidence>',
+    })
+    await $.command.register({
+      name: 'timeline',
+      description: 'Show the debugging timeline in a pane',
+    })
     return next(e)
   })
 
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     const command = truncate(redact(e.command), 300)
     const at = await $.clock.now()
-    await update($, timeline, current => {
+    await update($, timeline, (current) => {
       const entry: TimelineEntry = {
         id: `C${current.entries.length + 1}`,
         at,
@@ -32,15 +43,19 @@ export function register(on: On): void {
         outcome: null,
       }
       const entries = appendCapped(current.entries, entry, MAX_ENTRIES)
-      const recent = entries.slice(-REPEAT_WINDOW).filter(item => item.kind === 'command')
+      const recent = entries.slice(-REPEAT_WINDOW).filter((item) => item.kind === 'command')
       const counts = new Map<string, number>()
       for (const item of recent) counts.set(item.text, (counts.get(item.text) ?? 0) + 1)
-      const repeated = [...counts].filter(([, count]) => count >= REPEAT_THRESHOLD).map(([text]) => text)
+      const repeated = [...counts]
+        .filter(([, count]) => count >= REPEAT_THRESHOLD)
+        .map(([text]) => text)
       return { entries, repeated }
     })
     const current = await read($, timeline)
     if (current.repeated.includes(command)) {
-      $.ui.toast('debug-timeline: this command has run several times; state a hypothesis before running it again')
+      $.ui.toast(
+        'debug-timeline: this command has run several times; state a hypothesis before running it again',
+      )
     }
     return next(e)
   })
@@ -49,7 +64,7 @@ export function register(on: On): void {
     const text = truncate(redact(e.args.trim()), 500)
     if (text === '') return { text: 'Usage: /hypothesis <text>' }
     const at = await $.clock.now()
-    await update($, timeline, current => ({
+    await update($, timeline, (current) => ({
       ...current,
       entries: appendCapped(
         current.entries,
@@ -62,16 +77,20 @@ export function register(on: On): void {
 
   on('command.run', { command: 'result' }, async ($, e) => {
     const [id = '', outcome = '', ...rest] = e.args.trim().split(/\s+/)
-    if (!/^H\d+$/.test(id) || (outcome !== 'confirmed' && outcome !== 'rejected') || rest.length === 0) {
+    if (
+      !/^H\d+$/.test(id) ||
+      (outcome !== 'confirmed' && outcome !== 'rejected') ||
+      rest.length === 0
+    ) {
       return { text: 'Usage: /result <H-id> confirmed|rejected <evidence>' }
     }
     const evidence = truncate(redact(rest.join(' ')), 500)
     const resolved: 'confirmed' | 'rejected' = outcome === 'confirmed' ? 'confirmed' : 'rejected'
     const at = await $.clock.now()
-    await update($, timeline, current => ({
+    await update($, timeline, (current) => ({
       ...current,
       entries: appendCapped(
-        current.entries.map(item => (item.id === id ? { ...item, outcome: resolved } : item)),
+        current.entries.map((item) => (item.id === id ? { ...item, outcome: resolved } : item)),
         {
           id: `R${current.entries.length + 1}`,
           at,
@@ -102,13 +121,15 @@ export function register(on: On): void {
     }
     return (
       <Box flexDirection="column">
-        {current.entries.slice(-40).map(entry => (
+        {current.entries.slice(-40).map((entry) => (
           <Text key={entry.id} dimColor={entry.kind === 'command'}>
             {entry.id} {entry.kind}
             {entry.outcome === null ? '' : ` [${entry.outcome}]`}: {entry.text}
           </Text>
         ))}
-        {current.repeated.length > 0 ? <Text>Repeated commands: {current.repeated.length}</Text> : null}
+        {current.repeated.length > 0 ? (
+          <Text>Repeated commands: {current.repeated.length}</Text>
+        ) : null}
       </Box>
     )
   })

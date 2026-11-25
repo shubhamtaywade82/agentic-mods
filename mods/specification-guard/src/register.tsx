@@ -5,7 +5,9 @@ import { normalizePath, truncate, validateSpec } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 const IDLE: GateState = { verdict: 'UNKNOWN', phase: 'none', reason: 'no specification checked' }
-const gate = atom({ plugin: 'specification-guard', key: 'gate' } as const, IDLE, { shape: 'gate-1' })
+const gate = atom({ plugin: 'specification-guard', key: 'gate' } as const, IDLE, {
+  shape: 'gate-1',
+})
 
 const TEMPLATE = [
   'Feature: <name>',
@@ -33,7 +35,10 @@ export function register(on: On): void {
   })
 
   on('command.run', { command: 'spec' }, async ($, e) => {
-    const [subcommand = '', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = '', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
     if (subcommand === 'template') return { text: TEMPLATE }
     if (subcommand !== 'check' || rest.length === 0) {
       return { text: 'Usage: /spec check <path to the specification> | /spec template' }
@@ -43,12 +48,17 @@ export function register(on: On): void {
     await update($, gate, () => ({
       verdict: report.verdict,
       phase: 'specified',
-      reason: truncate(`${report.scenarios} scenario(s), ${report.issues.length} issue(s) in ${path}`, 200),
+      reason: truncate(
+        `${report.scenarios} scenario(s), ${report.issues.length} issue(s) in ${path}`,
+        200,
+      ),
     }))
     const lines = [
       `specification: ${report.verdict} (${report.scenarios} scenario(s))`,
-      ...report.issues.map(issue => `line ${issue.line}: ${issue.message}`),
-      ...(report.missingSections.length > 0 ? [`missing sections: ${report.missingSections.join(', ')}`] : []),
+      ...report.issues.map((issue) => `line ${issue.line}: ${issue.message}`),
+      ...(report.missingSections.length > 0
+        ? [`missing sections: ${report.missingSections.join(', ')}`]
+        : []),
     ]
     return { text: lines.join('\n') }
   })

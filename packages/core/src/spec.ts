@@ -15,7 +15,13 @@ export type SpecReport = {
   missingSections: string[]
 }
 
-export const REQUIRED_SECTIONS = ['performance', 'security', 'compatibility', 'observability', 'rollback'] as const
+export const REQUIRED_SECTIONS = [
+  'performance',
+  'security',
+  'compatibility',
+  'observability',
+  'rollback',
+] as const
 
 export function validateSpec(text: string): SpecReport {
   const issues: SpecIssue[] = []
@@ -52,7 +58,7 @@ export function validateSpec(text: string): SpecReport {
   if (scenarios === 0) issues.push({ line: 0, message: 'no Scenario found' })
 
   const lower = text.toLowerCase()
-  const missingSections = REQUIRED_SECTIONS.filter(section => !lower.includes(section))
+  const missingSections = REQUIRED_SECTIONS.filter((section) => !lower.includes(section))
   const verdict: SpecReport['verdict'] =
     issues.length > 0 ? 'FAIL' : missingSections.length > 0 ? 'UNKNOWN' : 'PASS'
   return { verdict, scenarios, issues, missingSections: [...missingSections] }

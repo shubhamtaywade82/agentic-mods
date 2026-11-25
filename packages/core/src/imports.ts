@@ -1,7 +1,8 @@
 /** Import extraction by language. Regular expressions over source text, not a full parser. */
 export type ImportLanguage = 'typescript' | 'java' | 'python' | 'go' | 'rust' | 'csharp'
 
-const TS_IMPORT = /(?:^|[\s;])(?:import|export)\s+(?:type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/g
+const TS_IMPORT =
+  /(?:^|[\s;])(?:import|export)\s+(?:type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/g
 const PY_FROM = /^\s*from\s+([.\w]+)\s+import\b/gm
 const PY_IMPORT = /^\s*import\s+([\w.]+(?:\s+as\s+\w+)?(?:\s*,\s*[\w.]+(?:\s+as\s+\w+)?)*)/gm
 const JAVA_IMPORT = /^\s*import\s+(?:static\s+)?([\w.]+?)(?:\.\*)?\s*;/gm
@@ -30,8 +31,8 @@ export function extractImports(language: ImportLanguage, source: string): string
     case 'python':
       found = [
         ...collect(PY_FROM, source),
-        ...collect(PY_IMPORT, source).flatMap(list =>
-          list.split(',').map(item => item.trim().replace(/\s+as\s+\w+$/, '')),
+        ...collect(PY_IMPORT, source).flatMap((list) =>
+          list.split(',').map((item) => item.trim().replace(/\s+as\s+\w+$/, '')),
         ),
       ]
       break

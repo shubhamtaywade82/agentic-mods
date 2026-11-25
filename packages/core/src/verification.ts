@@ -142,7 +142,12 @@ export const verifyEngine: VerifyEngine = {
         // Execution itself threw: treat as a transient failure so a retry on a
         // fallback route can recover; record the message as evidence.
         const failure: ClassifiedFailure = { category: 'transient', detail: messageOf(err) }
-        attempts.push({ attempt: attemptNo, route, verification: { passed: false, failures: [failure.detail], evidence: [] }, failure })
+        attempts.push({
+          attempt: attemptNo,
+          route,
+          verification: { passed: false, failures: [failure.detail], evidence: [] },
+          failure,
+        })
         const outcome = decideEscalation(failure, route, policy, attempts.length)
         if (outcome.kind === 'abort') return finalize('aborted', attempts)
         if (outcome.kind === 'exhausted') return finalize('exhausted', attempts)
@@ -212,6 +217,7 @@ export function defaultClassify(input: ClassifyInput): ClassifyResult {
 export function defaultClassifyFailure(f: VerificationResult): ClassifiedFailure {
   // If the verification produced no failures array (shouldn't happen, but be
   // defensive), treat it as deterministic so we don't loop forever.
-  if (f.failures.length === 0) return { category: 'deterministic', detail: 'verification failed without a reason' }
+  if (f.failures.length === 0)
+    return { category: 'deterministic', detail: 'verification failed without a reason' }
   return { category: 'route-mismatch', detail: f.failures[0] ?? 'unspecified' }
 }

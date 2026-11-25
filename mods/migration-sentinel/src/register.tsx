@@ -11,17 +11,23 @@ import {
 import type { MigrationStatus } from '../types'
 
 const IDLE: MigrationStatus = { verdict: 'UNKNOWN', findings: [] }
-const status = atom({ plugin: 'migration-sentinel', key: 'status' } as const, IDLE, { shape: 'status-1' })
+const status = atom({ plugin: 'migration-sentinel', key: 'status' } as const, IDLE, {
+  shape: 'status-1',
+})
 
 function verdictOf(findings: readonly MigrationFinding[]): MigrationStatus['verdict'] {
-  if (findings.some(item => item.severity === 'destructive')) return 'FAIL'
+  if (findings.some((item) => item.severity === 'destructive')) return 'FAIL'
   if (findings.length > 0) return 'UNKNOWN'
   return 'PASS'
 }
 
-async function publish($: EngineInterface, path: string, findings: readonly MigrationFinding[]): Promise<void> {
+async function publish(
+  $: EngineInterface,
+  path: string,
+  findings: readonly MigrationFinding[],
+): Promise<void> {
   const lines = findings.map(
-    item => `${path}:${item.line} ${item.severity} ${item.rule}: ${truncate(item.text, 160)}`,
+    (item) => `${path}:${item.line} ${item.severity} ${item.rule}: ${truncate(item.text, 160)}`,
   )
   await update($, status, () => ({ verdict: verdictOf(findings), findings: lines.slice(0, 50) }))
   for (const finding of findings) {
@@ -49,7 +55,9 @@ export function register(on: On): void {
     const findings = classifyMigrationSql(await $.fs.read(path))
     await publish($, path, findings)
     if (findings.length === 0) return { text: `${path}: no destructive or locking patterns found.` }
-    return { text: findings.map(item => `line ${item.line}: ${item.severity} ${item.rule}`).join('\n') }
+    return {
+      text: findings.map((item) => `line ${item.line}: ${item.severity} ${item.rule}`).join('\n'),
+    }
   })
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {

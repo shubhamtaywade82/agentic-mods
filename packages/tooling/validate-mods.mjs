@@ -15,24 +15,43 @@ import { dirname } from 'node:path'
 
 /** The native list in packages/core/src/native.ts must name exactly the mod folders. */
 function nativeNames() {
-  const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'core', 'src', 'native.ts'), 'utf8')
+  const source = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'core', 'src', 'native.ts'),
+    'utf8',
+  )
   const start = source.indexOf('NATIVE_MODS')
   const block = source.slice(start, source.indexOf('\n]', start))
-  return [...block.matchAll(/'([a-z0-9-]+)'/g)].map(match => match[1])
+  return [...block.matchAll(/'([a-z0-9-]+)'/g)].map((match) => match[1])
 }
 
 const claude = process.env.CLAUDE_BIN ?? 'claude'
 let allOk = true
 
-const vendoredSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'core', 'src', 'native.ts'), 'utf8')
+const vendoredSource = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '..', 'core', 'src', 'native.ts'),
+  'utf8',
+)
 const vendoredAfter = vendoredSource.slice(vendoredSource.indexOf('VENDORED_PLUGINS'))
-const vendoredListed = [...vendoredAfter.slice(vendoredAfter.indexOf('= ['), vendoredAfter.indexOf('\n]')).matchAll(/'([a-z0-9-]+)'/g)].map(match => match[1])
-allOk = run('vendored list matches lib/vendored.mjs', { ok: JSON.stringify(vendoredListed) === JSON.stringify(VENDORED) }) && allOk
-const folders = listMods().map(mod => mod.name)
+const vendoredListed = [
+  ...vendoredAfter
+    .slice(vendoredAfter.indexOf('= ['), vendoredAfter.indexOf('\n]'))
+    .matchAll(/'([a-z0-9-]+)'/g),
+].map((match) => match[1])
+allOk =
+  run('vendored list matches lib/vendored.mjs', {
+    ok: JSON.stringify(vendoredListed) === JSON.stringify(VENDORED),
+  }) && allOk
+const folders = listMods().map((mod) => mod.name)
 const listed = nativeNames()
-const missing = folders.filter(name => !listed.includes(name))
-const stale = listed.filter(name => !folders.includes(name))
-allOk = run('native list matches mods/', { ok: missing.length === 0 && stale.length === 0, note: [...missing.map(n => `add ${n}`), ...stale.map(n => `remove ${n}`)].join(', ') || undefined }) && allOk
+const missing = folders.filter((name) => !listed.includes(name))
+const stale = listed.filter((name) => !folders.includes(name))
+allOk =
+  run('native list matches mods/', {
+    ok: missing.length === 0 && stale.length === 0,
+    note:
+      [...missing.map((n) => `add ${n}`), ...stale.map((n) => `remove ${n}`)].join(', ') ||
+      undefined,
+  }) && allOk
 
 for (const mod of listMods()) {
   const hooks = join(mod.dir, 'hooks', 'register.js')
@@ -61,7 +80,11 @@ for (const name of VENDORED) {
     allOk = run(`validate plugins/${name} (missing)`, { ok: false }) && allOk
     continue
   }
-  const result = spawnSync(claude, ['plugin', 'validate', dir], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 })
+  const result = spawnSync(claude, ['plugin', 'validate', dir], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 120_000,
+  })
   const ok = result.status === 0
   if (!ok) process.stdout.write(`${result.stdout}${result.stderr}`)
   allOk = run(`validate plugins/${name} (vendored)`, { ok }) && allOk

@@ -1,12 +1,6 @@
 import type { EngineInterface, On } from 'claude-code'
 import { checkCommand, denyMessage } from './lib/blast'
-import {
-  denyReason,
-  hasHighSignal,
-  redact,
-  scan,
-  summarize,
-} from './lib/secrets'
+import { denyReason, hasHighSignal, redact, scan, summarize } from './lib/secrets'
 import {
   DEFAULT_DIFF_LIMIT,
   decideNoninteractive,
@@ -60,7 +54,9 @@ async function gateHistoryCommand(
     diffText = res.stdout ?? ''
   } catch {
     stats.commandsBlocked += 1
-    return { deny: 'guardian: could not inspect the staged diff for secrets; refusing this commit/push. Stage the diff and retry.' }
+    return {
+      deny: 'guardian: could not inspect the staged diff for secrets; refusing this commit/push. Stage the diff and retry.',
+    }
   }
 
   if (diffText.length > DEFAULT_DIFF_LIMIT) {

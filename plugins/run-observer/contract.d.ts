@@ -21,7 +21,7 @@ declare module 'claude-code' {
     'run-observer': {
       // The live TraceStore, exposed each turn so kit runs can read it.
       // Shape per plugins/run-observer/policies/trace-store.
-      store: unknown;
-    };
+      store: unknown
+    }
   }
 }

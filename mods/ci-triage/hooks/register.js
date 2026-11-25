@@ -100,7 +100,12 @@ function triageLog(text) {
   for (const rule of RULES) {
     const match = rule.pattern.exec(text);
     if (match !== null) {
-      return { category: rule.category, evidence: match[0].slice(0, 120), action: rule.action, stopLoop: rule.stopLoop };
+      return {
+        category: rule.category,
+        evidence: match[0].slice(0, 120),
+        action: rule.action,
+        stopLoop: rule.stopLoop
+      };
     }
   }
   return {
@@ -123,7 +128,9 @@ function register(on) {
   on("command.run", { command: "ci" }, async ($, e) => {
     const [subcommand = "", ...rest] = e.args.trim().split(/\s+/);
     if (subcommand !== "triage" || rest.length === 0) {
-      return { text: "Usage: /ci triage <path to the log file>. Download the failed job log first." };
+      return {
+        text: "Usage: /ci triage <path to the log file>. Download the failed job log first."
+      };
     }
     const path = normalizePath(rest.join(" "));
     const log = await $.fs.read(path);

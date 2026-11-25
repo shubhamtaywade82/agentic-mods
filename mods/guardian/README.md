@@ -6,7 +6,7 @@ A tool governance mod for Claude Code. It inspects `Bash`, `Write`, `Edit` and t
 2. **Command-line secret redaction** — scans Bash command lines for credential shapes (AWS keys, GitHub PATs, Slack tokens, Google API keys, private key headers, JWT-style bearer tokens, `PASSWORD=`/`TOKEN=` assignments). High-confidence secrets block the call; lower-confidence matches are redacted in place.
 3. **Git diff gate** — `git commit`/`push`/`tag` whose staged diff contains a secret are held or blocked before the secret enters history. Oversized diffs (above 256 KiB) are refused because they could not be scanned.
 4. **Write/Edit secret protection** — file writes embedding a high-signal secret are denied; maybe-findings are redacted.
-5. **Tool-result redaction** — secrets the tool *returned* are scrubbed before the model sees them, so a leaked value in stdout/output never enters the conversation.
+5. **Tool-result redaction** — secrets the tool _returned_ are scrubbed before the model sees them, so a leaked value in stdout/output never enters the conversation.
 
 A `/guardian-report` command summarizes what was blocked, held, approved and redacted in the session.
 
@@ -14,7 +14,7 @@ A `/guardian-report` command summarizes what was blocked, held, approved and red
 
 ## Scope and honesty
 
-This is a pattern tripwire, not a shell parser, a sandbox, or a complete DLP product. It can miss secrets in unusual encodings and cannot reason about what a command *might* do. Use it as one layer; keep your real controls (permissions, sandboxing, secret scanning in CI) in place.
+This is a pattern tripwire, not a shell parser, a sandbox, or a complete DLP product. It can miss secrets in unusual encodings and cannot reason about what a command _might_ do. Use it as one layer; keep your real controls (permissions, sandboxing, secret scanning in CI) in place.
 
 ## Architecture
 

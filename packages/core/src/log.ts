@@ -33,7 +33,7 @@ export function truncate(text: string, max: number): string {
  * `cap` lines. The caller reads the file, passes its text here, and writes the result back.
  */
 export function appendJsonLine(existing: string, line: string, cap: number): string {
-  const lines = existing.split('\n').filter(item => item.length > 0)
+  const lines = existing.split('\n').filter((item) => item.length > 0)
   lines.push(line)
   const kept = lines.length > cap ? lines.slice(lines.length - cap) : lines
   return `${kept.join('\n')}\n`

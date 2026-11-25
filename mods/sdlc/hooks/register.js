@@ -1,16 +1,25 @@
 // mods/sdlc/src/lib/commands.ts
 var COMMANDS = [
-  { name: "sdlc-init", description: "Bootstrap SDLC scaffolding in this repo (AGENTS.md, docs/, plan template)" },
+  {
+    name: "sdlc-init",
+    description: "Bootstrap SDLC scaffolding in this repo (AGENTS.md, docs/, plan template)"
+  },
   { name: "sdlc-feature", description: "Full feature workflow from idea to PR (all gates)" },
   { name: "sdlc-prd", description: "Stage 01: clarify an idea and write docs/prd/<slug>.md" },
-  { name: "sdlc-spec", description: "Stage 02: turn the PRD into docs/specs/<slug>.md (+ ADR if needed)" },
+  {
+    name: "sdlc-spec",
+    description: "Stage 02: turn the PRD into docs/specs/<slug>.md (+ ADR if needed)"
+  },
   { name: "sdlc-plan", description: "Stage 03: break the spec into docs/plans/<slug>.md" },
   { name: "sdlc-tdd", description: "Stage 04: implement the next planned task with strict TDD" },
   { name: "sdlc-review", description: "Stage 05: review the branch diff against the checklists" },
   { name: "sdlc-debug", description: "Stage 06: root-cause a bug with a hypothesis-driven method" },
   { name: "sdlc-refactor", description: "Stage 07: refactor safely behind green tests" },
   { name: "sdlc-ship", description: "Stage 08: verify, draft the PR body and changelog entry" },
-  { name: "sdlc-audit", description: "Security audit of a feature or area against the OWASP checklist" }
+  {
+    name: "sdlc-audit",
+    description: "Security audit of a feature or area against the OWASP checklist"
+  }
 ];
 function slugify(input) {
   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60).replace(/-+$/g, "");

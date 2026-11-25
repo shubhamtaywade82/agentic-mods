@@ -22,7 +22,9 @@ test('a destructive Bash command is denied and never runs', async ($, on) => {
   const res = (await $.tool
     .call({ tool: 'Bash', command: 'rm -rf /tmp/whatever' })
     .catch((r: unknown) => r)) as { deny?: string }
-  expect(typeof res?.deny === 'string' && res.deny.includes('guardian blocked this command')).toBe(true)
+  expect(typeof res?.deny === 'string' && res.deny.includes('guardian blocked this command')).toBe(
+    true,
+  )
   expect(ran).toBe(false)
 })
 
@@ -47,7 +49,8 @@ test('a Bash command carrying a real secret is denied', async ($, on) => {
   const res = (await $.tool
     .call({
       tool: 'Bash',
-      command: 'curl -H "Authorization: Bearer ghp_16C7e42F292c6912E7710c838347Ae178B4a" https://api.example.com',
+      command:
+        'curl -H "Authorization: Bearer ghp_16C7e42F292c6912E7710c838347Ae178B4a" https://api.example.com',
     })
     .catch((r: unknown) => r)) as { deny?: string }
   expect(typeof res?.deny === 'string' && res.deny.includes('github-pat')).toBe(true)
@@ -62,7 +65,11 @@ test('a Write embedding a private key is denied', async ($, on) => {
   })
 
   const res = (await $.tool
-    .call({ tool: 'Write', file_path: 'key.txt', content: '-----BEGIN RSA PRIVATE KEY-----\nabc\n' })
+    .call({
+      tool: 'Write',
+      file_path: 'key.txt',
+      content: '-----BEGIN RSA PRIVATE KEY-----\nabc\n',
+    })
     .catch((r: unknown) => r)) as { deny?: string }
   expect(typeof res?.deny === 'string' && res.deny.includes('private-key')).toBe(true)
   expect(ran).toBe(false)
@@ -71,9 +78,10 @@ test('a Write embedding a private key is denied', async ($, on) => {
 test('/guardian-report reflects what happened this session', async ($, on) => {
   on('tool.call', () => ({ result: 'ok' }))
 
-  await $.tool.call({ tool: 'Bash', command: 'git push --force origin main' }).catch(() => undefined)
+  await $.tool
+    .call({ tool: 'Bash', command: 'git push --force origin main' })
+    .catch(() => undefined)
   const answer = await $.command.run(reportInput)
   expect(answer.text).toContain('guardian session report')
   expect(answer.text).toContain('blocked')
 })
-

@@ -15,7 +15,7 @@ export function register(on: On): void {
       if (state.lastWriteAt === null) return
       const now = await $.clock.now()
       const remaining = cacheState(state.lastWriteAt, state.ttlMs, now).remainingMs
-      await update($, clock, current => ({ ...current, remainingMs: remaining }))
+      await update($, clock, (current) => ({ ...current, remainingMs: remaining }))
     })
     return next(e)
   })
@@ -23,7 +23,7 @@ export function register(on: On): void {
   on('turn.complete', async ($, e, next) => {
     const last = e.usage
     if (last !== undefined) {
-      const configured = (await loadConfig(path => $.fs.read(path))).value.cache.ttlSeconds
+      const configured = (await loadConfig((path) => $.fs.read(path))).value.cache.ttlSeconds
       const ttlMs = cacheTtlMs(last, configured)
       const now = await $.clock.now()
       await update($, clock, () => ({ lastWriteAt: now, ttlMs, remainingMs: ttlMs }))

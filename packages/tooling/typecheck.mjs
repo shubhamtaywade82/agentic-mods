@@ -15,7 +15,10 @@ if (!existsSync(ENGINE_TYPES_FILE)) {
 const tsc = join(ROOT, 'node_modules', '.bin', 'tsc')
 const projects = [
   { label: 'packages/core', project: join(CORE_DIR, 'tsconfig.json') },
-  ...listMods().map(mod => ({ label: `mods/${mod.name}`, project: join(mod.dir, 'tsconfig.json') })),
+  ...listMods().map((mod) => ({
+    label: `mods/${mod.name}`,
+    project: join(mod.dir, 'tsconfig.json'),
+  })),
 ]
 
 let allOk = true

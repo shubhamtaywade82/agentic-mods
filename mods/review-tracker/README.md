@@ -4,9 +4,9 @@ Turns review findings into tracked records with a lifecycle and a required reaso
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/finding` | Track review findings: /finding add|set|list |
+| Command    | What it does                        |
+| ---------- | ----------------------------------- |
+| `/finding` | Track review findings: /finding add | set | list |
 
 ## Hooks
 

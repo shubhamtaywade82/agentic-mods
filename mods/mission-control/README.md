@@ -4,8 +4,8 @@ Shows subagents as a tree: what each is doing, which files it touched, its tool 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command      | What it does                                  |
+| ------------ | --------------------------------------------- |
 | `/subagents` | Show subagent activity in a pane (/subagents) |
 
 ## Hooks

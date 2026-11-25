@@ -35,7 +35,10 @@ export class PathGuardError extends Error {
 
 /** POSIX separators, no leading `./`, no duplicate slashes. */
 export function normalizePath(input: string): string {
-  let path = input.trim().replace(/\\/g, '/').replace(/\/{2,}/g, '/')
+  let path = input
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/\/{2,}/g, '/')
   while (path.startsWith('./')) path = path.slice(2)
   return path
 }
@@ -97,7 +100,7 @@ export function globToRegExp(glob: string): RegExp {
 
 export function matchesAnyGlob(path: string, globs: readonly string[]): boolean {
   const normalized = normalizePath(path)
-  return globs.some(glob => globToRegExp(glob).test(normalized))
+  return globs.some((glob) => globToRegExp(glob).test(normalized))
 }
 
 export function isProtectedPath(

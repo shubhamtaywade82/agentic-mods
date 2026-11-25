@@ -57,8 +57,17 @@ for (const raw of RAW_WORKFLOWS) {
 const GATES_RESULT = parseGates(gatesCatalogue)
 const GATES: Readonly<Record<string, GateDefinition>> = GATES_RESULT.ok ? GATES_RESULT.value : {}
 
-const IDLE: ConductorState = { active: false, workflow: '', task: '', stage: '', status: 'none', blockers: [] }
-const conductor = atom({ plugin: 'workflow-conductor', key: 'conductor' } as const, IDLE, { shape: 'conductor-1' })
+const IDLE: ConductorState = {
+  active: false,
+  workflow: '',
+  task: '',
+  stage: '',
+  status: 'none',
+  blockers: [],
+}
+const conductor = atom({ plugin: 'workflow-conductor', key: 'conductor' } as const, IDLE, {
+  shape: 'conductor-1',
+})
 
 const EVIDENCE_IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
 const CONTRACT_IDLE: ContractStatus = { active: false, objective: '', violations: 0, mode: 'warn' }
@@ -68,25 +77,63 @@ const MIGRATION_IDLE: MigrationStatus = { verdict: 'UNKNOWN', findings: [] }
 const RADAR_IDLE: RadarStatus = { verdict: 'UNKNOWN', changes: [], scan: 'none' }
 const BUDGET_IDLE: BudgetStatus = { verdict: 'UNKNOWN', rows: [] }
 
-const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, { shape: 'status-1' })
-const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, { shape: 'status-1' })
-const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, { shape: 'gate-1' })
-const architecture = atom({ plugin: 'architecture-guard', key: 'status' } as const, ARCH_IDLE, { shape: 'status-1' })
-const migration = atom({ plugin: 'migration-sentinel', key: 'status' } as const, MIGRATION_IDLE, { shape: 'status-1' })
-const dependencies = atom({ plugin: 'dependency-radar', key: 'status' } as const, RADAR_IDLE, { shape: 'status-1' })
-const performance = atom({ plugin: 'performance-budget', key: 'status' } as const, BUDGET_IDLE, { shape: 'status-1' })
+const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, {
+  shape: 'status-1',
+})
+const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, {
+  shape: 'status-1',
+})
+const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, {
+  shape: 'gate-1',
+})
+const architecture = atom({ plugin: 'architecture-guard', key: 'status' } as const, ARCH_IDLE, {
+  shape: 'status-1',
+})
+const migration = atom({ plugin: 'migration-sentinel', key: 'status' } as const, MIGRATION_IDLE, {
+  shape: 'status-1',
+})
+const dependencies = atom({ plugin: 'dependency-radar', key: 'status' } as const, RADAR_IDLE, {
+  shape: 'status-1',
+})
+const performance = atom({ plugin: 'performance-budget', key: 'status' } as const, BUDGET_IDLE, {
+  shape: 'status-1',
+})
 
 // Gate-publishing mods share one shape: { verdict, phase, reason }.
 const SPEC_IDLE = { verdict: 'UNKNOWN' as const, phase: 'none', reason: 'not run' }
-const specification = atom({ plugin: 'specification-guard', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const plan = atom({ plugin: 'change-planner', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const regressionGate = atom({ plugin: 'regression-orchestrator', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const tddGate = atom({ plugin: 'tdd-conductor', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const defectGate = atom({ plugin: 'defect-protocol', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const behaviorGate = atom({ plugin: 'behavior-lock', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const compatGate = atom({ plugin: 'contract-compatibility-guard', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const observabilityGate = atom({ plugin: 'observability-verifier', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
-const releaseGate = atom({ plugin: 'release-conductor', key: 'gate' } as const, SPEC_IDLE, { shape: 'gate-1' })
+const specification = atom({ plugin: 'specification-guard', key: 'gate' } as const, SPEC_IDLE, {
+  shape: 'gate-1',
+})
+const plan = atom({ plugin: 'change-planner', key: 'gate' } as const, SPEC_IDLE, {
+  shape: 'gate-1',
+})
+const regressionGate = atom(
+  { plugin: 'regression-orchestrator', key: 'gate' } as const,
+  SPEC_IDLE,
+  { shape: 'gate-1' },
+)
+const tddGate = atom({ plugin: 'tdd-conductor', key: 'gate' } as const, SPEC_IDLE, {
+  shape: 'gate-1',
+})
+const defectGate = atom({ plugin: 'defect-protocol', key: 'gate' } as const, SPEC_IDLE, {
+  shape: 'gate-1',
+})
+const behaviorGate = atom({ plugin: 'behavior-lock', key: 'gate' } as const, SPEC_IDLE, {
+  shape: 'gate-1',
+})
+const compatGate = atom(
+  { plugin: 'contract-compatibility-guard', key: 'gate' } as const,
+  SPEC_IDLE,
+  { shape: 'gate-1' },
+)
+const observabilityGate = atom(
+  { plugin: 'observability-verifier', key: 'gate' } as const,
+  SPEC_IDLE,
+  { shape: 'gate-1' },
+)
+const releaseGate = atom({ plugin: 'release-conductor', key: 'gate' } as const, SPEC_IDLE, {
+  shape: 'gate-1',
+})
 
 type Gate = { verdict: string; phase: string; reason: string }
 
@@ -110,10 +157,14 @@ async function factsOf($: EngineInterface): Promise<Record<string, FactValue>> {
     read($, observabilityGate),
     read($, releaseGate),
   ])
-  const pass = (value: string | undefined): FactValue => (value === 'PASS' ? 'PASS' : value === 'FAIL' ? 'FAIL' : 'UNKNOWN')
-  const phased = (gate: Gate, phase: string): FactValue => (gate.phase === phase && gate.verdict === 'PASS' ? 'PASS' : 'UNKNOWN')
+  const pass = (value: string | undefined): FactValue =>
+    value === 'PASS' ? 'PASS' : value === 'FAIL' ? 'FAIL' : 'UNKNOWN'
+  const phased = (gate: Gate, phase: string): FactValue =>
+    gate.phase === phase && gate.verdict === 'PASS' ? 'PASS' : 'UNKNOWN'
   const behaviorBaseline: FactValue =
-    (bh.phase === 'baseline' || bh.phase === 'compared') && bh.verdict === 'PASS' ? 'PASS' : 'UNKNOWN'
+    (bh.phase === 'baseline' || bh.phase === 'compared') && bh.verdict === 'PASS'
+      ? 'PASS'
+      : 'UNKNOWN'
   return {
     evidence: pass(ev.overall),
     contract: !ct.active ? 'UNKNOWN' : ct.violations === 0 ? 'PASS' : 'FAIL',
@@ -194,10 +245,15 @@ async function blockersOf(
   if (gate === undefined) return []
   const facts = withDeferrals(await factsOf($), run.exceptions)
   const evaluation = evaluateGate(gate, facts, run.exceptions)
-  return [...evaluation.missing, ...evaluation.failing].map(fact => `${stage.gate}: ${fact}`)
+  return [...evaluation.missing, ...evaluation.failing].map((fact) => `${stage.gate}: ${fact}`)
 }
 
-async function ensureArtifact($: EngineInterface, task: string, file: string, title: string): Promise<void> {
+async function ensureArtifact(
+  $: EngineInterface,
+  task: string,
+  file: string,
+  title: string,
+): Promise<void> {
   const path = stateRelativePath(`tasks/${task}/${file}`)
   try {
     await $.fs.read(path)
@@ -206,7 +262,12 @@ async function ensureArtifact($: EngineInterface, task: string, file: string, ti
   }
 }
 
-async function appendArtifact($: EngineInterface, task: string, file: string, text: string): Promise<void> {
+async function appendArtifact(
+  $: EngineInterface,
+  task: string,
+  file: string,
+  text: string,
+): Promise<void> {
   const path = stateRelativePath(`tasks/${task}/${file}`)
   let existing: string
   try {
@@ -217,16 +278,31 @@ async function appendArtifact($: EngineInterface, task: string, file: string, te
   await $.fs.write(path, `${existing}\n${text}\n`)
 }
 
-function statusText(definition: WorkflowDefinition, run: RunState, blockers: readonly string[]): string {
+function statusText(
+  definition: WorkflowDefinition,
+  run: RunState,
+  blockers: readonly string[],
+): string {
   const lines = [`${definition.id} · task ${run.taskId} · ${run.status}`]
   for (const stage of definition.stages) {
-    const marker = stage.id === run.currentStage ? '>' : run.history.some(item => item.stage === stage.id) ? 'x' : ' '
+    const marker =
+      stage.id === run.currentStage
+        ? '>'
+        : run.history.some((item) => item.stage === stage.id)
+          ? 'x'
+          : ' '
     const gate = stage.gate === null ? '' : ` [gate ${stage.gate}]`
     lines.push(`${marker} ${stage.name}${gate}`)
   }
-  if (blockers.length > 0) lines.push('', 'Blocked:', ...blockers.map(item => `  ${item}`))
+  if (blockers.length > 0) lines.push('', 'Blocked:', ...blockers.map((item) => `  ${item}`))
   if (run.exceptions.length > 0) {
-    lines.push('', 'Approved deferrals:', ...run.exceptions.map(item => `  ${item.gate}: ${item.reason} (approved by ${item.approvedBy})`))
+    lines.push(
+      '',
+      'Approved deferrals:',
+      ...run.exceptions.map(
+        (item) => `  ${item.gate}: ${item.reason} (approved by ${item.approvedBy})`,
+      ),
+    )
   }
   return lines.join('\n')
 }
@@ -237,18 +313,30 @@ export function register(on: On): void {
       name: 'workflow',
       description: 'Delivery workflow: /workflow start|status|advance|defer|cancel',
     })
-    await $.command.register({ name: 'record', description: 'Append to a task artifact: /record <file.md> <text>' })
-    await $.command.register({ name: 'decision', description: 'Record a decision: /decision <title> | <decision> | <consequences>' })
+    await $.command.register({
+      name: 'record',
+      description: 'Append to a task artifact: /record <file.md> <text>',
+    })
+    await $.command.register({
+      name: 'decision',
+      description: 'Record a decision: /decision <title> | <decision> | <consequences>',
+    })
     return next(e)
   })
 
   on('command.run', { command: 'workflow' }, async ($, e) => {
-    const [subcommand = 'status', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = 'status', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
     const run = await loadRun($)
 
     if (subcommand === 'start') {
       const [workflowId = '', ...taskParts] = rest
-      const task = taskParts.join('-').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 60)
+      const task = taskParts
+        .join('-')
+        .replace(/[^A-Za-z0-9_-]/g, '')
+        .slice(0, 60)
       const definition = WORKFLOWS.get(workflowId)
       if (definition === undefined) {
         return { text: `Unknown workflow. Available: ${[...WORKFLOWS.keys()].join(', ')}` }
@@ -265,7 +353,8 @@ export function register(on: On): void {
       return { text: statusText(definition, started, await blockersOf($, started, definition)) }
     }
 
-    if (run === null) return { text: 'No workflow is running. Use /workflow start <workflow> <task-id>.' }
+    if (run === null)
+      return { text: 'No workflow is running. Use /workflow start <workflow> <task-id>.' }
     const definition = definitionOf(run)
     if (definition === undefined) return { text: `Workflow ${run.workflowId} is not available.` }
 
@@ -276,15 +365,19 @@ export function register(on: On): void {
 
     if (subcommand === 'advance') {
       const current = stageOf(definition, run.currentStage)
-      const target = rest[0] ?? (current !== undefined && current.next.length === 1 ? current.next[0] : undefined)
-      if (target === undefined) return { text: `Name the next stage: one of ${current?.next.join(', ') ?? 'none'}` }
+      const target =
+        rest[0] ??
+        (current !== undefined && current.next.length === 1 ? current.next[0] : undefined)
+      if (target === undefined)
+        return { text: `Name the next stage: one of ${current?.next.join(', ') ?? 'none'}` }
       const facts = withDeferrals(await factsOf($), run.exceptions)
       const result = advanceRun(definition, GATES, run, target, facts, await $.clock.now())
       if (!result.ok) {
         const evaluation = result.evaluation
         const lines = [result.reason]
         if (evaluation !== null) {
-          if (evaluation.missing.length > 0) lines.push(`missing evidence: ${evaluation.missing.join(', ')}`)
+          if (evaluation.missing.length > 0)
+            lines.push(`missing evidence: ${evaluation.missing.join(', ')}`)
           if (evaluation.failing.length > 0) lines.push(`failing: ${evaluation.failing.join(', ')}`)
         }
         return { text: lines.join('\n') }
@@ -292,21 +385,37 @@ export function register(on: On): void {
       const stage = stageOf(definition, target)
       if (stage?.artifact) await ensureArtifact($, run.taskId, stage.artifact, stage.name)
       await saveRun($, result.run)
-      return { text: statusText(definition, result.run, await blockersOf($, result.run, definition)) }
+      return {
+        text: statusText(definition, result.run, await blockersOf($, result.run, definition)),
+      }
     }
 
     if (subcommand === 'defer') {
       const [gateId = '', ...reasonWords] = rest
       const reason = truncate(reasonWords.join(' ').trim(), 300)
       if (GATES[gateId] === undefined || reason === '') {
-        return { text: 'Usage: /workflow defer <gate-id> <reason>. The reason is recorded with its approver.' }
+        return {
+          text: 'Usage: /workflow defer <gate-id> <reason>. The reason is recorded with its approver.',
+        }
       }
-      const approver = (await $.ui.ask(`Who approves deferring ${gateId}? Enter a name or role.`)).trim()
+      const approver = (
+        await $.ui.ask(`Who approves deferring ${gateId}? Enter a name or role.`)
+      ).trim()
       if (approver === '') return { text: 'No approver given; nothing was deferred.' }
-      const exception: Exception = { gate: gateId, reason, approvedBy: truncate(approver, 120), at: await $.clock.now() }
+      const exception: Exception = {
+        gate: gateId,
+        reason,
+        approvedBy: truncate(approver, 120),
+        at: await $.clock.now(),
+      }
       const updated: RunState = { ...run, exceptions: [...run.exceptions, exception] }
       await saveRun($, updated)
-      await appendArtifact($, run.taskId, 'decision-log.md', `## Deferred ${gateId}\n\n${reason}\n\nApproved by: ${exception.approvedBy}`)
+      await appendArtifact(
+        $,
+        run.taskId,
+        'decision-log.md',
+        `## Deferred ${gateId}\n\n${reason}\n\nApproved by: ${exception.approvedBy}`,
+      )
       return { text: `${gateId} deferred with approval. Missing evidence stays visible in status.` }
     }
 
@@ -323,7 +432,8 @@ export function register(on: On): void {
     const [file = '', ...rest] = e.args.trim().split(/\s+/)
     const text = rest.join(' ').trim()
     if (run === null) return { text: 'No task is running.' }
-    if (!/^[a-z0-9-]+\.md$/.test(file) || text === '') return { text: 'Usage: /record <name.md> <text>' }
+    if (!/^[a-z0-9-]+\.md$/.test(file) || text === '')
+      return { text: 'Usage: /record <name.md> <text>' }
     await appendArtifact($, run.taskId, file, truncate(text, 4000))
     return { text: `Recorded in ${file}.` }
   })
@@ -331,8 +441,11 @@ export function register(on: On): void {
   on('command.run', { command: 'decision' }, async ($, e) => {
     const run = await loadRun($)
     if (run === null) return { text: 'No task is running.' }
-    const [title = '', decision = '', consequences = ''] = e.args.split('|').map(part => part.trim())
-    if (title === '' || decision === '') return { text: 'Usage: /decision <title> | <decision> | <consequences>' }
+    const [title = '', decision = '', consequences = ''] = e.args
+      .split('|')
+      .map((part) => part.trim())
+    if (title === '' || decision === '')
+      return { text: 'Usage: /decision <title> | <decision> | <consequences>' }
     const at = new Date(await $.clock.now()).toISOString()
     await appendArtifact(
       $,
@@ -347,7 +460,8 @@ export function register(on: On): void {
     const current = await read($, conductor)
     if (!current.active) return next(e)
     const { Box, Text } = $.ui.resolve(e)
-    const blocked = current.blockers.length > 0 ? ` · blocked: ${current.blockers[0]}` : ' · ready to advance'
+    const blocked =
+      current.blockers.length > 0 ? ` · blocked: ${current.blockers[0]}` : ' · ready to advance'
     return (
       <Box>
         <Text>
@@ -364,13 +478,13 @@ export function register(on: On): void {
     return (
       <Box flexDirection="column">
         <Text>
-          {current.workflow || 'no workflow'} · {current.task || '-'} · stage {current.stage || '-'} · {current.status}
+          {current.workflow || 'no workflow'} · {current.task || '-'} · stage {current.stage || '-'}{' '}
+          · {current.status}
         </Text>
-        {current.blockers.map(item => (
+        {current.blockers.map((item) => (
           <Text key={item}>blocked: {item}</Text>
         ))}
       </Box>
     )
   })
-
 }

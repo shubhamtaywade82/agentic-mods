@@ -3,10 +3,28 @@
   "description": "Capture a behavioral baseline, refactor in increments, compare, verify.",
   "start": "baseline",
   "stages": [
-    { "id": "baseline", "name": "Baseline", "gate": "behavior-capture-gate", "artifact": null, "next": ["refactor"] },
+    {
+      "id": "baseline",
+      "name": "Baseline",
+      "gate": "behavior-capture-gate",
+      "artifact": null,
+      "next": ["refactor"]
+    },
     { "id": "refactor", "name": "Refactor", "gate": null, "artifact": null, "next": ["compare"] },
-    { "id": "compare", "name": "Compare", "gate": "behavior-lock-gate", "artifact": null, "next": ["verify"] },
-    { "id": "verify", "name": "Verify", "gate": "verification-gate", "artifact": null, "next": ["complete"] },
+    {
+      "id": "compare",
+      "name": "Compare",
+      "gate": "behavior-lock-gate",
+      "artifact": null,
+      "next": ["verify"]
+    },
+    {
+      "id": "verify",
+      "name": "Verify",
+      "gate": "verification-gate",
+      "artifact": null,
+      "next": ["complete"]
+    },
     { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
   ]
 }

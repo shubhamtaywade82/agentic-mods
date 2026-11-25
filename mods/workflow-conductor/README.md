@@ -4,11 +4,11 @@ Runs a delivery workflow (feature, TDD, bug fix, regression, refactoring, pull r
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/decision` | Record a decision: /decision <title> | <decision> | <consequences> |
-| `/record` | Append to a task artifact: /record <file.md> <text> |
-| `/workflow` | Delivery workflow: /workflow start|status|advance|defer|cancel |
+| Command     | What it does                                        |
+| ----------- | --------------------------------------------------- |
+| `/decision` | Record a decision: /decision <title>                | <decision> | <consequences> |
+| `/record`   | Append to a task artifact: /record <file.md> <text> |
+| `/workflow` | Delivery workflow: /workflow start                  | status     | advance        | defer | cancel |
 
 ## Hooks
 

@@ -4,8 +4,8 @@ Maps changed JavaScript and TypeScript files to the tests that import them, flag
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command   | What it does                                    |
+| --------- | ----------------------------------------------- |
 | `/impact` | Select the tests that the current changes reach |
 
 ## Hooks

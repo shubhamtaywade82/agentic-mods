@@ -11,10 +11,12 @@ import {
 import type { GateState } from '../types'
 
 const IDLE: GateState = { verdict: 'UNKNOWN', phase: 'none', reason: 'no regression scope run' }
-const gate = atom({ plugin: 'regression-orchestrator', key: 'gate' } as const, IDLE, { shape: 'gate-1' })
+const gate = atom({ plugin: 'regression-orchestrator', key: 'gate' } as const, IDLE, {
+  shape: 'gate-1',
+})
 
 function runnerOf($: EngineInterface): GitRunner {
-  return async argv => {
+  return async (argv) => {
     const result = await $.process.run(argv)
     return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }
   }
@@ -22,12 +24,18 @@ function runnerOf($: EngineInterface): GitRunner {
 
 async function commandsOf($: EngineInterface): Promise<Record<string, string[]>> {
   try {
-    const parsed = JSON.parse(await $.fs.read(stateRelativePath('regression.json'))) as { commands?: unknown }
+    const parsed = JSON.parse(await $.fs.read(stateRelativePath('regression.json'))) as {
+      commands?: unknown
+    }
     const commands = parsed.commands
     if (typeof commands !== 'object' || commands === null) return {}
     const out: Record<string, string[]> = {}
     for (const [name, argv] of Object.entries(commands)) {
-      if (Array.isArray(argv) && argv.length > 0 && argv.every(item => typeof item === 'string')) {
+      if (
+        Array.isArray(argv) &&
+        argv.length > 0 &&
+        argv.every((item) => typeof item === 'string')
+      ) {
         out[name] = [...(argv as string[])]
       }
     }
@@ -40,7 +48,7 @@ async function commandsOf($: EngineInterface): Promise<Record<string, string[]>>
 async function assess($: EngineInterface): Promise<RiskResult | null> {
   const changes = await workingTreeChanges(runnerOf($))
   if (changes === null) return null
-  return assessRegression(changes.map(change => change.path))
+  return assessRegression(changes.map((change) => change.path))
 }
 
 export function register(on: On): void {
@@ -77,14 +85,18 @@ export function register(on: On): void {
         }
         const result = await $.process.run(argv, { timeoutMs: 600_000 })
         if (result.exitCode !== 0) verdict = 'FAIL'
-        results.push(`${name}: ${result.exitCode === 0 ? 'passed' : `failed (exit ${result.exitCode})`}`)
+        results.push(
+          `${name}: ${result.exitCode === 0 ? 'passed' : `failed (exit ${result.exitCode})`}`,
+        )
       }
       await update($, gate, () => ({
         verdict,
         phase: 'ran',
         reason: `${risk.level} scope: ${risk.requires.length} check(s)`,
       }))
-      return { text: [`regression ${risk.level} (score ${risk.score}): ${verdict}`, ...results].join('\n') }
+      return {
+        text: [`regression ${risk.level} (score ${risk.score}): ${verdict}`, ...results].join('\n'),
+      }
     }
 
     return { text: 'Usage: /regression assess | /regression run' }

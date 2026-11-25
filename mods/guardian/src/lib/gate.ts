@@ -11,10 +11,7 @@
 
 /** Why an operation is being held for approval. */
 export type GateReason =
-  | 'destructive-command'
-  | 'diff-contains-secret'
-  | 'diff-oversized'
-  | 'noninteractive-block'
+  'destructive-command' | 'diff-contains-secret' | 'diff-oversized' | 'noninteractive-block'
 
 /** A held operation awaiting a decision. */
 export interface HeldOp {
@@ -40,10 +37,7 @@ export interface GateMatcher {
  * preview explains the impact without echoing the command verbatim (the
  * caller already shows the command; we describe what it WOULD do).
  */
-export function holdForBlast(
-  command: string,
-  match: { kind: string; why: string },
-): HeldOp {
+export function holdForBlast(command: string, match: { kind: string; why: string }): HeldOp {
   return {
     command,
     reason: 'destructive-command',

@@ -2,7 +2,7 @@
 
 An execution observability mod for Claude Code. It listens to the session lifecycle (`session.start`, `turn.start`, `agent.spawn`, `tool.call`, `tool.result`, `turn.complete`) and builds a **bounded hierarchical runtime tree**: main agent → subagents → tool calls, with parent/child links, per-node status (running/completed/failed/cancelled), duration, and the files each node touched.
 
-This is the architectural piece `pulse` was too flat to provide — `pulse` counts attempts, `trace` records the *shape* of the run, so you can answer "which subagent did what, and where did it fail?".
+This is the architectural piece `pulse` was too flat to provide — `pulse` counts attempts, `trace` records the _shape_ of the run, so you can answer "which subagent did what, and where did it fail?".
 
 ## Commands
 
@@ -20,7 +20,7 @@ The store is pure TypeScript with no `claude-code` import, so the same contract 
 
 ## Bound memory
 
-The store caps tracked nodes (default 500). When full, the oldest *leaf* node is evicted first — never the main agent — so the tree structure stays intact while bounded.
+The store caps tracked nodes (default 500). When full, the oldest _leaf_ node is evicted first — never the main agent — so the tree structure stays intact while bounded.
 
 ## Develop
 

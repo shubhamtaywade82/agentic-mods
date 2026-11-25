@@ -1,6 +1,6 @@
 # verify
 
-A verification-driven escalation engine mod for Claude Code. This is the architectural piece the reference repository (`claude-code-mods`) was **missing entirely**: a loop that runs *after* a routed task completes, not just before it starts (which is all Switchboard does).
+A verification-driven escalation engine mod for Claude Code. This is the architectural piece the reference repository (`claude-code-mods`) was **missing entirely**: a loop that runs _after_ a routed task completes, not just before it starts (which is all Switchboard does).
 
 ## The pipeline
 
@@ -12,6 +12,7 @@ Task -> classify complexity/risk -> select RoutingPolicy (model + effort)
 ```
 
 The engine walks four failure categories:
+
 - **transient** — retry on the same route (network/flaky)
 - **route-mismatch** — climb to the next route in the fallback ladder (wrong model/effort)
 - **deterministic** — abort (retrying identically is pointless)
@@ -32,7 +33,7 @@ It stops at `maxAttempts` (exhausted) or on a non-retryable failure (aborted).
 
 ## Why this matters
 
-Switchboard (the routing mod) makes a routing decision *before* a subagent starts. It has no notion of whether the result was actually correct. `verify` closes that gap: it re-routes on failure, escalating the model/effort until deterministic checks pass or the policy is exhausted. Pair the two for the full pipeline: Switchboard picks the first route, verify escalates it.
+Switchboard (the routing mod) makes a routing decision _before_ a subagent starts. It has no notion of whether the result was actually correct. `verify` closes that gap: it re-routes on failure, escalating the model/effort until deterministic checks pass or the policy is exhausted. Pair the two for the full pipeline: Switchboard picks the first route, verify escalates it.
 
 The engine is deliberately independent of Claude Code's `agent.spawn` event so it can be reused by Nexum and other agent runtimes — only the adapter in `register.ts` knows about Claude Code.
 

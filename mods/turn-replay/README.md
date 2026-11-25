@@ -4,8 +4,8 @@ Records every Edit and Write as a diff, grouped by turn, and shows them one at a
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command   | What it does                                                   |
+| --------- | -------------------------------------------------------------- |
 | `/replay` | Step through the file changes of the session: /replay [number] |
 
 ## Hooks

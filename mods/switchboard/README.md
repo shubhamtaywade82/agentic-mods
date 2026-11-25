@@ -4,8 +4,8 @@ Warns when two sessions edit the same file at once, lists current file claims, a
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command        | What it does                                                            |
+| -------------- | ----------------------------------------------------------------------- |
 | `/switchboard` | List file claims across sessions, or /switchboard send <session> <text> |
 
 ## Hooks

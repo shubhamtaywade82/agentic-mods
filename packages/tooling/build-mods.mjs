@@ -41,16 +41,16 @@ for (const mod of listMods()) {
       charset: 'utf8',
     })
     const inputs = Object.keys(result.metafile.inputs)
-    const npmInputs = inputs.filter(input => input.includes('node_modules'))
-    const outsideRoot = inputs.filter(input => input.startsWith('..'))
-    const imports = Object.values(result.metafile.outputs).flatMap(output =>
-      output.imports.filter(item => item.external).map(item => item.path),
+    const npmInputs = inputs.filter((input) => input.includes('node_modules'))
+    const outsideRoot = inputs.filter((input) => input.startsWith('..'))
+    const imports = Object.values(result.metafile.outputs).flatMap((output) =>
+      output.imports.filter((item) => item.external).map((item) => item.path),
     )
-    const badImports = [...new Set(imports)].filter(path => !ALLOWED_BARE.has(path))
+    const badImports = [...new Set(imports)].filter((path) => !ALLOWED_BARE.has(path))
     const problems = [
-      ...npmInputs.map(input => `npm input ${input}`),
-      ...badImports.map(path => `bare import ${path}`),
-      ...outsideRoot.map(input => `input outside repo ${input}`),
+      ...npmInputs.map((input) => `npm input ${input}`),
+      ...badImports.map((path) => `bare import ${path}`),
+      ...outsideRoot.map((input) => `input outside repo ${input}`),
     ]
     const size = Object.values(result.metafile.outputs).reduce((sum, out) => sum + out.bytes, 0)
     const ok = problems.length === 0

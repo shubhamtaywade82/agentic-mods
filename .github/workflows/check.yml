@@ -31,7 +31,7 @@ jobs:
 
       - name: Offline structure + type checks
         env:
-          OFFLINE: "1"
+          OFFLINE: '1'
         run: bash scripts/check.sh
 
   claude:
@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
       matrix:
         # Minimum supported mods API version + latest release.
-        claude: ["2.1.330", "latest"]
+        claude: ['2.1.330', 'latest']
     steps:
       - uses: actions/checkout@v4
 
@@ -60,5 +60,5 @@ jobs:
 
       - name: Validate and test every mod
         env:
-          CI: "1"
+          CI: '1'
         run: bash scripts/check.sh

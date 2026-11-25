@@ -225,7 +225,9 @@ var DANGER_RULES = [
     id: "git-force-push",
     level: "confirm",
     reason: "rewrites remote history",
-    matches: (argv) => gitSubcommand(argv) === "push" && argv.some((token) => token === "--force" || token === "-f" || token.startsWith("--force-with-lease"))
+    matches: (argv) => gitSubcommand(argv) === "push" && argv.some(
+      (token) => token === "--force" || token === "-f" || token.startsWith("--force-with-lease")
+    )
   },
   {
     id: "git-hard-reset",
@@ -290,7 +292,9 @@ function analyzeCommand(command) {
   return { checks, gitActions, dangers };
 }
 function sortDangers(dangers) {
-  return [...dangers].sort((a, b) => a.level === b.level ? 0 : a.level === "always-block" ? -1 : 1);
+  return [...dangers].sort(
+    (a, b) => a.level === b.level ? 0 : a.level === "always-block" ? -1 : 1
+  );
 }
 
 // packages/core/src/paths.ts
@@ -699,7 +703,11 @@ async function recordBlock($, tool, reason) {
   }
   await $.fs.write(
     path,
-    appendJsonLine(existing, auditLine({ plugin: PLUGIN, tool, decision: "deny", reason }, Date.now()), 500)
+    appendJsonLine(
+      existing,
+      auditLine({ plugin: PLUGIN, tool, decision: "deny", reason }, Date.now()),
+      500
+    )
   );
 }
 async function judgeCommand($, command) {
@@ -716,7 +724,10 @@ async function judgeCommand($, command) {
   const reasons = analysis.dangers.map((hit) => hit.reason).join("; ");
   switch (tier) {
     case "always-block":
-      return { kind: "deny", text: `command-guard: this tier never runs confirm-level commands. ${reasons}.` };
+      return {
+        kind: "deny",
+        text: `command-guard: this tier never runs confirm-level commands. ${reasons}.`
+      };
     case "preview-only":
       return {
         kind: "deny",
@@ -724,7 +735,10 @@ async function judgeCommand($, command) {
       };
     case "button": {
       const answer = await $.ui.ask(`Run this command? ${command}
-Reason: ${reasons}`, ["Proceed", "Cancel"]);
+Reason: ${reasons}`, [
+        "Proceed",
+        "Cancel"
+      ]);
       return answer === "Proceed" ? ALLOW : { kind: "deny", text: "command-guard: cancelled by the person." };
     }
     case "typed-code": {
@@ -737,7 +751,8 @@ To run it, type ${code}. Command: ${command}`);
 }
 async function protectedDenial($, tool, path) {
   const config = await configOf($);
-  if (!isProtectedPath(path, config.guard.protectedPaths, config.guard.protectedExceptions)) return null;
+  if (!isProtectedPath(path, config.guard.protectedPaths, config.guard.protectedExceptions))
+    return null;
   const text = `command-guard: ${path} is a protected secret file. Change it yourself, or add an exception in .agentic-mods/config.json.`;
   await recordBlock($, tool, text);
   return text;
@@ -772,15 +787,21 @@ function register(on) {
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     const denial = await protectedDenial($, "Edit", e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed on Edit." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed on Edit." }
+  );
   on("tool.call", { tool: "Write" }, async ($, e, next) => {
     const denial = await protectedDenial($, "Write", e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed on Write." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed on Write." }
+  );
   on("tool.call", { tool: "Read" }, async ($, e, next) => {
     const denial = await protectedDenial($, "Read", e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed on Read." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed on Read." }
+  );
 }
 export {
   register

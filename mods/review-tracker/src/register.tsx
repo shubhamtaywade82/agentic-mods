@@ -16,7 +16,12 @@ const FILE = 'findings.json'
 const ACTIONS: readonly FindingAction[] = ['start', 'fix', 'verify', 'reject', 'defer', 'reopen']
 const SEVERITIES = ['high', 'medium', 'low'] as const
 
-const IDLE: ReviewGate = { verdict: 'UNKNOWN', openHigh: 0, open: 0, reason: 'no review findings recorded' }
+const IDLE: ReviewGate = {
+  verdict: 'UNKNOWN',
+  openHigh: 0,
+  open: 0,
+  reason: 'no review findings recorded',
+}
 const gate = atom({ plugin: 'review-tracker', key: 'gate' } as const, IDLE, { shape: 'gate-1' })
 
 async function loadFindings($: EngineInterface): Promise<Finding[]> {
@@ -57,7 +62,10 @@ export function register(on: On): void {
   })
 
   on('command.run', { command: 'finding' }, async ($, e) => {
-    const [subcommand = 'list', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = 'list', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
     const findings = await loadFindings($)
 
     if (subcommand === 'list') {
@@ -65,7 +73,7 @@ export function register(on: On): void {
       if (findings.length === 0) return { text: 'No findings recorded.' }
       return {
         text: findings
-          .map(finding => `${finding.id} ${finding.severity} ${finding.status} ${finding.title}`)
+          .map((finding) => `${finding.id} ${finding.severity} ${finding.status} ${finding.title}`)
           .join('\n'),
       }
     }
@@ -73,7 +81,7 @@ export function register(on: On): void {
     if (subcommand === 'add') {
       const severity = rest[0]
       const title = rest.slice(1).join(' ').trim()
-      if (!SEVERITIES.some(value => value === severity) || title === '') {
+      if (!SEVERITIES.some((value) => value === severity) || title === '') {
         return { text: 'Usage: /finding add high|medium|low <title>' }
       }
       const finding: Finding = {
@@ -92,8 +100,8 @@ export function register(on: On): void {
 
     if (subcommand === 'set') {
       const [id = '', action = '', ...detail] = rest
-      const target = findings.find(finding => finding.id === id)
-      const transition = ACTIONS.find(value => value === action)
+      const target = findings.find((finding) => finding.id === id)
+      const transition = ACTIONS.find((value) => value === action)
       if (target === undefined || transition === undefined) {
         return { text: `Usage: /finding set <id> ${ACTIONS.join('|')} [text]` }
       }
@@ -110,7 +118,10 @@ export function register(on: On): void {
         reason: transition === 'reject' || transition === 'defer' ? text : target.reason,
         updatedAt: await $.clock.now(),
       }
-      await saveFindings($, findings.map(finding => (finding.id === id ? updated : finding)))
+      await saveFindings(
+        $,
+        findings.map((finding) => (finding.id === id ? updated : finding)),
+      )
       return { text: `${id} is now ${result.status}.` }
     }
 
@@ -122,7 +133,9 @@ export function register(on: On): void {
     const current = await read($, gate)
     return (
       <Box flexDirection="column">
-        <Text>Review gate: {current.verdict} · {current.reason}</Text>
+        <Text>
+          Review gate: {current.verdict} · {current.reason}
+        </Text>
         <Text dimColor>Use /finding add, /finding set and /finding list.</Text>
       </Box>
     )

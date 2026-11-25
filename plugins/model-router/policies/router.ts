@@ -7,24 +7,19 @@
 // §6). The router never overrides an explicit choice unless an escalation
 // policy explicitly authorizes it.
 
-import type {
-  RoutingContext,
-  RoutingDecision,
-  RoutingPolicy,
-  RoutingRule,
-} from './types';
+import type { RoutingContext, RoutingDecision, RoutingPolicy, RoutingRule } from './types'
 
 export function findMatchingRule(
   ctx: RoutingContext,
   policy: RoutingPolicy,
 ): RoutingRule | undefined {
   for (const rule of policy.rules) {
-    if (rule.taskType !== '*' && rule.taskType !== ctx.taskType) continue;
-    if (rule.complexity !== '*' && rule.complexity !== ctx.complexity) continue;
-    if (rule.risk !== '*' && rule.risk !== ctx.risk) continue;
-    return rule;
+    if (rule.taskType !== '*' && rule.taskType !== ctx.taskType) continue
+    if (rule.complexity !== '*' && rule.complexity !== ctx.complexity) continue
+    if (rule.risk !== '*' && rule.risk !== ctx.risk) continue
+    return rule
   }
-  return undefined;
+  return undefined
 }
 
 export function route(ctx: RoutingContext, policy: RoutingPolicy): RoutingDecision {
@@ -36,7 +31,7 @@ export function route(ctx: RoutingContext, policy: RoutingPolicy): RoutingDecisi
       reason: 'explicit user model selection preserved',
       isFallback: false,
       isEscalation: false,
-    };
+    }
   }
   // Escalation: if previous outcome was a failure, escalate.
   if (ctx.previousOutcome === 'failed-verification' || ctx.previousOutcome === 'failed-review') {
@@ -46,10 +41,10 @@ export function route(ctx: RoutingContext, policy: RoutingPolicy): RoutingDecisi
       reason: `escalation after ${ctx.previousOutcome}`,
       isFallback: false,
       isEscalation: true,
-    };
+    }
   }
   // Static policy match.
-  const rule = findMatchingRule(ctx, policy);
+  const rule = findMatchingRule(ctx, policy)
   if (rule) {
     return {
       model: rule.model,
@@ -58,7 +53,7 @@ export function route(ctx: RoutingContext, policy: RoutingPolicy): RoutingDecisi
       isFallback: false,
       isEscalation: false,
       matchedRuleId: rule.id,
-    };
+    }
   }
   // Default.
   return {
@@ -67,5 +62,5 @@ export function route(ctx: RoutingContext, policy: RoutingPolicy): RoutingDecisi
     reason: 'no rule matched; default model + effort',
     isFallback: false,
     isEscalation: false,
-  };
+  }
 }

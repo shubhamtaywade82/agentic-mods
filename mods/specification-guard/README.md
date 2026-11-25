@@ -4,8 +4,8 @@ Checks acceptance criteria are written as Given/When/Then scenarios with the non
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command | What it does                                  |
+| ------- | --------------------------------------------- |
 | `/spec` | Check acceptance criteria: /spec check <path> | /spec template |
 
 ## Hooks

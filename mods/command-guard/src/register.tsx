@@ -33,7 +33,7 @@ function stricter(a: GuardTier, b: GuardTier): GuardTier {
 }
 
 async function configOf($: EngineInterface): Promise<AgenticConfig> {
-  const loaded = await loadConfig(path => $.fs.read(path))
+  const loaded = await loadConfig((path) => $.fs.read(path))
   return loaded.value
 }
 
@@ -52,7 +52,11 @@ async function recordBlock($: EngineInterface, tool: string, reason: string): Pr
   }
   await $.fs.write(
     path,
-    appendJsonLine(existing, auditLine({ plugin: PLUGIN, tool, decision: 'deny', reason }, Date.now()), 500),
+    appendJsonLine(
+      existing,
+      auditLine({ plugin: PLUGIN, tool, decision: 'deny', reason }, Date.now()),
+      500,
+    ),
   )
 }
 
@@ -69,18 +73,26 @@ async function judgeCommand($: EngineInterface, command: string): Promise<Judgem
   let tier = config.guard.confirmTier
   if (state.isOpen) tier = stricter(tier, 'typed-code')
 
-  const reasons = analysis.dangers.map(hit => hit.reason).join('; ')
+  const reasons = analysis.dangers.map((hit) => hit.reason).join('; ')
   switch (tier) {
     case 'always-block':
-      return { kind: 'deny', text: `command-guard: this tier never runs confirm-level commands. ${reasons}.` }
+      return {
+        kind: 'deny',
+        text: `command-guard: this tier never runs confirm-level commands. ${reasons}.`,
+      }
     case 'preview-only':
       return {
         kind: 'deny',
         text: `command-guard: held for the person, not run. Command: ${command}. Reason: ${reasons}.`,
       }
     case 'button': {
-      const answer = await $.ui.ask(`Run this command? ${command}\nReason: ${reasons}`, ['Proceed', 'Cancel'])
-      return answer === 'Proceed' ? ALLOW : { kind: 'deny', text: 'command-guard: cancelled by the person.' }
+      const answer = await $.ui.ask(`Run this command? ${command}\nReason: ${reasons}`, [
+        'Proceed',
+        'Cancel',
+      ])
+      return answer === 'Proceed'
+        ? ALLOW
+        : { kind: 'deny', text: 'command-guard: cancelled by the person.' }
     }
     case 'typed-code': {
       const code = await shortCode(command, 6)
@@ -92,9 +104,14 @@ async function judgeCommand($: EngineInterface, command: string): Promise<Judgem
   }
 }
 
-async function protectedDenial($: EngineInterface, tool: string, path: string): Promise<string | null> {
+async function protectedDenial(
+  $: EngineInterface,
+  tool: string,
+  path: string,
+): Promise<string | null> {
   const config = await configOf($)
-  if (!isProtectedPath(path, config.guard.protectedPaths, config.guard.protectedExceptions)) return null
+  if (!isProtectedPath(path, config.guard.protectedPaths, config.guard.protectedExceptions))
+    return null
   const text = `command-guard: ${path} is a protected secret file. Change it yourself, or add an exception in .agentic-mods/config.json.`
   await recordBlock($, tool, text)
   return text
@@ -109,12 +126,12 @@ export function register(on: On): void {
     return next(e)
   })
 
-  on('command.run', { command: 'guard' }, async $ => {
-    const loaded = await loadConfig(path => $.fs.read(path))
+  on('command.run', { command: 'guard' }, async ($) => {
+    const loaded = await loadConfig((path) => $.fs.read(path))
     const lines = [
       `command-guard: confirm tier ${loaded.value.guard.confirmTier}`,
       `blocked this session: ${await blockedCount($)}`,
-      ...loaded.errors.map(message => `config: ${message}`),
+      ...loaded.errors.map((message) => `config: ${message}`),
     ]
     return { text: lines.join('\n') }
   })
@@ -133,15 +150,21 @@ export function register(on: On): void {
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const denial = await protectedDenial($, 'Edit', e.file_path)
     return denial === null ? next(e) : { deny: denial }
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'command-guard failed closed on Edit.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'command-guard failed closed on Edit.' },
+  )
 
   on('tool.call', { tool: 'Write' }, async ($, e, next) => {
     const denial = await protectedDenial($, 'Write', e.file_path)
     return denial === null ? next(e) : { deny: denial }
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'command-guard failed closed on Write.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'command-guard failed closed on Write.' },
+  )
 
   on('tool.call', { tool: 'Read' }, async ($, e, next) => {
     const denial = await protectedDenial($, 'Read', e.file_path)
     return denial === null ? next(e) : { deny: denial }
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'command-guard failed closed on Read.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'command-guard failed closed on Read.' },
+  )
 }

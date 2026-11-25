@@ -321,11 +321,9 @@ var encoder = new TextEncoder();
 var PANE = "markdown-preview";
 var MAX_BYTES = 2e5;
 var IDLE = { path: "", text: "" };
-var document = atom(
-  { plugin: "markdown-preview", key: "document" },
-  IDLE,
-  { shape: "document-1" }
-);
+var document = atom({ plugin: "markdown-preview", key: "document" }, IDLE, {
+  shape: "document-1"
+});
 function register(on) {
   on("session.start", async ($, e, next) => {
     await $.command.register({

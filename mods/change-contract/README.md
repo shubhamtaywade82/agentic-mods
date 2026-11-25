@@ -4,9 +4,9 @@ Holds the task's objective, allowed and forbidden paths. Writes outside the cont
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/contract` | Show, set or amend the change contract: /contract show|set|allow|forbid|mode|violations|close |
+| Command     | What it does                                           |
+| ----------- | ------------------------------------------------------ |
+| `/contract` | Show, set or amend the change contract: /contract show | set | allow | forbid | mode | violations | close |
 
 ## Hooks
 

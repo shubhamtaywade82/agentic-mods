@@ -4,8 +4,8 @@ Watches network requests and process launches made by other mods, enforces an al
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command     | What it does                                                  |
+| ----------- | ------------------------------------------------------------- |
 | `/firewall` | Show recent network and process decisions made for other mods |
 
 ## Hooks

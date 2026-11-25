@@ -1,30 +1,140 @@
 // mods/design-patterns/src/lib/index.ts
 var PATTERNS = [
   // creational
-  { name: "Factory Method", category: "creational", useWhen: "choosing an implementation at runtime", idiom: "Record<Key, () => Impl> registry with satisfies" },
-  { name: "Abstract Factory", category: "creational", useWhen: "creating families of matching objects", idiom: "object of factory functions typed by an interface" },
-  { name: "Builder", category: "creational", useWhen: "many optional params or stepwise construction", idiom: "options object with defaults; fluent builder for ordered steps" },
-  { name: "Prototype", category: "creational", useWhen: "copying configured objects", idiom: "structuredClone / spread / clone() method" },
-  { name: "Singleton", category: "creational", useWhen: "one shared instance is required", idiom: "ES module export (the module cache is the singleton)" },
+  {
+    name: "Factory Method",
+    category: "creational",
+    useWhen: "choosing an implementation at runtime",
+    idiom: "Record<Key, () => Impl> registry with satisfies"
+  },
+  {
+    name: "Abstract Factory",
+    category: "creational",
+    useWhen: "creating families of matching objects",
+    idiom: "object of factory functions typed by an interface"
+  },
+  {
+    name: "Builder",
+    category: "creational",
+    useWhen: "many optional params or stepwise construction",
+    idiom: "options object with defaults; fluent builder for ordered steps"
+  },
+  {
+    name: "Prototype",
+    category: "creational",
+    useWhen: "copying configured objects",
+    idiom: "structuredClone / spread / clone() method"
+  },
+  {
+    name: "Singleton",
+    category: "creational",
+    useWhen: "one shared instance is required",
+    idiom: "ES module export (the module cache is the singleton)"
+  },
   // structural
-  { name: "Adapter", category: "structural", useWhen: "an interface does not match what the client needs", idiom: "class or function implementing your port, wrapping the SDK" },
-  { name: "Bridge", category: "structural", useWhen: "two independent dimensions vary", idiom: "inject the implementor interface" },
-  { name: "Composite", category: "structural", useWhen: "trees / part-whole hierarchies", idiom: "recursive discriminated union or children arrays" },
-  { name: "Decorator", category: "structural", useWhen: "adding behavior by wrapping", idiom: "higher-order function wrapping the same interface" },
-  { name: "Facade", category: "structural", useWhen: "a simple API over a subsystem", idiom: "use-case service function or class" },
-  { name: "Flyweight", category: "structural", useWhen: "sharing immutable intrinsic state", idiom: "Map cache of frozen objects" },
-  { name: "Proxy", category: "structural", useWhen: "controlling access, laziness or caching", idiom: "wrapper class implementing the interface" },
+  {
+    name: "Adapter",
+    category: "structural",
+    useWhen: "an interface does not match what the client needs",
+    idiom: "class or function implementing your port, wrapping the SDK"
+  },
+  {
+    name: "Bridge",
+    category: "structural",
+    useWhen: "two independent dimensions vary",
+    idiom: "inject the implementor interface"
+  },
+  {
+    name: "Composite",
+    category: "structural",
+    useWhen: "trees / part-whole hierarchies",
+    idiom: "recursive discriminated union or children arrays"
+  },
+  {
+    name: "Decorator",
+    category: "structural",
+    useWhen: "adding behavior by wrapping",
+    idiom: "higher-order function wrapping the same interface"
+  },
+  {
+    name: "Facade",
+    category: "structural",
+    useWhen: "a simple API over a subsystem",
+    idiom: "use-case service function or class"
+  },
+  {
+    name: "Flyweight",
+    category: "structural",
+    useWhen: "sharing immutable intrinsic state",
+    idiom: "Map cache of frozen objects"
+  },
+  {
+    name: "Proxy",
+    category: "structural",
+    useWhen: "controlling access, laziness or caching",
+    idiom: "wrapper class implementing the interface"
+  },
   // behavioral
-  { name: "Chain of Responsibility", category: "behavioral", useWhen: "ordered handlers that can short-circuit", idiom: "middleware arrays composed with reduceRight" },
-  { name: "Command", category: "behavioral", useWhen: "a request needs queueing, retry or undo", idiom: "{ type, payload } objects + handler map; queue jobs" },
-  { name: "Iterator", category: "behavioral", useWhen: "traversing without exposing internals", idiom: "[Symbol.iterator], generators, async generators" },
-  { name: "Mediator", category: "behavioral", useWhen: "many-to-many coordination", idiom: "orchestrator service or typed event bus" },
-  { name: "Memento", category: "behavioral", useWhen: "snapshot and restore state", idiom: "immutable snapshot types, structuredClone" },
-  { name: "Observer", category: "behavioral", useWhen: "dependents need notifying", idiom: "typed EventEmitter / EventTarget / streams" },
-  { name: "State", category: "behavioral", useWhen: "behavior changes with state and transitions", idiom: "discriminated union + transition table" },
-  { name: "Strategy", category: "behavioral", useWhen: "algorithms are interchangeable", idiom: "function type (input) => output, Record map" },
-  { name: "Template Method", category: "behavioral", useWhen: "a fixed skeleton with variable steps", idiom: "higher-order function taking step functions" },
-  { name: "Visitor", category: "behavioral", useWhen: "new operations over stable node types", idiom: "discriminated union + exhaustive switch on kind" }
+  {
+    name: "Chain of Responsibility",
+    category: "behavioral",
+    useWhen: "ordered handlers that can short-circuit",
+    idiom: "middleware arrays composed with reduceRight"
+  },
+  {
+    name: "Command",
+    category: "behavioral",
+    useWhen: "a request needs queueing, retry or undo",
+    idiom: "{ type, payload } objects + handler map; queue jobs"
+  },
+  {
+    name: "Iterator",
+    category: "behavioral",
+    useWhen: "traversing without exposing internals",
+    idiom: "[Symbol.iterator], generators, async generators"
+  },
+  {
+    name: "Mediator",
+    category: "behavioral",
+    useWhen: "many-to-many coordination",
+    idiom: "orchestrator service or typed event bus"
+  },
+  {
+    name: "Memento",
+    category: "behavioral",
+    useWhen: "snapshot and restore state",
+    idiom: "immutable snapshot types, structuredClone"
+  },
+  {
+    name: "Observer",
+    category: "behavioral",
+    useWhen: "dependents need notifying",
+    idiom: "typed EventEmitter / EventTarget / streams"
+  },
+  {
+    name: "State",
+    category: "behavioral",
+    useWhen: "behavior changes with state and transitions",
+    idiom: "discriminated union + transition table"
+  },
+  {
+    name: "Strategy",
+    category: "behavioral",
+    useWhen: "algorithms are interchangeable",
+    idiom: "function type (input) => output, Record map"
+  },
+  {
+    name: "Template Method",
+    category: "behavioral",
+    useWhen: "a fixed skeleton with variable steps",
+    idiom: "higher-order function taking step functions"
+  },
+  {
+    name: "Visitor",
+    category: "behavioral",
+    useWhen: "new operations over stable node types",
+    idiom: "discriminated union + exhaustive switch on kind"
+  }
 ];
 function findPattern(query) {
   const q = query.trim().toLowerCase();
@@ -52,7 +162,9 @@ function renderAnswer(args) {
   if (q.startsWith("list")) {
     const cat = q.slice(4).trim().toLowerCase();
     if (cat === "creational" || cat === "structural" || cat === "behavioral") {
-      const rows = byCategory(cat).map((p) => `- ${p.name}: use when ${p.useWhen}. Idiom first: ${p.idiom}.`);
+      const rows = byCategory(cat).map(
+        (p) => `- ${p.name}: use when ${p.useWhen}. Idiom first: ${p.idiom}.`
+      );
       return `design-patterns — ${cat} (${rows.length}):
 ${rows.join("\n")}`;
     }

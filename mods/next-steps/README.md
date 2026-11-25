@@ -4,8 +4,8 @@ After a turn that changed files, offers up to three suggested next prompts in a 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command | What it does                |
+| ------- | --------------------------- |
 | `/next` | Show suggested next prompts |
 
 ## Hooks

@@ -69,7 +69,8 @@ function parseManifest(path, text) {
 }
 function parsePackageJson(text) {
   const parsed = JSON.parse(text);
-  if (typeof parsed !== "object" || parsed === null) throw new Error("package.json is not an object");
+  if (typeof parsed !== "object" || parsed === null)
+    throw new Error("package.json is not an object");
   const record = parsed;
   const out = [];
   for (const [key, isDev] of [
@@ -91,7 +92,12 @@ function parseRequirements(text) {
     if (line === "" || line.startsWith("-")) continue;
     const match = /^([A-Za-z0-9_.-]+)\s*(.*)$/.exec(line);
     if (match === null) continue;
-    out.push({ name: match[1] ?? "", version: (match[2] ?? "").trim(), isDev: false, ecosystem: "pypi" });
+    out.push({
+      name: match[1] ?? "",
+      version: (match[2] ?? "").trim(),
+      isDev: false,
+      ecosystem: "pypi"
+    });
   }
   return out;
 }
@@ -103,7 +109,12 @@ function parsePyproject(text) {
     const spec = match[1] ?? "";
     const parsed = /^([A-Za-z0-9_.-]+)\s*(.*)$/.exec(spec.trim());
     if (parsed === null) continue;
-    out.push({ name: parsed[1] ?? "", version: (parsed[2] ?? "").trim(), isDev: false, ecosystem: "pypi" });
+    out.push({
+      name: parsed[1] ?? "",
+      version: (parsed[2] ?? "").trim(),
+      isDev: false,
+      ecosystem: "pypi"
+    });
   }
   return out;
 }
@@ -179,7 +190,9 @@ function parseGradle(text) {
 }
 function parseCsproj(text) {
   const out = [];
-  for (const match of text.matchAll(/<PackageReference\s+Include="([^"]+)"(?:\s+Version="([^"]+)")?/g)) {
+  for (const match of text.matchAll(
+    /<PackageReference\s+Include="([^"]+)"(?:\s+Version="([^"]+)")?/g
+  )) {
     out.push({
       name: match[1] ?? "",
       version: match[2] ?? "managed",
@@ -225,7 +238,9 @@ function diffDependencies(before, after) {
 
 // mods/dependency-radar/src/register.tsx
 var IDLE = { verdict: "UNKNOWN", changes: [], scan: "no scan recorded" };
-var status = atom({ plugin: "dependency-radar", key: "status" }, IDLE, { shape: "status-1" });
+var status = atom({ plugin: "dependency-radar", key: "status" }, IDLE, {
+  shape: "status-1"
+});
 async function readOrNull($, path) {
   try {
     return await $.fs.read(path);
@@ -256,12 +271,15 @@ async function analyse($, path, before, after) {
   const changes = [
     ...diff.added.map((dep) => `+ ${dep.name} ${dep.version}${dep.isDev ? " (dev)" : ""}`),
     ...diff.removed.map((dep) => `- ${dep.name} ${dep.version}`),
-    ...diff.changed.map((item) => `${item.isMajor ? "MAJOR " : ""}~ ${item.name} ${item.from} -> ${item.to}`)
+    ...diff.changed.map(
+      (item) => `${item.isMajor ? "MAJOR " : ""}~ ${item.name} ${item.from} -> ${item.to}`
+    )
   ].map((line) => truncate(`${path}: ${line}`, 200));
   const verdict = changes.length === 0 ? "PASS" : "UNKNOWN";
   await update($, status, (state) => ({ ...state, verdict, changes: changes.slice(0, 50) }));
   for (const item of diff.changed) {
-    if (item.isMajor) $.ui.toast(`dependency-radar: major change to ${item.name}; review before release`);
+    if (item.isMajor)
+      $.ui.toast(`dependency-radar: major change to ${item.name}; review before release`);
   }
 }
 async function readScan($) {

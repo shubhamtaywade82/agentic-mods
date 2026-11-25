@@ -58,7 +58,10 @@ function transitionFinding(current, action, details) {
     return { ok: false, reason: "verifying a finding needs evidence" };
   }
   if ((action === "reject" || action === "defer") && !(details.reason && details.reason.trim().length > 0)) {
-    return { ok: false, reason: `${action === "reject" ? "rejecting" : "deferring"} needs a reason` };
+    return {
+      ok: false,
+      reason: `${action === "reject" ? "rejecting" : "deferring"} needs a reason`
+    };
   }
   return { ok: true, status: next };
 }
@@ -91,7 +94,12 @@ var PANE = "review-tracker";
 var FILE = "findings.json";
 var ACTIONS = ["start", "fix", "verify", "reject", "defer", "reopen"];
 var SEVERITIES = ["high", "medium", "low"];
-var IDLE = { verdict: "UNKNOWN", openHigh: 0, open: 0, reason: "no review findings recorded" };
+var IDLE = {
+  verdict: "UNKNOWN",
+  openHigh: 0,
+  open: 0,
+  reason: "no review findings recorded"
+};
 var gate = atom({ plugin: "review-tracker", key: "gate" }, IDLE, { shape: "gate-1" });
 async function loadFindings($) {
   try {
@@ -176,7 +184,10 @@ function register(on) {
         reason: transition === "reject" || transition === "defer" ? text : target.reason,
         updatedAt: await $.clock.now()
       };
-      await saveFindings($, findings.map((finding) => finding.id === id ? updated : finding));
+      await saveFindings(
+        $,
+        findings.map((finding) => finding.id === id ? updated : finding)
+      );
       return { text: `${id} is now ${result.status}.` };
     }
     return { text: "Usage: /finding add|set|list" };

@@ -9,7 +9,12 @@ var verifyEngine = {
         output = await execute(route);
       } catch (err) {
         const failure2 = { category: "transient", detail: messageOf(err) };
-        attempts.push({ attempt: attemptNo, route, verification: { passed: false, failures: [failure2.detail], evidence: [] }, failure: failure2 });
+        attempts.push({
+          attempt: attemptNo,
+          route,
+          verification: { passed: false, failures: [failure2.detail], evidence: [] },
+          failure: failure2
+        });
         const outcome2 = decideEscalation(failure2, route, policy, attempts.length);
         if (outcome2.kind === "abort") return finalize("aborted", attempts);
         if (outcome2.kind === "exhausted") return finalize("exhausted", attempts);
@@ -53,8 +58,27 @@ function messageOf(err) {
 // mods/verify/src/lib/policy.ts
 function heuristicClassify(input) {
   const t = (input.task + " " + input.agentType + " " + JSON.stringify(input.signals ?? {})).toLowerCase();
-  const complexSignals = ["refactor", "architecture", "migration", "security", "concurrency", "distributed", "schema", "irreversible"];
-  const riskSignals = ["prod", "production", "delete", "drop", "force", "release", "deploy", "migration", "irreversible"];
+  const complexSignals = [
+    "refactor",
+    "architecture",
+    "migration",
+    "security",
+    "concurrency",
+    "distributed",
+    "schema",
+    "irreversible"
+  ];
+  const riskSignals = [
+    "prod",
+    "production",
+    "delete",
+    "drop",
+    "force",
+    "release",
+    "deploy",
+    "migration",
+    "irreversible"
+  ];
   const complexity = complexSignals.some((s) => t.includes(s)) ? 0.8 : 0.3;
   const risk = riskSignals.some((s) => t.includes(s)) ? 0.8 : 0.2;
   const effort = complexity > 0.6 ? "high" : complexity > 0.3 ? "medium" : "low";
@@ -101,7 +125,11 @@ function containsCheck(substring) {
     name: `contains:${substring}`,
     run(output) {
       const text = typeof output === "string" ? output : JSON.stringify(output);
-      return text.includes(substring) ? { passed: true, reason: "" } : { passed: false, reason: `output did not contain "${substring}"`, evidence: [text.slice(0, 200)] };
+      return text.includes(substring) ? { passed: true, reason: "" } : {
+        passed: false,
+        reason: `output did not contain "${substring}"`,
+        evidence: [text.slice(0, 200)]
+      };
     }
   };
 }

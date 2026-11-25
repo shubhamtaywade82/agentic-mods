@@ -19,7 +19,14 @@ export function classifyFailure(stdout: string, stderr: string): FailureKind {
   return 'unknown'
 }
 
-export type TddEvent = 'red-verified' | 'red-rejected' | 'green-verified' | 'green-rejected' | 'refactor' | 'complete' | 'exception'
+export type TddEvent =
+  | 'red-verified'
+  | 'red-rejected'
+  | 'green-verified'
+  | 'green-rejected'
+  | 'refactor'
+  | 'complete'
+  | 'exception'
 
 export type TddTransition = { ok: true; phase: TddPhase } | { ok: false; reason: string }
 
@@ -27,7 +34,8 @@ export type TddTransition = { ok: true; phase: TddPhase } | { ok: false; reason:
 export function nextPhase(current: TddPhase, event: TddEvent): TddTransition {
   switch (event) {
     case 'red-verified':
-      if (current === 'idle' || current === 'refactor' || current === 'complete') return { ok: true, phase: 'red' }
+      if (current === 'idle' || current === 'refactor' || current === 'complete')
+        return { ok: true, phase: 'red' }
       return { ok: false, reason: `RED is not valid from ${current}` }
     case 'green-verified':
       if (current === 'red') return { ok: true, phase: 'green' }
@@ -53,7 +61,8 @@ export function productionWriteAllowed(phase: TddPhase): boolean {
   return phase === 'red' || phase === 'refactor'
 }
 
-const TEST_PATH = /(\.test\.|\.spec\.|(^|\/)__tests__\/|(^|\/)tests?\/|_test\.(go|py)$|(^|\/)test_[^/]*\.py$)/
+const TEST_PATH =
+  /(\.test\.|\.spec\.|(^|\/)__tests__\/|(^|\/)tests?\/|_test\.(go|py)$|(^|\/)test_[^/]*\.py$)/
 
 export function isTestPath(path: string): boolean {
   return TEST_PATH.test(path.replace(/\\/g, '/'))

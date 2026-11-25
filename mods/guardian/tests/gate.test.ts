@@ -24,7 +24,11 @@ test('holdForBlast describes impact without echoing the command', () => {
 })
 
 test('holdForSecretDiff names kinds but never values', () => {
-  const held = holdForSecretDiff('git push', ['github-pat'], { files: 2, insertions: 5, deletions: 1 })
+  const held = holdForSecretDiff('git push', ['github-pat'], {
+    files: 2,
+    insertions: 5,
+    deletions: 1,
+  })
   expect(held.reason).toBe('diff-contains-secret')
   expect(held.preview).toContain('github-pat')
   expect(held.preview).toContain('2 file(s)')
@@ -41,7 +45,9 @@ test('holdForOversizedDiff refuses a diff it could not scan', () => {
 test('non-interactive sessions deny every held op (fail closed)', () => {
   expect(decideNoninteractive(holdForBlast('rm -rf x', { kind: 'rm-rf', why: 'x' }))).toBe('deny')
   expect(
-    decideNoninteractive(holdForSecretDiff('git push', ['aws-access-key'], { files: 1, insertions: 0, deletions: 0 })),
+    decideNoninteractive(
+      holdForSecretDiff('git push', ['aws-access-key'], { files: 1, insertions: 0, deletions: 0 }),
+    ),
   ).toBe('deny')
 })
 

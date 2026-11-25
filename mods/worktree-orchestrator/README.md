@@ -4,8 +4,8 @@ Lists git worktrees with their branches and uncommitted changes, and reports fil
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command      | What it does                                        |
+| ------------ | --------------------------------------------------- |
 | `/worktrees` | List git worktrees and file collisions between them |
 
 ## Hooks

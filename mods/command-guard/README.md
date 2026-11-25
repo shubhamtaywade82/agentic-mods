@@ -4,8 +4,8 @@ Holds destructive shell commands for a decision, refuses the unsafe ones outrigh
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command  | What it does                                                           |
+| -------- | ---------------------------------------------------------------------- |
 | `/guard` | Show command-guard's settings, config problems and blocks this session |
 
 ## Hooks

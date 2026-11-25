@@ -65,7 +65,9 @@ test('contextLine renders tokens, percent and band; safe on bad input', () => {
 // ------------------------------------------------------ rendering helpers
 
 test('spinnerSuffix packs attempts and context into one short line', () => {
-  expect(spinnerSuffix(7, 100000, 200000)).toBe(' · pulse: 7 calls, context 100000/200000 (50%, caution)')
+  expect(spinnerSuffix(7, 100000, 200000)).toBe(
+    ' · pulse: 7 calls, context 100000/200000 (50%, caution)',
+  )
 })
 
 test('report lists tools with padded columns and the context line', () => {

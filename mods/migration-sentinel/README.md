@@ -4,8 +4,8 @@ Reviews SQL migration edits for destructive and table-locking changes, records t
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command      | What it does                                    |
+| ------------ | ----------------------------------------------- |
 | `/migration` | Check a migration file: /migration check <path> |
 
 ## Hooks

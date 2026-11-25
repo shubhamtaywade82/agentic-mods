@@ -4,8 +4,8 @@ One pane with the verification state of the change: contract, impact, evidence, 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command    | What it does             |
+| ---------- | ------------------------ |
 | `/agentic` | Cockpit: /agentic status | doctor | privacy |
 
 ## Hooks

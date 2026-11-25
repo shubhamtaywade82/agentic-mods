@@ -63,7 +63,11 @@ declare module 'claude-code/testing' {
      */
     approval: {
       _next?: 'approve' | 'deny' | 'timeout'
-      ask(input: { command: string; reason: string; preview: string }): Promise<'approve' | 'deny' | 'timeout'>
+      ask(input: {
+        command: string
+        reason: string
+        preview: string
+      }): Promise<'approve' | 'deny' | 'timeout'>
     }
   }
 

@@ -25,12 +25,38 @@ import type { RoutingPolicy } from './routing'
  * LLM-based classifier implementing the same ClassifyInput -> ClassifyResult.
  */
 export function heuristicClassify(input: ClassifyInput): ClassifyResult {
-  const t = (input.task + ' ' + input.agentType + ' ' + JSON.stringify(input.signals ?? {})).toLowerCase()
-  const complexSignals = ['refactor', 'architecture', 'migration', 'security', 'concurrency', 'distributed', 'schema', 'irreversible']
-  const riskSignals = ['prod', 'production', 'delete', 'drop', 'force', 'release', 'deploy', 'migration', 'irreversible']
+  const t = (
+    input.task +
+    ' ' +
+    input.agentType +
+    ' ' +
+    JSON.stringify(input.signals ?? {})
+  ).toLowerCase()
+  const complexSignals = [
+    'refactor',
+    'architecture',
+    'migration',
+    'security',
+    'concurrency',
+    'distributed',
+    'schema',
+    'irreversible',
+  ]
+  const riskSignals = [
+    'prod',
+    'production',
+    'delete',
+    'drop',
+    'force',
+    'release',
+    'deploy',
+    'migration',
+    'irreversible',
+  ]
   const complexity = complexSignals.some((s) => t.includes(s)) ? 0.8 : 0.3
   const risk = riskSignals.some((s) => t.includes(s)) ? 0.8 : 0.2
-  const effort: RoutingPolicy['effort'] = complexity > 0.6 ? 'high' : complexity > 0.3 ? 'medium' : 'low'
+  const effort: RoutingPolicy['effort'] =
+    complexity > 0.6 ? 'high' : complexity > 0.3 ? 'medium' : 'low'
   const rationale = `heuristic: complexity ${complexity.toFixed(1)}, risk ${risk.toFixed(1)}`
   return { complexity, risk, effort, rationale }
 }
@@ -40,10 +66,18 @@ export function heuristicClassify(input: ClassifyInput): ClassifyResult {
  * category so the engine can decide whether to retry, escalate the route, or
  * abort. A real deployment could swap in a smarter classifier.
  */
-export function heuristicClassifyFailure(f: VerificationResult): { category: FailureCategory; detail: string } {
+export function heuristicClassifyFailure(f: VerificationResult): {
+  category: FailureCategory
+  detail: string
+} {
   const detail = f.failures[0] ?? 'unspecified'
   const text = detail.toLowerCase()
-  if (text.includes('timeout') || text.includes('timed out') || text.includes('temporarily') || text.includes('retry')) {
+  if (
+    text.includes('timeout') ||
+    text.includes('timed out') ||
+    text.includes('temporarily') ||
+    text.includes('retry')
+  ) {
     return { category: 'transient', detail }
   }
   if (text.includes('wrong model') || text.includes('too weak') || text.includes('route')) {
@@ -104,13 +138,21 @@ export function containsCheck(substring: string): VerificationCheck {
       const text = typeof output === 'string' ? output : JSON.stringify(output)
       return text.includes(substring)
         ? { passed: true, reason: '' }
-        : { passed: false, reason: `output did not contain "${substring}"`, evidence: [text.slice(0, 200)] }
+        : {
+            passed: false,
+            reason: `output did not contain "${substring}"`,
+            evidence: [text.slice(0, 200)],
+          }
     },
   }
 }
 
 /** Build a check that passes when a predicate accepts the output. */
-export function predicateCheck(name: string, pred: (output: unknown) => boolean, reason: string): VerificationCheck {
+export function predicateCheck(
+  name: string,
+  pred: (output: unknown) => boolean,
+  reason: string,
+): VerificationCheck {
   return {
     name,
     run(output: unknown): VerificationCheckResult {
@@ -120,7 +162,10 @@ export function predicateCheck(name: string, pred: (output: unknown) => boolean,
 }
 
 /** Run a list of checks; the result passes only when every check passes. */
-export async function runChecks(output: unknown, checks: readonly VerificationCheck[]): Promise<VerificationResult> {
+export async function runChecks(
+  output: unknown,
+  checks: readonly VerificationCheck[],
+): Promise<VerificationResult> {
   const failures: string[] = []
   const evidence: string[] = []
   for (const c of checks) {

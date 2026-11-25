@@ -3,12 +3,13 @@
 
 import { expect, test } from 'claude-code/testing'
 
-const runInput = (args: string) => ({
-  command: 'verify-run',
-  args,
-  origin: { kind: 'plugin', name: 'verify' },
-  presentation: { isFullscreen: false, columns: 80 },
-}) as const
+const runInput = (args: string) =>
+  ({
+    command: 'verify-run',
+    args,
+    origin: { kind: 'plugin', name: 'verify' },
+    presentation: { isFullscreen: false, columns: 80 },
+  }) as const
 
 const statusInput = {
   command: 'verify-status',

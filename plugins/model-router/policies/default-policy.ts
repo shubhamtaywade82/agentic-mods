@@ -4,7 +4,7 @@
 // router logs what it would choose and changes nothing until the policy
 // state sets suggestOnly=false.
 
-import type { RoutingPolicy } from './types';
+import type { RoutingPolicy } from './types'
 
 export const DEFAULT_POLICY: RoutingPolicy = {
   schemaVersion: 1,
@@ -55,4 +55,4 @@ export const DEFAULT_POLICY: RoutingPolicy = {
   defaultModel: 'sonnet',
   defaultEffort: 'medium',
   suggestOnly: true,
-};
+}

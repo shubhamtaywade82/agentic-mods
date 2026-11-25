@@ -20,8 +20,8 @@ export function diffLines(oldText: string, newText: string): DiffOp[] {
   const b = splitLines(newText)
   if (a.length + b.length > MAX_LINES) {
     return [
-      ...a.map(line => ({ kind: 'delete' as const, line })),
-      ...b.map(line => ({ kind: 'insert' as const, line })),
+      ...a.map((line) => ({ kind: 'delete' as const, line })),
+      ...b.map((line) => ({ kind: 'insert' as const, line })),
     ]
   }
   return myers(a, b)
@@ -109,7 +109,11 @@ export function trimContext(ops: readonly DiffOp[], context: number): DiffOp[] {
   const keep = new Array<boolean>(ops.length).fill(false)
   ops.forEach((op, index) => {
     if (op.kind === 'equal') return
-    for (let i = Math.max(0, index - context); i <= Math.min(ops.length - 1, index + context); i++) {
+    for (
+      let i = Math.max(0, index - context);
+      i <= Math.min(ops.length - 1, index + context);
+      i++
+    ) {
       keep[i] = true
     }
   })

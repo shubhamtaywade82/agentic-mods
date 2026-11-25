@@ -20,7 +20,10 @@ import {
 // --------------------------------------------------------------- classifier
 
 test('heuristicClassify flags complex/risky tasks', () => {
-  const hard = heuristicClassify({ task: 'refactor the security-critical migration', agentType: 'main' })
+  const hard = heuristicClassify({
+    task: 'refactor the security-critical migration',
+    agentType: 'main',
+  })
   expect(hard.complexity).toBe(0.8)
   expect(hard.risk).toBe(0.8)
   expect(hard.effort).toBe('high')
@@ -32,16 +35,26 @@ test('heuristicClassify flags complex/risky tasks', () => {
 
 test('heuristicClassifyFailure maps timeouts to transient, wrong-model to route-mismatch', () => {
   expect(
-    heuristicClassifyFailure({ passed: false, failures: ['request timed out'], evidence: [] }).category,
+    heuristicClassifyFailure({ passed: false, failures: ['request timed out'], evidence: [] })
+      .category,
   ).toBe('transient')
   expect(
-    heuristicClassifyFailure({ passed: false, failures: ['wrong model for this task'], evidence: [] }).category,
+    heuristicClassifyFailure({
+      passed: false,
+      failures: ['wrong model for this task'],
+      evidence: [],
+    }).category,
   ).toBe('route-mismatch')
   expect(
-    heuristicClassifyFailure({ passed: false, failures: ['fatal unrecoverable error'], evidence: [] }).category,
+    heuristicClassifyFailure({
+      passed: false,
+      failures: ['fatal unrecoverable error'],
+      evidence: [],
+    }).category,
   ).toBe('fatal')
   expect(
-    heuristicClassifyFailure({ passed: false, failures: ['assertion failed'], evidence: [] }).category,
+    heuristicClassifyFailure({ passed: false, failures: ['assertion failed'], evidence: [] })
+      .category,
   ).toBe('deterministic')
 })
 
@@ -69,7 +82,11 @@ test('runChecks passes only when every check passes', async () => {
 
 // ----------------------------------------------------------- the full engine
 
-const passVerify = async (_output: unknown): Promise<VerificationResult> => ({ passed: true, failures: [], evidence: [] })
+const passVerify = async (_output: unknown): Promise<VerificationResult> => ({
+  passed: true,
+  failures: [],
+  evidence: [],
+})
 
 const failVerify = async (_output: unknown): Promise<VerificationResult> => ({
   passed: false,
@@ -107,7 +124,9 @@ test('the engine escalates the route on a route-mismatch failure', async () => {
     },
     verify: async (output) => {
       const ok = output === 'good'
-      return ok ? { passed: true, failures: [], evidence: [] } : { passed: false, failures: ['wrong model for this task'], evidence: [] }
+      return ok
+        ? { passed: true, failures: [], evidence: [] }
+        : { passed: false, failures: ['wrong model for this task'], evidence: [] }
     },
   })
   expect(outcome.status).toBe('completed')
@@ -161,7 +180,10 @@ test('the engine retries on a transient failure (same route)', async () => {
       calls += 1
       return calls >= 2 ? 'ok' : 'fail'
     },
-    verify: async (output) => output === 'ok' ? { passed: true, failures: [], evidence: [] } : { passed: false, failures: ['timed out'], evidence: [] },
+    verify: async (output) =>
+      output === 'ok'
+        ? { passed: true, failures: [], evidence: [] }
+        : { passed: false, failures: ['timed out'], evidence: [] },
   })
   expect(outcome.status).toBe('completed')
   expect(calls).toBe(2)
@@ -174,8 +196,17 @@ test('renderOutcome shows status, final route and per-attempt lines', () => {
     status: 'completed',
     finalRoute: { model: 'opus', effort: 'high' },
     attempts: [
-      { attempt: 1, route: { model: 'haiku', effort: 'low' }, verification: { passed: false, failures: ['x'], evidence: [] }, failure: { category: 'route-mismatch', detail: 'x' } },
-      { attempt: 2, route: { model: 'opus', effort: 'high' }, verification: { passed: true, failures: [], evidence: [] } },
+      {
+        attempt: 1,
+        route: { model: 'haiku', effort: 'low' },
+        verification: { passed: false, failures: ['x'], evidence: [] },
+        failure: { category: 'route-mismatch', detail: 'x' },
+      },
+      {
+        attempt: 2,
+        route: { model: 'opus', effort: 'high' },
+        verification: { passed: true, failures: [], evidence: [] },
+      },
     ],
   }
   const text = renderOutcome(outcome)
@@ -188,8 +219,26 @@ test('renderOutcome shows status, final route and per-attempt lines', () => {
 test('renderStatus handles an empty session and summarizes a populated one', () => {
   expect(renderStatus([])).toContain('no runs')
   const text = renderStatus([
-    { status: 'completed', attempts: [{ attempt: 1, route: { model: 'a', effort: 'low' }, verification: { passed: true, failures: [], evidence: [] } }] },
-    { status: 'exhausted', attempts: [{ attempt: 1, route: { model: 'b', effort: 'high' }, verification: { passed: false, failures: ['x'], evidence: [] } }] },
+    {
+      status: 'completed',
+      attempts: [
+        {
+          attempt: 1,
+          route: { model: 'a', effort: 'low' },
+          verification: { passed: true, failures: [], evidence: [] },
+        },
+      ],
+    },
+    {
+      status: 'exhausted',
+      attempts: [
+        {
+          attempt: 1,
+          route: { model: 'b', effort: 'high' },
+          verification: { passed: false, failures: ['x'], evidence: [] },
+        },
+      ],
+    },
   ])
   expect(text).toContain('runs: 2')
   expect(text).toContain('completed 1')

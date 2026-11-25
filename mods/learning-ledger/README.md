@@ -4,9 +4,9 @@ Keeps repository lessons as reviewable records. A lesson is proposed, then appro
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/lesson` | Repository lessons: /lesson propose <text> | <paths>, approve|reject|retire <id>, check |
+| Command   | What it does                               |
+| --------- | ------------------------------------------ |
+| `/lesson` | Repository lessons: /lesson propose <text> | <paths>, approve | reject | retire <id>, check |
 
 ## Hooks
 

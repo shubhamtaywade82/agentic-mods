@@ -5,7 +5,8 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'patterns',
-      description: 'Look up a GoF pattern, list a category, or describe a problem to get candidates',
+      description:
+        'Look up a GoF pattern, list a category, or describe a problem to get candidates',
     })
     return next(e)
   })

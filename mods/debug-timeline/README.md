@@ -4,11 +4,11 @@ Records the commands run during debugging, the hypotheses proposed and their out
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/hypothesis` | Record a debugging hypothesis: /hypothesis <text> |
-| `/result` | Record a hypothesis outcome: /result <id> confirmed|rejected <evidence> |
-| `/timeline` | Show the debugging timeline in a pane |
+| Command       | What it does                                        |
+| ------------- | --------------------------------------------------- |
+| `/hypothesis` | Record a debugging hypothesis: /hypothesis <text>   |
+| `/result`     | Record a hypothesis outcome: /result <id> confirmed | rejected <evidence> |
+| `/timeline`   | Show the debugging timeline in a pane               |
 
 ## Hooks
 

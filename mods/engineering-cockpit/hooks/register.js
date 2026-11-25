@@ -298,7 +298,11 @@ function assessReadiness(input) {
     verdict: input.evidence.overall,
     detail: input.evidence.checks.length === 0 ? "no checks configured or run" : failing.length === 0 ? "all required checks current" : failing.map((item) => `${item.check} ${item.verdict} (${item.reason})`).join("; ")
   };
-  const review2 = { label: "Review", verdict: input.review.verdict, detail: input.review.reason };
+  const review2 = {
+    label: "Review",
+    verdict: input.review.verdict,
+    detail: input.review.reason
+  };
   const architecture2 = {
     label: "Architecture",
     verdict: input.architecture.verdict,
@@ -314,23 +318,48 @@ function assessReadiness(input) {
 var PANE = "engineering-cockpit";
 var EVIDENCE_IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
 var CONTRACT_IDLE = { active: false, objective: "", violations: 0, mode: "warn" };
-var IMPACT_IDLE = { selection: [], untested: [], full: false, reason: "not computed yet" };
-var REVIEW_IDLE = { verdict: "UNKNOWN", openHigh: 0, open: 0, reason: "no review findings recorded" };
-var ARCH_IDLE = { verdict: "UNKNOWN", reason: "not scanned yet", fresh: 0, baseline: 0 };
+var IMPACT_IDLE = {
+  selection: [],
+  untested: [],
+  full: false,
+  reason: "not computed yet"
+};
+var REVIEW_IDLE = {
+  verdict: "UNKNOWN",
+  openHigh: 0,
+  open: 0,
+  reason: "no review findings recorded"
+};
+var ARCH_IDLE = {
+  verdict: "UNKNOWN",
+  reason: "not scanned yet",
+  fresh: 0,
+  baseline: 0
+};
 var MIGRATION_IDLE = { verdict: "UNKNOWN", findings: [] };
 var RADAR_IDLE = { verdict: "UNKNOWN", changes: [], scan: "no scan recorded" };
 var BUDGET_IDLE = { verdict: "UNKNOWN", rows: ["no measurement checked yet"] };
-var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, { shape: "status-1" });
-var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, { shape: "status-1" });
-var impact = atom({ plugin: "test-impact", key: "impact" }, IMPACT_IDLE, { shape: "impact-1" });
-var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, { shape: "gate-1" });
+var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, {
+  shape: "status-1"
+});
+var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, {
+  shape: "status-1"
+});
+var impact = atom({ plugin: "test-impact", key: "impact" }, IMPACT_IDLE, {
+  shape: "impact-1"
+});
+var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, {
+  shape: "gate-1"
+});
 var architecture = atom({ plugin: "architecture-guard", key: "status" }, ARCH_IDLE, {
   shape: "status-1"
 });
 var migration = atom({ plugin: "migration-sentinel", key: "status" }, MIGRATION_IDLE, {
   shape: "status-1"
 });
-var radar = atom({ plugin: "dependency-radar", key: "status" }, RADAR_IDLE, { shape: "status-1" });
+var radar = atom({ plugin: "dependency-radar", key: "status" }, RADAR_IDLE, {
+  shape: "status-1"
+});
 var budget = atom({ plugin: "performance-budget", key: "status" }, BUDGET_IDLE, {
   shape: "status-1"
 });
@@ -367,18 +396,33 @@ async function rowsOf($) {
       verdict: impactVerdict,
       detail: im.full ? `full suite: ${im.reason}` : `${im.selection.length} test(s) selected · ${im.untested.length} untested change(s)`
     },
-    { label: "EVIDENCE", verdict: ev.overall, detail: ev.checks.map((item) => `${item.check} ${item.verdict}`).join(" · ") || "no checks run" },
+    {
+      label: "EVIDENCE",
+      verdict: ev.overall,
+      detail: ev.checks.map((item) => `${item.check} ${item.verdict}`).join(" · ") || "no checks run"
+    },
     { label: "REVIEW", verdict: rv.verdict, detail: rv.reason },
     { label: "ARCHITECTURE", verdict: ar.verdict, detail: ar.reason },
-    { label: "MIGRATION", verdict: mg.verdict, detail: mg.findings[0] ?? "no migration changes reviewed" },
+    {
+      label: "MIGRATION",
+      verdict: mg.verdict,
+      detail: mg.findings[0] ?? "no migration changes reviewed"
+    },
     { label: "DEPENDENCIES", verdict: rd.verdict, detail: rd.changes[0] ?? rd.scan },
     { label: "PERFORMANCE", verdict: bd.verdict, detail: bd.rows[0] ?? "no measurement checked" },
-    { label: "RELEASE", verdict: readiness.verdict === "READY" ? "PASS" : readiness.verdict === "NOT READY" ? "FAIL" : "UNKNOWN", detail: `readiness ${readiness.verdict}` }
+    {
+      label: "RELEASE",
+      verdict: readiness.verdict === "READY" ? "PASS" : readiness.verdict === "NOT READY" ? "FAIL" : "UNKNOWN",
+      detail: `readiness ${readiness.verdict}`
+    }
   ];
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "agentic", description: "Cockpit: /agentic status | doctor | privacy" });
+    await $.command.register({
+      name: "agentic",
+      description: "Cockpit: /agentic status | doctor | privacy"
+    });
     return next(e);
   });
   on("command.run", { command: "agentic" }, async ($, e) => {
@@ -386,7 +430,9 @@ function register(on) {
     if (subcommand === "status") {
       await $.ui.open({ id: PANE, title: "Engineering cockpit" });
       const rows = await rowsOf($);
-      return { text: rows.map((row) => `${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`).join("\n") };
+      return {
+        text: rows.map((row) => `${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`).join("\n")
+      };
     }
     if (subcommand === "doctor") {
       const loaded = await loadConfig((path) => $.fs.read(path));

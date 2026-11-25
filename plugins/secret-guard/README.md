@@ -85,16 +85,16 @@ nested shells, and ignores quoted text that merely mentions Git.
 
 Pushes use a deliberately narrow allowlist:
 
-| Command | Result |
-| --- | --- |
-| `git push` | Allowed after scanning locally reachable commit history |
-| `git push origin` | Allowed after the same conservative scan |
-| `git push --force origin` | Allowed; force changes update semantics, not the source-ref scope |
-| `git push -v origin` | Allowed; verbose is transport/output-only |
-| `git push origin main` | Denied: explicit refspec |
-| `git push --all`, `--tags`, or `--mirror` | Denied: unsupported ref selection |
-| `git -C sub push`, `git --git-dir ... push`, `cd sub && git push`, or a `GIT_DIR`/`GIT_WORK_TREE` override | Denied: scan repository context cannot be proven |
-| Unknown flags, multiple positional arguments, or nesting too deep to inspect | Denied: target scope is uncertain |
+| Command                                                                                                    | Result                                                            |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `git push`                                                                                                 | Allowed after scanning locally reachable commit history           |
+| `git push origin`                                                                                          | Allowed after the same conservative scan                          |
+| `git push --force origin`                                                                                  | Allowed; force changes update semantics, not the source-ref scope |
+| `git push -v origin`                                                                                       | Allowed; verbose is transport/output-only                         |
+| `git push origin main`                                                                                     | Denied: explicit refspec                                          |
+| `git push --all`, `--tags`, or `--mirror`                                                                  | Denied: unsupported ref selection                                 |
+| `git -C sub push`, `git --git-dir ... push`, `cd sub && git push`, or a `GIT_DIR`/`GIT_WORK_TREE` override | Denied: scan repository context cannot be proven                  |
+| Unknown flags, multiple positional arguments, or nesting too deep to inspect                               | Denied: target scope is uncertain                                 |
 
 For an accepted push, the guard runs
 `git log -p --format= --all --not --remotes`. This is intentionally broader

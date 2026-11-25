@@ -20,8 +20,7 @@ declare module 'claude-code' {
   interface PluginState {
     'sdlc-guard': {
       // PolicyContext: interactive defaults to true.
-      context:
-        { interactive: boolean; scopeFileCount?: number; isProduction?: boolean } | undefined;
-    };
+      context: { interactive: boolean; scopeFileCount?: number; isProduction?: boolean } | undefined
+    }
   }
 }

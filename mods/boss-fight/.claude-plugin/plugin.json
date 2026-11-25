@@ -2,9 +2,7 @@
   "name": "boss-fight",
   "version": "0.1.0",
   "description": "Shows the test check as a boss battle above the prompt: the boss stands while the test check fails and falls when it passes. It reads evidence-gate's published state and changes nothing.",
-  "dependencies": [
-    "evidence-gate"
-  ],
+  "dependencies": ["evidence-gate"],
   "author": {
     "name": "shubhamtaywade82"
   }

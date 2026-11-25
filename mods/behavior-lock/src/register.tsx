@@ -16,7 +16,10 @@ const gate = atom({ plugin: 'behavior-lock', key: 'gate' } as const, IDLE, { sha
 
 type Baseline = { name: string; files: Record<string, ExportEntry[]> }
 
-async function surfaceOf($: EngineInterface, files: readonly string[]): Promise<Record<string, ExportEntry[]>> {
+async function surfaceOf(
+  $: EngineInterface,
+  files: readonly string[],
+): Promise<Record<string, ExportEntry[]>> {
   const out: Record<string, ExportEntry[]> = {}
   for (const path of files) {
     out[path] = extractSurface(await $.fs.read(path))
@@ -26,7 +29,7 @@ async function surfaceOf($: EngineInterface, files: readonly string[]): Promise<
 
 function flatten(files: Record<string, ExportEntry[]>): ExportEntry[] {
   return Object.entries(files).flatMap(([file, entries]) =>
-    entries.map(entry => ({ name: `${file}#${entry.name}`, signature: entry.signature })),
+    entries.map((entry) => ({ name: `${file}#${entry.name}`, signature: entry.signature })),
   )
 }
 
@@ -40,9 +43,14 @@ export function register(on: On): void {
   })
 
   on('command.run', { command: 'lock' }, async ($, e) => {
-    const [subcommand = '', name = '', ...files] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = '', name = '', ...files] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
     if (!/^[a-z0-9-]{1,40}$/.test(name)) {
-      return { text: 'Usage: /lock capture|compare <name> [files...]. The name is lowercase letters, digits or dashes.' }
+      return {
+        text: 'Usage: /lock capture|compare <name> [files...]. The name is lowercase letters, digits or dashes.',
+      }
     }
     const path = stateRelativePath(`behavior/${name}.json`)
 
@@ -52,7 +60,11 @@ export function register(on: On): void {
       const baseline: Baseline = { name, files: await surfaceOf($, normalized) }
       await $.fs.write(path, `${JSON.stringify(baseline, null, 2)}\n`)
       const count = Object.values(baseline.files).reduce((sum, list) => sum + list.length, 0)
-      await update($, gate, () => ({ verdict: 'PASS', phase: 'baseline', reason: `${count} export(s) captured as ${name}` }))
+      await update($, gate, () => ({
+        verdict: 'PASS',
+        phase: 'baseline',
+        reason: `${count} export(s) captured as ${name}`,
+      }))
       return { text: `Baseline ${name}: ${count} export(s) across ${normalized.length} file(s).` }
     }
 
@@ -69,13 +81,18 @@ export function register(on: On): void {
       await update($, gate, () => ({
         verdict: breaking === 0 ? 'PASS' : 'FAIL',
         phase: 'compared',
-        reason: truncate(`${diff.removed.length} removed, ${diff.changed.length} changed, ${diff.added.length} added`, 200),
+        reason: truncate(
+          `${diff.removed.length} removed, ${diff.changed.length} changed, ${diff.added.length} added`,
+          200,
+        ),
       }))
       const lines = [
-        breaking === 0 ? 'Surface matches the baseline (additions only).' : 'Breaking surface change.',
-        ...diff.removed.map(item => `removed: ${item}`),
-        ...diff.changed.map(item => `changed: ${item}`),
-        ...diff.added.map(item => `added: ${item}`),
+        breaking === 0
+          ? 'Surface matches the baseline (additions only).'
+          : 'Breaking surface change.',
+        ...diff.removed.map((item) => `removed: ${item}`),
+        ...diff.changed.map((item) => `changed: ${item}`),
+        ...diff.added.map((item) => `added: ${item}`),
       ]
       return { text: lines.join('\n') }
     }

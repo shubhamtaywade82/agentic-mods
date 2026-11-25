@@ -43,10 +43,10 @@ import type {
   TurnStartInput,
   TurnStepInput,
   TurnStepResult,
-} from 'claude-code';
-import { atom, update } from 'claude-code';
-import { TraceStore } from '../policies/trace-store';
-import type { ObserverEvent, ObserverEventKind, RetentionPolicy } from '../policies/types';
+} from 'claude-code'
+import { atom, update } from 'claude-code'
+import { TraceStore } from '../policies/trace-store'
+import type { ObserverEvent, ObserverEventKind, RetentionPolicy } from '../policies/types'
 
 const DEFAULT_POLICY: RetentionPolicy = {
   schemaVersion: 1,
@@ -55,12 +55,12 @@ const DEFAULT_POLICY: RetentionPolicy = {
   redactSummaries: true,
   dropUsageData: false,
   redactPathPatterns: [],
-};
+}
 
 function redactSummary(text: string, policy: RetentionPolicy): string {
-  if (!policy.redactSummaries) return text;
+  if (!policy.redactSummaries) return text
   // Strip anything that looks like an absolute path.
-  return text.replace(/\/(?:[^/\s]+\/)+[^/\s]+/g, '<path>');
+  return text.replace(/\/(?:[^/\s]+\/)+[^/\s]+/g, '<path>')
 }
 
 /** Record an event into the store. Takes plain values, never $. */
@@ -81,8 +81,8 @@ function record(
     summary: redactSummary(summary, DEFAULT_POLICY),
     partial: false,
     ...extra,
-  };
-  store.record(event);
+  }
+  store.record(event)
 }
 
 /** Run an observation; an observer never blocks on its own failure. */
@@ -94,19 +94,19 @@ async function observe(
   work: () => Promise<void> | void,
 ): Promise<void> {
   try {
-    await work();
+    await work()
   } catch (err) {
     // Fail silently: telemetry observations must never spam or disrupt user interaction.
-    void err;
+    void err
   }
 }
 
 /** The host clock, or undefined when it fails: an observer's clock is best-effort. */
 async function readClock($: EngineInterface): Promise<number | undefined> {
   try {
-    return await $.clock.now();
+    return await $.clock.now()
   } catch {
-    return undefined;
+    return undefined
   }
 }
 
@@ -114,105 +114,105 @@ export function register(on: On): void {
   // The store is per-session; the host's $.state is the sharing surface
   // (the contract declares the 'store' key). In-memory by design (M13);
   // the file-backed collector is future work.
-  const store = new TraceStore(DEFAULT_POLICY);
+  const store = new TraceStore(DEFAULT_POLICY)
   // The store state key, declared in contract.d.ts. update() publishes
   // the live store each turn so kit runs can read it.
-  const STORE = atom({ plugin: 'run-observer', key: 'store' } as const, store);
-  let currentRunId = 'RUN-0001';
-  let sessionId: string | undefined;
+  const STORE = atom({ plugin: 'run-observer', key: 'store' } as const, store)
+  let currentRunId = 'RUN-0001'
+  let sessionId: string | undefined
 
   on('session.start', async ($, _e: SessionStartInput, next) => {
     await observe($, 'session-start', async () => {
-      sessionId = await $.session.id();
+      sessionId = await $.session.id()
       record(
         store,
         currentRunId,
         await $.clock.now(),
         'session-start',
         `session=${sessionId ?? '?'}`,
-      );
-    });
-    return next(_e);
-  });
+      )
+    })
+    return next(_e)
+  })
 
   on('turn.start', async ($, e: TurnStartInput, next) => {
     await observe($, 'turn-start', async () => {
-      if (e.turnId !== undefined) currentRunId = e.turnId;
-      record(store, currentRunId, await $.clock.now(), 'turn-start', `run=${currentRunId}`);
-    });
-    return next(e);
-  });
+      if (e.turnId !== undefined) currentRunId = e.turnId
+      record(store, currentRunId, await $.clock.now(), 'turn-start', `run=${currentRunId}`)
+    })
+    return next(e)
+  })
 
   // turn.step streams: delegate with yield* and record what came back
   // (the model that answered — under result.usage.model — and its token
   // usage).
   on('turn.step', async function* ($, e: TurnStepInput, next) {
-    const result: TurnStepResult = yield* next(e);
+    const result: TurnStepResult = yield* next(e)
     await observe($, 'turn-step', async () => {
-      const usage = result.usage;
-      const model = usage?.model ?? undefined;
+      const usage = result.usage
+      const model = usage?.model ?? undefined
       record(store, currentRunId, await $.clock.now(), 'turn-step', `model=${model ?? '?'}`, {
         ...(model !== undefined ? { model } : {}),
         ...(usage?.input_tokens !== undefined ? { tokensIn: usage.input_tokens } : {}),
         ...(usage?.output_tokens !== undefined ? { tokensOut: usage.output_tokens } : {}),
         partial: usage == null,
-      });
-    });
-    return result;
-  });
+      })
+    })
+    return result
+  })
 
   on('tool.call', async ($, e: ToolCallInput, next) => {
     // Telemetry must never decide whether the chain runs. This registration
     // fails open (.catch below yields "no result"), so a throw BEFORE next()
     // would swallow every guard registered inside this observer (approval,
     // secret scan). Read the clock defensively and always reach next().
-    const startedAt = await readClock($);
-    const result = await next(e);
+    const startedAt = await readClock($)
+    const result = await next(e)
     await observe($, 'tool-call', async () => {
       // Tolerate a host that resolves to nothing (the official engine
       // always yields a ToolCallResult; the kit's MockRuntime may be
       // configured without one) before touching fields.
-      const r = result as ToolCallResult<string> | undefined | null;
+      const r = result as ToolCallResult<string> | undefined | null
       const ok = !(
         r !== null &&
         typeof r === 'object' &&
         (r.isError !== undefined || r.deny !== undefined)
-      );
-      const durationMs = startedAt === undefined ? 0 : (await $.clock.now()) - startedAt;
+      )
+      const durationMs = startedAt === undefined ? 0 : (await $.clock.now()) - startedAt
       record(
         store,
         currentRunId,
         await $.clock.now(),
         'tool-call',
         `tool=${e.tool} ok=${ok} ${durationMs}ms`,
-      );
-    });
-    return result;
+      )
+    })
+    return result
     // Fail open: an observer must never block the chain. observe() already
     // swallows this plugin's own recording errors; this .catch is the final
     // net so any residual throw still yields "no result" (the host proceeds
     // with the tool's own outcome) instead of aborting the call.
-  }).catch(() => undefined);
+  }).catch(() => undefined)
 
   on('turn.complete', async ($, e: TurnCompleteInput, next) => {
     await observe($, 'turn-complete', async () => {
-      const usage = e.usage;
-      const parts = [`run=${e.turnId ?? currentRunId}`];
-      if (e.agentId !== undefined) parts.push(`agent=${e.agentId}`);
-      if (e.isAborted) parts.push('aborted');
+      const usage = e.usage
+      const parts = [`run=${e.turnId ?? currentRunId}`]
+      if (e.agentId !== undefined) parts.push(`agent=${e.agentId}`)
+      if (e.isAborted) parts.push('aborted')
       record(store, currentRunId, await $.clock.now(), 'turn-complete', parts.join(' '), {
         ...(usage?.input_tokens !== undefined ? { tokensIn: usage.input_tokens } : {}),
         ...(usage?.output_tokens !== undefined ? { tokensOut: usage.output_tokens } : {}),
         partial: usage == null,
-      });
+      })
       // Surface a live status line under the prompt.
       $.ui.status(
         `kit: ${store.getRun(currentRunId)?.events.length ?? 0} events · run=${currentRunId}`,
-      );
+      )
       // Publishing is telemetry too: a state backend failure must not prevent
       // the lifecycle event from reaching downstream handlers.
-      await update($, STORE, () => store);
-    });
-    return next(e);
-  });
+      await update($, STORE, () => store)
+    })
+    return next(e)
+  })
 }

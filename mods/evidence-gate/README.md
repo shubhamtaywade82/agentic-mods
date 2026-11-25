@@ -4,8 +4,8 @@ Runs the configured build, test, lint, type-check and security commands, records
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command     | What it does                                                   |
+| ----------- | -------------------------------------------------------------- |
 | `/evidence` | Show or run the verification checks: /evidence [run [check...] | clear] |
 
 ## Hooks

@@ -89,7 +89,9 @@ function renderTree(snap) {
       const icon = iconFor(c.status);
       const files = c.files.length > 0 ? ` · ${c.files.length} file(s)` : "";
       const note = c.note ? ` — ${c.note}` : "";
-      lines.push(`${indent}${icon} ${c.label} [${c.status}${c.durationMs ? ` ${c.durationMs}ms` : ""}]${files}${note}`);
+      lines.push(
+        `${indent}${icon} ${c.label} [${c.status}${c.durationMs ? ` ${c.durationMs}ms` : ""}]${files}${note}`
+      );
       render(c.id, depth + 1);
     }
   };
@@ -228,7 +230,9 @@ function register(on) {
   });
   on("command.run", { command: "trace-summary" }, async () => {
     const s = summarize(trace);
-    return { text: `trace summary: ${s.total} nodes (${s.agents} agents, ${s.tools} tools; ${s.running} running, ${s.failed} failed, ${s.completed} completed)` };
+    return {
+      text: `trace summary: ${s.total} nodes (${s.agents} agents, ${s.tools} tools; ${s.running} running, ${s.failed} failed, ${s.completed} completed)`
+    };
   });
 }
 export {

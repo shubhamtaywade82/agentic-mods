@@ -4,8 +4,8 @@ Runs the compatibility tools configured for this repository (OpenAPI diff, buf b
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command   | What it does                                                                    |
+| --------- | ------------------------------------------------------------------------------- |
 | `/compat` | Compatibility checks: /compat run [name] (tools from .agentic-mods/compat.json) |
 
 ## Hooks

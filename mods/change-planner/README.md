@@ -4,8 +4,8 @@ Records the change plan (objective, files, tests, risks) and turns it into a cha
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command        | What it does                              |
+| -------------- | ----------------------------------------- |
 | `/change-plan` | Change plan: /change-plan set <objective> | <files> | <tests> | <risks>, /change-plan show, /change-plan contract |
 
 ## Hooks

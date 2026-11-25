@@ -27,18 +27,18 @@ Installing from a published marketplace path has not been tested.
 
 ## Presets
 
-| Preset | Adds to `essential` |
-|---|---|
-| essential | command-guard, evidence-gate, change-contract, session-meter, task-orientation, engineering-cockpit |
-| node-typescript | test-impact, architecture-guard, turn-replay, next-steps |
-| frontend | node-typescript, markdown-preview, boss-fight |
-| backend | node-typescript, migration-sentinel, performance-budget, dependency-radar |
-| java-spring | test-impact, architecture-guard, migration-sentinel, dependency-radar, performance-budget |
-| python · go · rust | test-impact, dependency-radar (python adds migration-sentinel) |
-| dotnet | test-impact, architecture-guard |
-| monorepo | test-impact, architecture-guard, worktree-orchestrator, switchboard |
-| platform-engineering | migration-sentinel, dependency-radar, release-conductor, contract-compatibility-guard, mod-firewall |
-| regulated | mod-firewall, review-tracker, pr-readiness, release-conductor, incident-timeline, learning-ledger, workflow-conductor (enforce mode) |
+| Preset               | Adds to `essential`                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| essential            | command-guard, evidence-gate, change-contract, session-meter, task-orientation, engineering-cockpit                                  |
+| node-typescript      | test-impact, architecture-guard, turn-replay, next-steps                                                                             |
+| frontend             | node-typescript, markdown-preview, boss-fight                                                                                        |
+| backend              | node-typescript, migration-sentinel, performance-budget, dependency-radar                                                            |
+| java-spring          | test-impact, architecture-guard, migration-sentinel, dependency-radar, performance-budget                                            |
+| python · go · rust   | test-impact, dependency-radar (python adds migration-sentinel)                                                                       |
+| dotnet               | test-impact, architecture-guard                                                                                                      |
+| monorepo             | test-impact, architecture-guard, worktree-orchestrator, switchboard                                                                  |
+| platform-engineering | migration-sentinel, dependency-radar, release-conductor, contract-compatibility-guard, mod-firewall                                  |
+| regulated            | mod-firewall, review-tracker, pr-readiness, release-conductor, incident-timeline, learning-ledger, workflow-conductor (enforce mode) |
 
 Presets are lists in `presets/*.json`. They do not enable anything by themselves: the person turns
 mods on.
@@ -66,23 +66,28 @@ observability-verifier, release-conductor, ci-triage.
 
 **Presentation:** boss-fight, code-pet, session-wrapped, commentary.
 
+**Integrated local mods:** guardian (secret redaction and destructive-command approval), trace (run tree of
+agents, tools and files), verify (route, verify and escalate a task), pulse (tool-call and context
+readout), sdlc (8-stage lifecycle commands), design-patterns (GoF pattern reference), mod-template
+(starter to copy).
+
 The full list, with the purpose of each mod, is in `registry/native-mods.json`.
 
 ## Commands (selection)
 
-| Command | Mod | What it does |
-|---|---|---|
-| `/guard` | command-guard | settings, config problems, blocks this session |
-| `/evidence run [check]` · `/evidence` | evidence-gate | run configured checks, show verdicts |
-| `/contract set|allow|forbid|mode|show` | change-contract | scope for the change |
-| `/impact` | test-impact | tests the working tree reaches |
-| `/finding add|set|list` | review-tracker | review findings and lifecycle |
-| `/pr-ready [description]` | pr-readiness | readiness verdict, drafted verification section |
-| `/workflow start|status|advance|defer|cancel` | workflow-conductor | run a delivery workflow |
-| `/tdd red|green|refactor|complete <test>` | tdd-conductor | TDD cycle with behavioral RED |
-| `/regression assess|run` | regression-orchestrator | risk scope and its checks |
-| `/incident open|event|mitigate|recover|close|postmortem` | incident-timeline | incident record |
-| `/agentic status|doctor|privacy` | engineering-cockpit | overall state and config health |
+| Command                               | Mod           | What it does                                    |
+| ------------------------------------- | ------------- | ----------------------------------------------- |
+| `/guard`                              | command-guard | settings, config problems, blocks this session  |
+| `/evidence run [check]` · `/evidence` | evidence-gate | run configured checks, show verdicts            |
+| `/contract set                        | allow         | forbid                                          | mode                      | show`                           | change-contract               | scope for the change    |
+| `/impact`                             | test-impact   | tests the working tree reaches                  |
+| `/finding add                         | set           | list`                                           | review-tracker            | review findings and lifecycle   |
+| `/pr-ready [description]`             | pr-readiness  | readiness verdict, drafted verification section |
+| `/workflow start                      | status        | advance                                         | defer                     | cancel`                         | workflow-conductor            | run a delivery workflow |
+| `/tdd red                             | green         | refactor                                        | complete <test>`          | tdd-conductor                   | TDD cycle with behavioral RED |
+| `/regression assess                   | run`          | regression-orchestrator                         | risk scope and its checks |
+| `/incident open                       | event         | mitigate                                        | recover                   | close                           | postmortem`                   | incident-timeline       | incident record |
+| `/agentic status                      | doctor        | privacy`                                        | engineering-cockpit       | overall state and config health |
 
 ## Configuration
 

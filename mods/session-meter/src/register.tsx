@@ -1,13 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import {
-  formatPercent,
-  formatUsd,
-  levelOf,
-  loadConfig,
-  rateLevel,
-} from '@agentic-mods/core'
+import { formatPercent, formatUsd, levelOf, loadConfig, rateLevel } from '@agentic-mods/core'
 import type { MeterState } from '../types'
 
 const IDLE: MeterState = { contextPercent: null, usd: null, rateLimits: [], warning: null }
@@ -15,12 +9,15 @@ const meter = atom({ plugin: 'session-meter', key: 'meter' } as const, IDLE, { s
 
 export function register(on: On): void {
   on('session.measure', async ($, e, next) => {
-    const config = (await loadConfig(path => $.fs.read(path))).value.meter
+    const config = (await loadConfig((path) => $.fs.read(path))).value.meter
     const windowSize = e.context.window
     const tokens = e.context.tokens ?? 0
     const contextPercent = windowSize > 0 ? (tokens / windowSize) * 100 : null
     const usd = e.cost?.usd ?? null
-    const rateLimits = e.rateLimits.map(limit => ({ kind: limit.kind, percentUsed: limit.percentUsed }))
+    const rateLimits = e.rateLimits.map((limit) => ({
+      kind: limit.kind,
+      percentUsed: limit.percentUsed,
+    }))
 
     const warnings: string[] = []
     if (
@@ -54,7 +51,8 @@ export function register(on: On): void {
     const parts: string[] = []
     if (state.contextPercent !== null) parts.push(`context ${formatPercent(state.contextPercent)}`)
     if (state.usd !== null) parts.push(`cost ${formatUsd(state.usd)}`)
-    for (const limit of state.rateLimits) parts.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`)
+    for (const limit of state.rateLimits)
+      parts.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`)
     return (
       <Box>
         <Text dimColor={state.warning === null}>

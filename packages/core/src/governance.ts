@@ -6,7 +6,7 @@ import type { Layer } from './config'
 export function layerOf(path: string, layers: readonly Layer[]): Layer | null {
   const normalized = normalizePath(path)
   for (const layer of layers) {
-    if (layer.paths.some(glob => globToRegExp(glob).test(normalized))) return layer
+    if (layer.paths.some((glob) => globToRegExp(glob).test(normalized))) return layer
   }
   return null
 }
@@ -56,20 +56,17 @@ export function newViolations(
   found: readonly LayerViolation[],
   baseline: ReadonlySet<string>,
 ): LayerViolation[] {
-  return found.filter(item => !baseline.has(item.key))
+  return found.filter((item) => !baseline.has(item.key))
 }
 
-export function architectureDecision(
-  mode: Mode,
-  fresh: readonly LayerViolation[],
-): Decision {
+export function architectureDecision(mode: Mode, fresh: readonly LayerViolation[]): Decision {
   if (fresh.length === 0) {
     return { decision: 'allow', policyId: 'architecture-guard', message: 'no new violations' }
   }
   const first = fresh[0]
   const summary = fresh
     .slice(0, 3)
-    .map(item => `${item.fromPath} (${item.fromLayer}) imports ${item.toPath} (${item.toLayer})`)
+    .map((item) => `${item.fromPath} (${item.fromLayer}) imports ${item.toPath} (${item.toLayer})`)
     .join('; ')
   return violation(
     mode,
@@ -102,7 +99,7 @@ export function parseContractJson(text: string): ContractSpec | null {
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null
   const record = parsed as Record<string, unknown>
   const isStrings = (value: unknown): value is string[] =>
-    Array.isArray(value) && value.every(item => typeof item === 'string')
+    Array.isArray(value) && value.every((item) => typeof item === 'string')
   const mode = record['mode']
   if (typeof record['objective'] !== 'string') return null
   if (!isStrings(record['allowed']) || !isStrings(record['forbidden'])) return null

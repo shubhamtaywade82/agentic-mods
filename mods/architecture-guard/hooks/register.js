@@ -479,8 +479,15 @@ var MAX_SCAN_FILES = 2e3;
 var MAX_BYTES = 3e5;
 var TS_FILE = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
 var JAVA_FILE = /\.java$/;
-var IDLE = { verdict: "UNKNOWN", reason: "not scanned yet", fresh: 0, baseline: 0 };
-var status = atom({ plugin: "architecture-guard", key: "status" }, IDLE, { shape: "status-1" });
+var IDLE = {
+  verdict: "UNKNOWN",
+  reason: "not scanned yet",
+  fresh: 0,
+  baseline: 0
+};
+var status = atom({ plugin: "architecture-guard", key: "status" }, IDLE, {
+  shape: "status-1"
+});
 function languageOf(path) {
   if (TS_FILE.test(path)) return "typescript";
   if (JAVA_FILE.test(path)) return "java";
@@ -571,7 +578,9 @@ function register(on) {
     const subcommand = e.args.trim();
     if (subcommand === "scan") return { text: await scan($) };
     const current = await read($, status);
-    return { text: `architecture: ${current.verdict} · ${current.reason} · baseline ${current.baseline}` };
+    return {
+      text: `architecture: ${current.verdict} · ${current.reason} · baseline ${current.baseline}`
+    };
   });
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     if (languageOf(e.file_path) === null) return next(e);
@@ -579,14 +588,18 @@ function register(on) {
     if (decision.decision === "block") return { deny: describeDecision(decision) };
     if (decision.decision === "warn") $.ui.toast(describeDecision(decision));
     return next(e);
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "architecture-guard failed closed on Edit." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "architecture-guard failed closed on Edit." }
+  );
   on("tool.call", { tool: "Write" }, async ($, e, next) => {
     if (languageOf(e.file_path) === null) return next(e);
     const decision = await judge($, e.file_path, e.content);
     if (decision.decision === "block") return { deny: describeDecision(decision) };
     if (decision.decision === "warn") $.ui.toast(describeDecision(decision));
     return next(e);
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "architecture-guard failed closed on Write." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "architecture-guard failed closed on Write." }
+  );
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e);
     const current = await read($, status);

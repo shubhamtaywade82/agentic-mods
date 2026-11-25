@@ -16,24 +16,49 @@ const PANE = 'engineering-cockpit'
 
 const EVIDENCE_IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
 const CONTRACT_IDLE: ContractStatus = { active: false, objective: '', violations: 0, mode: 'warn' }
-const IMPACT_IDLE: ImpactStatus = { selection: [], untested: [], full: false, reason: 'not computed yet' }
-const REVIEW_IDLE: ReviewGate = { verdict: 'UNKNOWN', openHigh: 0, open: 0, reason: 'no review findings recorded' }
-const ARCH_IDLE: ArchitectureStatus = { verdict: 'UNKNOWN', reason: 'not scanned yet', fresh: 0, baseline: 0 }
+const IMPACT_IDLE: ImpactStatus = {
+  selection: [],
+  untested: [],
+  full: false,
+  reason: 'not computed yet',
+}
+const REVIEW_IDLE: ReviewGate = {
+  verdict: 'UNKNOWN',
+  openHigh: 0,
+  open: 0,
+  reason: 'no review findings recorded',
+}
+const ARCH_IDLE: ArchitectureStatus = {
+  verdict: 'UNKNOWN',
+  reason: 'not scanned yet',
+  fresh: 0,
+  baseline: 0,
+}
 const MIGRATION_IDLE: MigrationStatus = { verdict: 'UNKNOWN', findings: [] }
 const RADAR_IDLE: RadarStatus = { verdict: 'UNKNOWN', changes: [], scan: 'no scan recorded' }
 const BUDGET_IDLE: BudgetStatus = { verdict: 'UNKNOWN', rows: ['no measurement checked yet'] }
 
-const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, { shape: 'status-1' })
-const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, { shape: 'status-1' })
-const impact = atom({ plugin: 'test-impact', key: 'impact' } as const, IMPACT_IDLE, { shape: 'impact-1' })
-const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, { shape: 'gate-1' })
+const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, {
+  shape: 'status-1',
+})
+const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, {
+  shape: 'status-1',
+})
+const impact = atom({ plugin: 'test-impact', key: 'impact' } as const, IMPACT_IDLE, {
+  shape: 'impact-1',
+})
+const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, {
+  shape: 'gate-1',
+})
 const architecture = atom({ plugin: 'architecture-guard', key: 'status' } as const, ARCH_IDLE, {
   shape: 'status-1',
 })
 const migration = atom({ plugin: 'migration-sentinel', key: 'status' } as const, MIGRATION_IDLE, {
   shape: 'status-1',
 })
-const radar = atom({ plugin: 'dependency-radar', key: 'status' } as const, RADAR_IDLE, { shape: 'status-1' })
+const radar = atom({ plugin: 'dependency-radar', key: 'status' } as const, RADAR_IDLE, {
+  shape: 'status-1',
+})
 const budget = atom({ plugin: 'performance-budget', key: 'status' } as const, BUDGET_IDLE, {
   shape: 'status-1',
 })
@@ -76,19 +101,40 @@ async function rowsOf($: EngineInterface): Promise<CockpitRow[]> {
         ? `full suite: ${im.reason}`
         : `${im.selection.length} test(s) selected · ${im.untested.length} untested change(s)`,
     },
-    { label: 'EVIDENCE', verdict: ev.overall, detail: ev.checks.map(item => `${item.check} ${item.verdict}`).join(' · ') || 'no checks run' },
+    {
+      label: 'EVIDENCE',
+      verdict: ev.overall,
+      detail:
+        ev.checks.map((item) => `${item.check} ${item.verdict}`).join(' · ') || 'no checks run',
+    },
     { label: 'REVIEW', verdict: rv.verdict, detail: rv.reason },
     { label: 'ARCHITECTURE', verdict: ar.verdict, detail: ar.reason },
-    { label: 'MIGRATION', verdict: mg.verdict, detail: mg.findings[0] ?? 'no migration changes reviewed' },
+    {
+      label: 'MIGRATION',
+      verdict: mg.verdict,
+      detail: mg.findings[0] ?? 'no migration changes reviewed',
+    },
     { label: 'DEPENDENCIES', verdict: rd.verdict, detail: rd.changes[0] ?? rd.scan },
     { label: 'PERFORMANCE', verdict: bd.verdict, detail: bd.rows[0] ?? 'no measurement checked' },
-    { label: 'RELEASE', verdict: readiness.verdict === 'READY' ? 'PASS' : readiness.verdict === 'NOT READY' ? 'FAIL' : 'UNKNOWN', detail: `readiness ${readiness.verdict}` },
+    {
+      label: 'RELEASE',
+      verdict:
+        readiness.verdict === 'READY'
+          ? 'PASS'
+          : readiness.verdict === 'NOT READY'
+            ? 'FAIL'
+            : 'UNKNOWN',
+      detail: `readiness ${readiness.verdict}`,
+    },
   ]
 }
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'agentic', description: 'Cockpit: /agentic status | doctor | privacy' })
+    await $.command.register({
+      name: 'agentic',
+      description: 'Cockpit: /agentic status | doctor | privacy',
+    })
     return next(e)
   })
 
@@ -97,15 +143,24 @@ export function register(on: On): void {
     if (subcommand === 'status') {
       await $.ui.open({ id: PANE, title: 'Engineering cockpit' })
       const rows = await rowsOf($)
-      return { text: rows.map(row => `${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`).join('\n') }
+      return {
+        text: rows
+          .map((row) => `${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`)
+          .join('\n'),
+      }
     }
     if (subcommand === 'doctor') {
-      const loaded = await loadConfig(path => $.fs.read(path))
+      const loaded = await loadConfig((path) => $.fs.read(path))
       const rows = await rowsOf($)
       const lines = [
         loaded.errors.length === 0 ? 'config: valid' : 'config problems:',
-        ...loaded.errors.map(message => `  ${message}`),
-        `cockpit rows with UNKNOWN: ${rows.filter(row => row.verdict === 'UNKNOWN').map(row => row.label).join(', ') || 'none'}`,
+        ...loaded.errors.map((message) => `  ${message}`),
+        `cockpit rows with UNKNOWN: ${
+          rows
+            .filter((row) => row.verdict === 'UNKNOWN')
+            .map((row) => row.label)
+            .join(', ') || 'none'
+        }`,
       ]
       return { text: lines.join('\n') }
     }
@@ -115,7 +170,7 @@ export function register(on: On): void {
           'Local only. No network calls and no remote telemetry are made by these mods.',
           'Files written under .agentic-mods/: contract.json, findings.json, ledger.json,',
           'architecture-baseline.json, audit/*.jsonl, incidents/*, scans/* (read only).',
-          'Session values are kept in each mod\'s own store, shared across sessions on this machine.',
+          "Session values are kept in each mod's own store, shared across sessions on this machine.",
           'Secret-looking values are redacted before they are written to an audit or timeline file.',
         ].join('\n'),
       }
@@ -130,7 +185,7 @@ export function register(on: On): void {
     return (
       <Box flexDirection="column">
         <Text>Release: {readiness.verdict}</Text>
-        {rows.map(row => (
+        {rows.map((row) => (
           <Text key={row.label}>
             {row.label.padEnd(13)} {row.verdict.padEnd(9)} {row.detail}
           </Text>

@@ -26,15 +26,16 @@ interface Rule {
   test: (cmd: string) => boolean
 }
 
-const isProdDb = (cmd: string): boolean =>
-  /\b(?:prod(?:uction)?|live|primary)\b/i.test(cmd)
+const isProdDb = (cmd: string): boolean => /\b(?:prod(?:uction)?|live|primary)\b/i.test(cmd)
 
 /** Rules evaluated in order; first match wins. */
 const RULES: readonly Rule[] = [
   {
     kind: 'rm-rf',
     why: 'recursively force-deletes files; recovery is impossible in most setups',
-    test: (c) => /(^|[\s;&|])(rm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\b|rm\s+-rf\b)/.test(c) || /rm\s+--recursive\s+--force/.test(c),
+    test: (c) =>
+      /(^|[\s;&|])(rm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\b|rm\s+-rf\b)/.test(c) ||
+      /rm\s+--recursive\s+--force/.test(c),
   },
   {
     kind: 'force-push',
@@ -44,7 +45,8 @@ const RULES: readonly Rule[] = [
   {
     kind: 'history-rewrite',
     why: 'rewrites history or drops commits on the current branch',
-    test: (c) => /git\s+(filter-branch|rebase\b[^\n]*--root|reflog\s+expire\b[^\n]*--expire=now)/.test(c),
+    test: (c) =>
+      /git\s+(filter-branch|rebase\b[^\n]*--root|reflog\s+expire\b[^\n]*--expire=now)/.test(c),
   },
   {
     kind: 'drop-database',
@@ -54,12 +56,16 @@ const RULES: readonly Rule[] = [
   {
     kind: 'prod-db-write',
     why: 'writes to what looks like a production database',
-    test: (c) => isProdDb(c) && /\b(?:psql|mysql|psqlpg|pg_restore|pg_dump|redis-cli|mongo|mongosh)\b/.test(c),
+    test: (c) =>
+      isProdDb(c) && /\b(?:psql|mysql|psqlpg|pg_restore|pg_dump|redis-cli|mongo|mongosh)\b/.test(c),
   },
   {
     kind: 'db-migration',
     why: 'runs a database migration, which changes schema irreversibly',
-    test: (c) => /\b(?:bin\/rails\s+db:(?:migrate|reset|drop)|npx\s+prisma\s+migrate\s+(?:deploy|reset|dev)|python\s+manage\.py\s+migrate|alembic\s+upgrade)\b/.test(c),
+    test: (c) =>
+      /\b(?:bin\/rails\s+db:(?:migrate|reset|drop)|npx\s+prisma\s+migrate\s+(?:deploy|reset|dev)|python\s+manage\.py\s+migrate|alembic\s+upgrade)\b/.test(
+        c,
+      ),
   },
   {
     kind: 'chmod-777-root',

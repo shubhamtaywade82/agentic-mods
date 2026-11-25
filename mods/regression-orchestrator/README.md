@@ -4,8 +4,8 @@ Scores the regression risk of the working tree, explains the score, and runs the
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command       | What it does                         |
+| ------------- | ------------------------------------ |
 | `/regression` | Regression scope: /regression assess | /regression run |
 
 ## Hooks

@@ -4,8 +4,8 @@ Assembles release readiness from the evidence, review, architecture, migration, 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command    | What it does                      |
+| ---------- | --------------------------------- |
 | `/release` | Release readiness: /release check |
 
 ## Hooks

@@ -18,7 +18,10 @@ export function toolLabel(tool: string | undefined, command: string | undefined)
 }
 
 /** Map a file operation from a Write/Edit event into a FileTouch. */
-export function fileTouchFromTool(tool: string | undefined, path: string | undefined): FileTouch | null {
+export function fileTouchFromTool(
+  tool: string | undefined,
+  path: string | undefined,
+): FileTouch | null {
   if (typeof path !== 'string' || path.length === 0) return null
   const op = tool === 'Edit' || tool === 'Write' ? 'write' : 'read'
   return { path, op }
@@ -95,6 +98,9 @@ export function openAgent(
   description: string | undefined,
 ): string {
   const role = typeof subagentType === 'string' && subagentType.length > 0 ? subagentType : 'agent'
-  const label = typeof description === 'string' && description.length > 0 ? `${role}: ${description.slice(0, 50)}` : role
+  const label =
+    typeof description === 'string' && description.length > 0
+      ? `${role}: ${description.slice(0, 50)}`
+      : role
   return trace.open({ kind: 'agent' satisfies NodeKind, label, parentId })
 }

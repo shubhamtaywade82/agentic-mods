@@ -26,7 +26,10 @@ function strField(e: unknown, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
-function pickInitialRoute(effort: RoutingPolicy['effort'], policy: EscalationPolicy): RoutingPolicy {
+function pickInitialRoute(
+  effort: RoutingPolicy['effort'],
+  policy: EscalationPolicy,
+): RoutingPolicy {
   const match = policy.fallbackRoutes.find((r) => r.effort === effort)
   return match ?? policy.fallbackRoutes[0] ?? { model: 'claude-3-7-sonnet', effort: 'medium' }
 }
@@ -35,7 +38,8 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'verify-run',
-      description: 'Run a task through the verify-escalate engine: classify, route, execute, verify, escalate',
+      description:
+        'Run a task through the verify-escalate engine: classify, route, execute, verify, escalate',
     })
     await $.command.register({
       name: 'verify-status',

@@ -13,17 +13,26 @@ export interface CommandSpec {
  * Tests pin this list so a forgotten registration fails loudly.
  */
 export const COMMANDS: readonly CommandSpec[] = [
-  { name: 'sdlc-init', description: 'Bootstrap SDLC scaffolding in this repo (AGENTS.md, docs/, plan template)' },
+  {
+    name: 'sdlc-init',
+    description: 'Bootstrap SDLC scaffolding in this repo (AGENTS.md, docs/, plan template)',
+  },
   { name: 'sdlc-feature', description: 'Full feature workflow from idea to PR (all gates)' },
   { name: 'sdlc-prd', description: 'Stage 01: clarify an idea and write docs/prd/<slug>.md' },
-  { name: 'sdlc-spec', description: 'Stage 02: turn the PRD into docs/specs/<slug>.md (+ ADR if needed)' },
+  {
+    name: 'sdlc-spec',
+    description: 'Stage 02: turn the PRD into docs/specs/<slug>.md (+ ADR if needed)',
+  },
   { name: 'sdlc-plan', description: 'Stage 03: break the spec into docs/plans/<slug>.md' },
   { name: 'sdlc-tdd', description: 'Stage 04: implement the next planned task with strict TDD' },
   { name: 'sdlc-review', description: 'Stage 05: review the branch diff against the checklists' },
   { name: 'sdlc-debug', description: 'Stage 06: root-cause a bug with a hypothesis-driven method' },
   { name: 'sdlc-refactor', description: 'Stage 07: refactor safely behind green tests' },
   { name: 'sdlc-ship', description: 'Stage 08: verify, draft the PR body and changelog entry' },
-  { name: 'sdlc-audit', description: 'Security audit of a feature or area against the OWASP checklist' },
+  {
+    name: 'sdlc-audit',
+    description: 'Security audit of a feature or area against the OWASP checklist',
+  },
 ] as const
 
 /** The 8-stage lifecycle, used by /sdlc-init docs and the overview. */
@@ -79,7 +88,9 @@ export function buildCommandPrompt(name: string, args: string): string {
         '1. Clarify (planner) -> docs/prd/' + slug + '.md  [gate: I approve acceptance criteria]',
         '2. Spec (architect) -> docs/specs/' + slug + '.md  [gate: I approve the design]',
         '3. Plan (planner) -> docs/plans/' + slug + '.md  [gate: I approve the tasks]',
-        '4. Create branch feat/' + slug + '. For each task: implementer (TDD), one commit per task.',
+        '4. Create branch feat/' +
+          slug +
+          '. For each task: implementer (TDD), one commit per task.',
         '5. Review (reviewer + security if relevant) in a fresh context; fix Blockers/Majors.',
         '6. Fill the PR template and show it to me before opening the PR.',
       ].join('\n')

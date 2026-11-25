@@ -179,7 +179,9 @@ export function renderTree(snap: TraceSnapshot): string {
       const icon = iconFor(c.status)
       const files = c.files.length > 0 ? ` · ${c.files.length} file(s)` : ''
       const note = c.note ? ` — ${c.note}` : ''
-      lines.push(`${indent}${icon} ${c.label} [${c.status}${c.durationMs ? ` ${c.durationMs}ms` : ''}]${files}${note}`)
+      lines.push(
+        `${indent}${icon} ${c.label} [${c.status}${c.durationMs ? ` ${c.durationMs}ms` : ''}]${files}${note}`,
+      )
       render(c.id, depth + 1)
     }
   }

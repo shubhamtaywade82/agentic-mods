@@ -4,9 +4,9 @@ Runs the RED, GREEN and REFACTOR cycle. RED counts only when the test fails for 
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/tdd` | TDD cycle: /tdd red|green|refactor|complete <test path>, /tdd exception <reason>, /tdd status |
+| Command | What it does        |
+| ------- | ------------------- |
+| `/tdd`  | TDD cycle: /tdd red | green | refactor | complete <test path>, /tdd exception <reason>, /tdd status |
 
 ## Hooks
 

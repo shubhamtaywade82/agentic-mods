@@ -37,8 +37,8 @@ export function parseStatusZ(output: string): StatusEntry[] {
 export function parseNameList(output: string): string[] {
   return output
     .split(/[\0\n]/)
-    .map(path => path.trim())
-    .filter(path => path.length > 0)
+    .map((path) => path.trim())
+    .filter((path) => path.length > 0)
 }
 
 export type Worktree = {
@@ -54,7 +54,7 @@ export type Worktree = {
 export function parseWorktreeList(output: string): Worktree[] {
   const worktrees: Worktree[] = []
   for (const block of output.split(/\n\s*\n/)) {
-    const lines = block.split('\n').filter(line => line.length > 0)
+    const lines = block.split('\n').filter((line) => line.length > 0)
     if (lines.length === 0) continue
     let path: string | null = null
     let head: string | null = null

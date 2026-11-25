@@ -57,7 +57,8 @@ export function register(on: On): void {
     const fresh = pruneClaims(await storedClaims($), TTL_MS, now)
     if (fresh.length === 0) return { text: 'No file claims in the last 30 minutes.' }
     const lines = fresh.map(
-      claim => `${claim.path} · session ${claim.sessionId} · ${Math.round((now - claim.at) / 60000)} min ago`,
+      (claim) =>
+        `${claim.path} · session ${claim.sessionId} · ${Math.round((now - claim.at) / 60000)} min ago`,
     )
     return { text: lines.join('\n') }
   })

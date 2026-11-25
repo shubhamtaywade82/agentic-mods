@@ -1,6 +1,12 @@
 import type { On } from 'claude-code'
 import { InMemoryTrace, renderTree } from './lib/trace'
-import { openAgent, openTool, summarize, traceSpinnerSuffix, fileTouchFromTool } from './lib/summary'
+import {
+  openAgent,
+  openTool,
+  summarize,
+  traceSpinnerSuffix,
+  fileTouchFromTool,
+} from './lib/summary'
 
 const trace = new InMemoryTrace()
 const openTools: string[] = []
@@ -73,6 +79,8 @@ export function register(on: On): void {
 
   on('command.run', { command: 'trace-summary' }, async () => {
     const s = summarize(trace)
-    return { text: `trace summary: ${s.total} nodes (${s.agents} agents, ${s.tools} tools; ${s.running} running, ${s.failed} failed, ${s.completed} completed)` }
+    return {
+      text: `trace summary: ${s.total} nodes (${s.agents} agents, ${s.tools} tools; ${s.running} running, ${s.failed} failed, ${s.completed} completed)`,
+    }
   })
 }

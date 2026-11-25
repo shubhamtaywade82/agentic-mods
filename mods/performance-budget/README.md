@@ -4,9 +4,9 @@ Compares measurements from benchmark and bundle-size reports against the budgets
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `/perf` | Check a measurement against budgets: /perf check <generic|vite-stats|jmh|pytest-benchmark|go-bench> <path> |
+| Command | What it does                                              |
+| ------- | --------------------------------------------------------- |
+| `/perf` | Check a measurement against budgets: /perf check <generic | vite-stats | jmh | pytest-benchmark | go-bench> <path> |
 
 ## Hooks
 

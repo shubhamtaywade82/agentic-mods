@@ -82,7 +82,9 @@ export function estimateCost(
 ): number {
   const p = pricing.get(model)
   if (!p) return 0
-  return (inputTokens / 1_000_000) * p.inputPerMillion + (outputTokens / 1_000_000) * p.outputPerMillion
+  return (
+    (inputTokens / 1_000_000) * p.inputPerMillion + (outputTokens / 1_000_000) * p.outputPerMillion
+  )
 }
 
 /**

@@ -18,9 +18,7 @@
       "name": "boss-fight",
       "version": "0.1.0",
       "description": "Shows the test check as a boss battle above the prompt: the boss stands while the test check fails and falls when it passes. It reads evidence-gate's published state and changes nothing.",
-      "dependencies": [
-        "evidence-gate"
-      ],
+      "dependencies": ["evidence-gate"],
       "path": "mods/boss-fight"
     },
     {
@@ -55,18 +53,14 @@
       "version": "0.1.0",
       "description": "A small status creature above the prompt whose mood follows the evidence state and how much tool activity the turn has had. It reads evidence-gate's published state and changes nothing.",
       "types": "./types/index.d.ts",
-      "dependencies": [
-        "evidence-gate"
-      ],
+      "dependencies": ["evidence-gate"],
       "path": "mods/code-pet"
     },
     {
       "name": "command-guard",
       "version": "0.1.0",
       "description": "Holds destructive shell commands for a decision, refuses the unsafe ones outright, and keeps secret files out of edits and reads.",
-      "dependencies": [
-        "incident-timeline"
-      ],
+      "dependencies": ["incident-timeline"],
       "path": "mods/command-guard"
     },
     {
@@ -211,12 +205,7 @@
       "name": "pr-readiness",
       "version": "0.1.0",
       "description": "Combines scope, evidence, review and architecture into one readiness verdict, and drafts a pull-request verification section from recorded results only.",
-      "dependencies": [
-        "evidence-gate",
-        "change-contract",
-        "review-tracker",
-        "architecture-guard"
-      ],
+      "dependencies": ["evidence-gate", "change-contract", "review-tracker", "architecture-guard"],
       "path": "mods/pr-readiness"
     },
     {

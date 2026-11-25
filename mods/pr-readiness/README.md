@@ -4,8 +4,8 @@ Combines scope, evidence, review and architecture into one readiness verdict, an
 
 ## Commands
 
-| Command | What it does |
-|---|---|
+| Command     | What it does                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------ |
 | `/pr-ready` | Readiness verdict for the change; /pr-ready description drafts the PR verification section |
 
 ## Hooks
