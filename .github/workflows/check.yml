@@ -1,0 +1,62 @@
+name: Mod checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline:
+    name: Offline checks (JSON, shell, stub tsc)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned tooling
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq shellcheck
+          npm install -g typescript@5.9
+
+      - name: Lint shell scripts
+        run: shellcheck --severity=error scripts/*.sh mods/*/scripts/*.sh
+
+      - name: Offline structure + type checks
+        env:
+          OFFLINE: "1"
+        run: bash scripts/check.sh
+
+  claude:
+    name: Claude Code ${{ matrix.claude }}
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Minimum supported mods API version + latest release.
+        claude: ["2.1.287", "latest"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@${{ matrix.claude }}
+
+      - name: Warm mod type declarations
+        run: |
+          for m in mods/*/; do
+            claude --plugin-dir "$m" -p "warm the plugin so it writes .claude-plugin/types" || true
+          done
+
+      - name: Validate and test every mod
+        env:
+          CI: "1"
+        run: bash scripts/check.sh

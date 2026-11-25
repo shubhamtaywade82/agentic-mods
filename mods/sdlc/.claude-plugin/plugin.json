@@ -1,0 +1,9 @@
+{
+  "name": "sdlc",
+  "version": "0.1.0",
+  "description": "Complete SDLC kit: an 8-stage feature lifecycle (clarify > PRD > spec > plan > TDD build > review > debug > release) with slash commands, sub-agent roles, templates and checklists",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

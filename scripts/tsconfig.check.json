@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023", "dom"],
+    "types": [],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "claude-code": ["./stub/claude-code.d.ts"],
+      "claude-code/testing": ["./stub/claude-code-testing.d.ts"],
+      "@agentic-mods/core": ["../packages/core/src/index.ts"]
+    }
+  },
+  "include": [
+    "../packages/core/src",
+    "../mods/mod-template/hooks",
+    "../mods/mod-template/tests",
+    "../mods/sdlc/hooks",
+    "../mods/sdlc/tests",
+    "../mods/design-patterns/hooks",
+    "../mods/design-patterns/tests",
+    "../mods/guardian/hooks",
+    "../mods/guardian/tests",
+    "../mods/pulse/hooks",
+    "../mods/pulse/tests",
+    "../mods/trace/hooks",
+    "../mods/trace/tests",
+    "../mods/switchboard/hooks",
+    "../mods/switchboard/tests",
+    "../mods/verify/hooks",
+    "../mods/verify/tests",
+    "./stub/claude-code.d.ts",
+    "./stub/claude-code-testing.d.ts"
+  ]
+}

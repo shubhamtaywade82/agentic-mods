@@ -1,0 +1,9 @@
+{
+  "name": "design-patterns",
+  "version": "0.1.0",
+  "description": "Design-pattern reference mod: all 22 GoF patterns for TypeScript/Node and Ruby/Rails with idioms, selection tables, smells-to-patterns diagnosis, testing guides, and a /patterns selection command",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

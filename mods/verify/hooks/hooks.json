@@ -1,0 +1,4 @@
+{
+  "description": "verify hooks module",
+  "modules": ["./register.ts"]
+}
