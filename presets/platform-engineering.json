@@ -13,6 +13,10 @@
     "contract-compatibility-guard",
     "mod-firewall",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "test-impact",
+    "review-tracker",
+    "architecture-guard",
+    "performance-budget"
   ]
 }

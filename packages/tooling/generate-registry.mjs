@@ -49,6 +49,20 @@ const manifests = sources.map((source) => {
   }
 })
 
+// /plugin install does not install a plugin's dependencies, and a plugin whose dependency is
+// absent never loads, so a preset must list every dependency of every mod it names.
+function missingDependencies(presetMods) {
+  const listed = new Set(presetMods)
+  const dependenciesOf = new Map(
+    manifests.map((manifest) => [manifest.name, manifest.dependencies ?? []]),
+  )
+  return presetMods.flatMap((name) =>
+    (dependenciesOf.get(name) ?? [])
+      .filter((dependency) => !listed.has(dependency))
+      .map((dependency) => `${name} needs ${dependency}`),
+  )
+}
+
 const presetDir = join(ROOT, 'presets')
 const presets = existsSync(presetDir)
   ? readdirSync(presetDir)
@@ -63,10 +77,15 @@ for (const file of presets) {
     continue
   }
   const unknown = parsed.data.mods.filter((name) => !names.has(name))
+  const missing = missingDependencies(parsed.data.mods)
+  const problems = [
+    ...(unknown.length ? [`unknown: ${unknown.join(', ')}`] : []),
+    ...(missing.length ? [`missing dependencies: ${missing.join(', ')}`] : []),
+  ]
   allOk =
     run(`preset ${parsed.data.id}`, {
-      ok: unknown.length === 0,
-      note: unknown.length ? `unknown: ${unknown.join(', ')}` : `${parsed.data.mods.length} mods`,
+      ok: problems.length === 0,
+      note: problems.join('; ') || `${parsed.data.mods.length} mods`,
     }) && allOk
 }
 

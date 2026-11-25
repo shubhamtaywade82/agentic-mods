@@ -5,6 +5,7 @@
  * Commands answered by a mod need no model call, so this costs no tokens.
  *
  * Usage: node packages/tooling/smoke-live.mjs [mod ...]
+ *        node packages/tooling/smoke-live.mjs --print-args mod ...   (flags for a manual session)
  */
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -80,6 +81,13 @@ function smokeMod(repo, mod) {
       allOk
   }
   return allOk
+}
+
+// For a manual session: the --plugin-dir flags for these mods, dependencies included.
+if (process.argv[2] === '--print-args') {
+  const dirs = new Set(process.argv.slice(3).flatMap((name) => withDependencies(name)))
+  process.stdout.write(`${[...dirs].map((dir) => `--plugin-dir ${dir}`).join(' ')}\n`)
+  process.exit(0)
 }
 
 const wanted = process.argv.slice(2)

@@ -10,6 +10,10 @@
     "test-impact",
     "dependency-radar",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "review-tracker",
+    "architecture-guard",
+    "migration-sentinel",
+    "performance-budget"
   ]
 }

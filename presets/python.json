@@ -11,6 +11,9 @@
     "dependency-radar",
     "migration-sentinel",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "review-tracker",
+    "architecture-guard",
+    "performance-budget"
   ]
 }

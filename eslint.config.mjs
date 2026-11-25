@@ -9,6 +9,7 @@ export default tseslint.config(
       '**/dist/**',
       'mods/*/hooks/register.js',
       'packages/tooling/engine-types/**',
+      '**/.claude-plugin/types/**',
       'plugins/**',
       '.remember/**',
       '.omc/**',

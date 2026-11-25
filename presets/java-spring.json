@@ -13,6 +13,7 @@
     "dependency-radar",
     "performance-budget",
     "sdlc-guard",
-    "secret-guard"
+    "secret-guard",
+    "review-tracker"
   ]
 }

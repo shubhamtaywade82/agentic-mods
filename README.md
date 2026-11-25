@@ -31,21 +31,24 @@ Installing from a published marketplace path has not been tested.
 
 ## Presets
 
-| Preset               | Adds to `essential`                                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| essential            | command-guard, evidence-gate, change-contract, session-meter, task-orientation, engineering-cockpit                                  |
-| node-typescript      | test-impact, architecture-guard, turn-replay, next-steps                                                                             |
-| frontend             | node-typescript, markdown-preview, boss-fight                                                                                        |
-| backend              | node-typescript, migration-sentinel, performance-budget, dependency-radar                                                            |
-| java-spring          | test-impact, architecture-guard, migration-sentinel, dependency-radar, performance-budget                                            |
-| python · go · rust   | test-impact, dependency-radar (python adds migration-sentinel)                                                                       |
-| dotnet               | test-impact, architecture-guard                                                                                                      |
-| monorepo             | test-impact, architecture-guard, worktree-orchestrator, switchboard                                                                  |
-| platform-engineering | migration-sentinel, dependency-radar, release-conductor, contract-compatibility-guard, mod-firewall                                  |
-| regulated            | mod-firewall, review-tracker, pr-readiness, release-conductor, incident-timeline, learning-ledger, workflow-conductor (enforce mode) |
+| Preset               | What it is for                                                                        | Mods |
+| -------------------- | ------------------------------------------------------------------------------------- | ---- |
+| essential            | Safety from sdlc-guard and secret-guard, plus verification and visibility.            | 13   |
+| node-typescript      | Essential plus TypeScript test selection and import-layer checks.                     | 15   |
+| frontend             | Node/TypeScript plus Markdown preview and the test boss.                              | 17   |
+| backend              | Node/TypeScript plus schema, performance and dependency checks.                       | 15   |
+| java-spring          | Maven or Gradle projects with layer rules and migrations.                             | 13   |
+| python               | Python projects with pytest selection, dependency diffs and migrations.               | 13   |
+| go                   | Go modules with test selection and dependency diffs.                                  | 13   |
+| rust                 | Cargo projects with test selection and dependency diffs.                              | 13   |
+| dotnet               | .NET solutions with test selection and layer rules.                                   | 13   |
+| monorepo             | Many packages in one repository, with worktree collisions visible.                    | 15   |
+| platform-engineering | Infrastructure-heavy work: migrations, releases and contract checks.                  | 16   |
+| regulated            | Reviewed releases with an audit trail. Use enforce mode in .agentic-mods/config.json. | 27   |
 
-Presets are lists in `presets/*.json`. They do not enable anything by themselves: the person turns
-mods on.
+Presets are lists in `presets/*.json`; each lists every mod it needs, dependencies included
+(`pnpm registry` fails otherwise, since `/plugin install` does not install dependencies). They do not
+enable anything by themselves: the person turns mods on.
 
 ## Mods (47)
 

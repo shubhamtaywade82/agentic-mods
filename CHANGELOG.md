@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Fixed (from the manual live pass)
+
+- Every preset left out some of its mods' dependencies; `engineering-cockpit` alone needs eight. Since
+  `/plugin install` does not install dependencies and a mod with a missing one never loads, the
+  cockpit never loaded from any preset. Presets now list their full dependency closure, and
+  `pnpm registry` fails a preset that misses one.
+- The README preset table was out of date; it now matches `presets/*.json`.
+- guardian's README says to load one approval guard: guardian, `command-guard` and `sdlc-guard`
+  together ask twice for the same command.
+
 Fixes from the review of the full catalog. Each fix has a test under the mod's `tests/`.
 
 ### Fixed
