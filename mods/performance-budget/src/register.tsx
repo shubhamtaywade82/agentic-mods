@@ -7,6 +7,7 @@ import {
   evaluateBudgets,
   parseMetrics,
   normalizePath,
+  readJsonFile,
   worstVerdict,
 } from '@agentic-mods/core'
 import type { BudgetStatus } from '../types'
@@ -23,21 +24,19 @@ const status = atom({ plugin: 'performance-budget', key: 'status' } as const, ID
   shape: 'status-1',
 })
 
-async function budgetsOf($: EngineInterface): Promise<Budget[]> {
-  try {
-    const parsed: unknown = JSON.parse(await $.fs.read('.agentic-mods/budgets.json'))
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (item): item is Budget =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof (item as Budget).name === 'string' &&
-        typeof (item as Budget).max === 'number' &&
-        typeof (item as Budget).unit === 'string',
-    )
-  } catch {
-    return []
-  }
+/** The configured budgets, or why the file could not be used. */
+async function budgetsOf($: EngineInterface): Promise<Budget[] | { error: string }> {
+  const file = await readJsonFile((path) => $.fs.read(path), '.agentic-mods/budgets.json')
+  if (file.kind === 'invalid') return { error: file.reason }
+  if (file.kind === 'missing' || !Array.isArray(file.value)) return []
+  return file.value.filter(
+    (item): item is Budget =>
+      typeof item === 'object' &&
+      item !== null &&
+      typeof (item as Budget).name === 'string' &&
+      typeof (item as Budget).max === 'number' &&
+      typeof (item as Budget).unit === 'string',
+  )
 }
 
 export function register(on: On): void {
@@ -58,6 +57,7 @@ export function register(on: On): void {
     }
     const path = normalizePath(rest.join(' '))
     const budgets = await budgetsOf($)
+    if (!Array.isArray(budgets)) return { text: budgets.error }
     if (budgets.length === 0) {
       return { text: 'No budgets: add .agentic-mods/budgets.json as a list of {name, max, unit}.' }
     }
