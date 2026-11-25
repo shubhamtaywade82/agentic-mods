@@ -1,10 +1,10 @@
 import type { On } from 'claude-code'
 
-import { normalizePath, redact, triageLog, truncate } from '@agentic-mods/core'
+import { normalizePath, redact, triageLog, truncate, registerCommand } from '@agentic-mods/core'
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'ci',
       description: 'Triage a CI log file: /ci triage <path to the downloaded log>',
     })

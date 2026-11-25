@@ -10,6 +10,7 @@ import {
   type TddPhase,
   truncate,
   normalizePath,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
@@ -76,20 +77,20 @@ async function guardProduction($: EngineInterface, path: string): Promise<string
   const phase = await phaseOf($)
   if (productionWriteAllowed(phase)) return null
   if ((await $.store.get('exception')) === true) return null
-  return `tdd-conductor: ${path} is production code, and the cycle is ${phase}. Write a failing test first (/tdd red <test>), or record an exception with /tdd exception <reason>.`
+  return `tdd-conductor: ${path} is production code, and the cycle is ${phase}. Write a failing test first (/tdd-cycle red <test>), or record an exception with /tdd-cycle exception <reason>.`
 }
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
-      name: 'tdd',
+    await registerCommand($, {
+      name: 'tdd-cycle',
       description:
-        'TDD cycle: /tdd red|green|refactor|complete <test path>, /tdd exception <reason>, /tdd status',
+        'TDD cycle: /tdd-cycle red|green|refactor|complete <test path>, /tdd-cycle exception <reason>, /tdd-cycle status',
     })
     return next(e)
   })
 
-  on('command.run', { command: 'tdd' }, async ($, e) => {
+  on('command.run', { command: 'tdd-cycle' }, async ($, e) => {
     const [subcommand = 'status', ...rest] = e.args
       .trim()
       .split(/\s+/)
@@ -104,7 +105,7 @@ export function register(on: On): void {
 
     if (subcommand === 'exception') {
       const reason = rest.join(' ').trim()
-      if (reason === '') return { text: 'Usage: /tdd exception <reason>' }
+      if (reason === '') return { text: 'Usage: /tdd-cycle exception <reason>' }
       await $.store.set('exception', true)
       const logPath = stateRelativePath('tdd-exceptions.log')
       const earlier = await $.fs.read(logPath).catch(() => '')
@@ -118,7 +119,7 @@ export function register(on: On): void {
     const testPath = rest.join(' ')
 
     if (subcommand === 'red') {
-      if (testPath === '') return { text: 'Usage: /tdd red <test path>' }
+      if (testPath === '') return { text: 'Usage: /tdd-cycle red <test path>' }
       const run = await runTests($, testPath)
       if (typeof run === 'string') return { text: run }
       await $.store.set('exception', false)
@@ -144,7 +145,7 @@ export function register(on: On): void {
     }
 
     if (subcommand === 'green') {
-      if (testPath === '') return { text: 'Usage: /tdd green <test path>' }
+      if (testPath === '') return { text: 'Usage: /tdd-cycle green <test path>' }
       const transition = nextPhase(phase, 'green-verified')
       if (!transition.ok) return { text: transition.reason }
       const run = await runTests($, testPath)
@@ -165,10 +166,10 @@ export function register(on: On): void {
         $,
         transition.phase,
         'UNKNOWN',
-        'REFACTOR started: run /tdd green <test> to confirm it stays green',
+        'REFACTOR started: run /tdd-cycle green <test> to confirm it stays green',
       )
       return {
-        text: 'REFACTOR started. Keep behavior unchanged; confirm with /tdd green <test path>.',
+        text: 'REFACTOR started. Keep behavior unchanged; confirm with /tdd-cycle green <test path>.',
       }
     }
 
@@ -180,7 +181,7 @@ export function register(on: On): void {
     }
 
     return {
-      text: 'Usage: /tdd red|green|refactor|complete <test path> | /tdd exception <reason> | /tdd status',
+      text: 'Usage: /tdd-cycle red|green|refactor|complete <test path> | /tdd-cycle exception <reason> | /tdd-cycle status',
     }
   })
 

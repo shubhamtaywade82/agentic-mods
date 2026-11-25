@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import { truncate } from '@agentic-mods/core'
+import { truncate, registerCommand } from '@agentic-mods/core'
 import type { Orientation } from '../types'
 
 const PANE = 'task-orientation'
@@ -27,7 +27,7 @@ export function register(on: On): void {
       'orient-next',
       'orient-show',
     ]) {
-      await $.command.register({
+      await registerCommand($, {
         name,
         description: `task-orientation: ${name === 'orient-show' ? 'show the pane' : `set the ${name.replace('orient-', '')}`}`,
       })

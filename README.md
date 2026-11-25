@@ -79,19 +79,21 @@ The full list, with the purpose of each mod, is in `registry/native-mods.json`.
 
 ## Commands (selection)
 
-| Command                               | Mod           | What it does                                    |
-| ------------------------------------- | ------------- | ----------------------------------------------- |
-| `/guard`                              | command-guard | settings, config problems, blocks this session  |
-| `/evidence run [check]` · `/evidence` | evidence-gate | run configured checks, show verdicts            |
-| `/contract set                        | allow         | forbid                                          | mode                      | show`                           | change-contract               | scope for the change    |
-| `/impact`                             | test-impact   | tests the working tree reaches                  |
-| `/finding add                         | set           | list`                                           | review-tracker            | review findings and lifecycle   |
-| `/pr-ready [description]`             | pr-readiness  | readiness verdict, drafted verification section |
-| `/workflow start                      | status        | advance                                         | defer                     | cancel`                         | workflow-conductor            | run a delivery workflow |
-| `/tdd red                             | green         | refactor                                        | complete <test>`          | tdd-conductor                   | TDD cycle with behavioral RED |
-| `/regression assess                   | run`          | regression-orchestrator                         | risk scope and its checks |
-| `/incident open                       | event         | mitigate                                        | recover                   | close                           | postmortem`                   | incident-timeline       | incident record |
-| `/agentic status                      | doctor        | privacy`                                        | engineering-cockpit       | overall state and config health |
+| Command                                                       | Mod                     | What it does                                    |
+| ------------------------------------------------------------- | ----------------------- | ----------------------------------------------- |
+| `/guard`                                                      | command-guard           | settings, config problems, blocks this session  |
+| `/evidence run [check]`, `/evidence`                          | evidence-gate           | run configured checks, show verdicts            |
+| `/contract set\|allow\|forbid\|mode\|show`                    | change-contract         | scope for the change                            |
+| `/impact`                                                     | test-impact             | tests the working tree reaches                  |
+| `/finding add\|set\|list`                                     | review-tracker          | review findings and lifecycle                   |
+| `/pr-ready [description]`                                     | pr-readiness            | readiness verdict, drafted verification section |
+| `/workflow start\|status\|advance\|defer\|cancel`             | workflow-conductor      | run a delivery workflow                         |
+| `/tdd-cycle red\|green\|refactor\|complete <test>`            | tdd-conductor           | TDD cycle with behavioral RED                   |
+| `/regression assess\|run`                                     | regression-orchestrator | risk scope and its checks                       |
+| `/release-gate check`                                         | release-conductor       | release readiness checklist                     |
+| `/trace-tree`, `/trace-summary`                               | trace                   | execution tree of agents and tools              |
+| `/incident open\|event\|mitigate\|recover\|close\|postmortem` | incident-timeline       | incident record                                 |
+| `/agentic status\|doctor\|privacy`                            | engineering-cockpit     | overall state and config health                 |
 
 ## Configuration
 

@@ -8,6 +8,7 @@ import {
   stateRelativePath,
   transitionFinding,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { ReviewGate } from '../types'
 
@@ -73,7 +74,7 @@ function nextId(findings: readonly Finding[]): string {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'finding',
       description: 'Track review findings: /finding add|set|list',
     })

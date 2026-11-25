@@ -1,3 +1,28 @@
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
+// packages/core/src/config.ts
+var CONFIG_PATH = `${STATE_DIR}/config.json`;
+
+// packages/core/src/hash.ts
+var encoder = new TextEncoder();
+
 // mods/response-modes/src/register.tsx
 var STYLE_TEXT = {
   tldr: "Answer in at most five sentences. Lead with the decision or the result, then the one detail the reader needs.",
@@ -21,7 +46,7 @@ async function setStyle($, style) {
 function register(on) {
   on("session.start", async ($, e, next) => {
     for (const [name, description] of COMMANDS) {
-      await $.command.register({ name, description });
+      await registerCommand($, { name, description });
     }
     const sessionId = await $.session.id();
     if (await $.store.get("sessionId") !== sessionId) {

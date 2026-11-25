@@ -2,7 +2,7 @@ import { expect, test } from 'claude-code/testing'
 
 const tddInput = (args: string) =>
   ({
-    command: 'tdd',
+    command: 'tdd-cycle',
     args,
     origin: { kind: 'plugin', name: 'tdd-conductor' },
     presentation: { isFullscreen: false, columns: 80 },

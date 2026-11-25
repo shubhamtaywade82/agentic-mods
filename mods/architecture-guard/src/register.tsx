@@ -15,6 +15,7 @@ import {
   resolveJavaImport,
   resolveTypeScriptImport,
   stateRelativePath,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { ArchitectureStatus } from '../types'
 
@@ -126,7 +127,7 @@ async function scan($: EngineInterface): Promise<string> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'architecture',
       description:
         'Architecture layer checks: /architecture scan (records the baseline) or /architecture status',

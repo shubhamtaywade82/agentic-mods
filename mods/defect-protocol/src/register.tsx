@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import { truncate } from '@agentic-mods/core'
+import { truncate, registerCommand } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 type Defect = Record<string, string>
@@ -43,7 +43,7 @@ async function publish(fields: Defect): Promise<DefectGate> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'defect',
       description:
         'Defect protocol: /defect open <title>, /defect set <field> <text>, /defect status',

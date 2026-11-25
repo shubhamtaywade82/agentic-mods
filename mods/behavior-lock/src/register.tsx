@@ -8,6 +8,7 @@ import {
   normalizePath,
   stateRelativePath,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
@@ -35,7 +36,7 @@ function flatten(files: Record<string, ExportEntry[]>): ExportEntry[] {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'lock',
       description: 'Behavior lock: /lock capture <name> <files...> | /lock compare <name>',
     })

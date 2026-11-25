@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 const releaseInput = {
-  command: 'release',
+  command: 'release-gate',
   args: 'check',
   origin: { kind: 'plugin', name: 'release-conductor' },
   presentation: { isFullscreen: false, columns: 80 },

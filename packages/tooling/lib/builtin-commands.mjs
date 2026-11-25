@@ -73,7 +73,9 @@ export const BUILTIN_COMMANDS = new Set([
 /** Command names a mod registers or answers, read from its source. */
 export function commandNamesIn(source) {
   const names = new Set()
-  for (const match of source.matchAll(/\$\.command\.register\(\{\s*name: '([a-z0-9-]+)'/g))
+  for (const match of source.matchAll(
+    /(?:\$\.command\.register\(|registerCommand\(\$, )\{\s*name: '([a-z0-9-]+)'/g,
+  ))
     names.add(match[1])
   for (const match of source.matchAll(/\{ command: '([a-z0-9-]+)' \}/g)) names.add(match[1])
   for (const match of source.matchAll(/for \(const name of \[([^\]]*)\]/g)) {

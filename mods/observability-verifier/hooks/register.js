@@ -28,6 +28,22 @@ function stateRelativePath(relative) {
   return `${STATE_DIR}/${path}`;
 }
 
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;
 async function readJsonFile(read, path) {
@@ -71,7 +87,7 @@ async function checksOf($) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: "observe",
       description: "Health checks after a change: /observe check"
     });

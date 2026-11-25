@@ -1,7 +1,7 @@
 import { atom, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import { normalizePath, truncate, validateSpec } from '@agentic-mods/core'
+import { normalizePath, truncate, validateSpec, registerCommand } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 const IDLE: GateState = { verdict: 'UNKNOWN', phase: 'none', reason: 'no specification checked' }
@@ -27,7 +27,7 @@ const TEMPLATE = [
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'spec',
       description: 'Check acceptance criteria: /spec check <path> | /spec template',
     })

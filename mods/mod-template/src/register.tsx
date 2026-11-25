@@ -1,16 +1,17 @@
 import type { On } from 'claude-code'
 import { AttemptCounter, LABELS } from './lib/counter'
 import { formatUsage } from './lib/usage'
+import { registerCommand } from '@agentic-mods/core'
 
 const counter = new AttemptCounter()
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'mod-template-tally',
       description: 'Show how many tool-call attempts Claude has made',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'mod-template-usage',
       description: 'Show context and plan-limit usage',
     })

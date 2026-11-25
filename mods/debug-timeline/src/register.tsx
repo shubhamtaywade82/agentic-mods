@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import { appendCapped, redact, truncate } from '@agentic-mods/core'
+import { appendCapped, redact, truncate, registerCommand } from '@agentic-mods/core'
 import type { TimelineEntry, TimelineState } from '../types'
 
 const PANE = 'debug-timeline'
@@ -16,15 +16,15 @@ const timeline = atom({ plugin: 'debug-timeline', key: 'timeline' } as const, ID
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'hypothesis',
       description: 'Record a debugging hypothesis: /hypothesis <text>',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'result',
       description: 'Record a hypothesis outcome: /result <id> confirmed|rejected <evidence>',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'timeline',
       description: 'Show the debugging timeline in a pane',
     })

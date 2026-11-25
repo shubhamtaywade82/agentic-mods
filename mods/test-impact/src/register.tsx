@@ -8,6 +8,7 @@ import {
   type GitRunner,
   parseNameList,
   workingTreeChanges,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { ImpactStatus } from '../types'
 
@@ -83,7 +84,7 @@ async function computeImpact($: EngineInterface): Promise<ImpactStatus> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'impact',
       description: 'Select the tests that the current changes reach',
     })

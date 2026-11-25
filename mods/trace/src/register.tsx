@@ -7,6 +7,7 @@ import {
   traceSpinnerSuffix,
   fileTouchFromTool,
 } from './lib/summary'
+import { registerCommand } from '@agentic-mods/core'
 
 const trace = new InMemoryTrace()
 const openTools = new Set<string>()
@@ -22,11 +23,11 @@ function strField(e: unknown, key: string): string | undefined {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
-      name: 'trace',
+    await registerCommand($, {
+      name: 'trace-tree',
       description: 'Show the hierarchical execution tree for this session',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'trace-summary',
       description: 'One-line summary of the execution tree (counts, running nodes)',
     })
@@ -85,7 +86,7 @@ export function register(on: On): void {
     return next({ ...e, props: { ...e.props, suffix: traceSpinnerSuffix(summarize(trace)) } })
   })
 
-  on('command.run', { command: 'trace' }, async () => {
+  on('command.run', { command: 'trace-tree' }, async () => {
     if (!trace.get('main')) {
       mainId = trace.open({ kind: 'main', label: 'main', parentId: null })
     }

@@ -1,6 +1,11 @@
 import type { EngineInterface, On } from 'claude-code'
 
-import { type GitRunner, parseStatusZ, parseWorktreeList } from '@agentic-mods/core'
+import {
+  type GitRunner,
+  parseStatusZ,
+  parseWorktreeList,
+  registerCommand,
+} from '@agentic-mods/core'
 
 function runnerOf($: EngineInterface): GitRunner {
   return async (argv) => {
@@ -43,7 +48,7 @@ async function report($: EngineInterface): Promise<string> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'worktrees',
       description: 'List git worktrees and file collisions between them',
     })

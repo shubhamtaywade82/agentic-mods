@@ -21,7 +21,9 @@ function stubStore(on: Parameters<Parameters<typeof test>[1]>[1]) {
 test('a turn whose only edit was denied does not suggest checking changes', async ($, on) => {
   stubStore(on)
   on('tool.call', () => ({ deny: 'blocked by another mod' }))
-  await $.tool.call({ tool: 'Edit', file_path: '/r/a.ts', old_string: 'a', new_string: 'b' }).catch(() => undefined)
+  await $.tool
+    .call({ tool: 'Edit', file_path: '/r/a.ts', old_string: 'a', new_string: 'b' })
+    .catch(() => undefined)
   await $.turn.complete({ reason: 'answer', answer: 'done' } as never).catch(() => undefined)
   const answer = await $.command.run(nextInput)
   expect(answer.text).not.toContain('/evidence run')

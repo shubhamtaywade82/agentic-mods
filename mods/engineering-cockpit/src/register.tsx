@@ -1,7 +1,13 @@
 import { atom, read } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { assessReadiness, loadConfig, type ReadinessInput, type Verdict } from '@agentic-mods/core'
+import {
+  assessReadiness,
+  loadConfig,
+  type ReadinessInput,
+  type Verdict,
+  registerCommand,
+} from '@agentic-mods/core'
 import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { ContractStatus } from '../../change-contract/types'
 import type { ImpactStatus } from '../../test-impact/types'
@@ -131,7 +137,7 @@ async function rowsOf($: EngineInterface): Promise<CockpitRow[]> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'agentic',
       description: 'Cockpit: /agentic status | doctor | privacy',
     })

@@ -145,11 +145,36 @@ function buildCommandPrompt(name, args) {
   }
 }
 
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+
+// packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
+}
+
+// packages/core/src/config.ts
+var CONFIG_PATH = `${STATE_DIR}/config.json`;
+
+// packages/core/src/hash.ts
+var encoder = new TextEncoder();
+
 // mods/sdlc/src/register.tsx
 function register(on) {
   on("session.start", async ($, e, next) => {
     for (const c of COMMANDS) {
-      await $.command.register({ name: c.name, description: c.description });
+      await registerCommand($, { name: c.name, description: c.description });
     }
     return next(e);
   });

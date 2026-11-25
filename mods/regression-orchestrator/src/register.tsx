@@ -8,6 +8,7 @@ import {
   type RiskResult,
   stateRelativePath,
   workingTreeChanges,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
@@ -51,7 +52,7 @@ async function assess($: EngineInterface): Promise<RiskResult | null> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'regression',
       description: 'Regression scope: /regression assess | /regression run',
     })

@@ -12,6 +12,7 @@ import {
   normalizePath,
   parseContractJson,
   stateRelativePath,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { ContractStatus } from '../types'
 
@@ -76,7 +77,7 @@ async function guardWrite($: EngineInterface, path: string): Promise<string | nu
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'contract',
       description:
         'Show, set or amend the change contract: /contract show|set|allow|forbid|mode|violations|close',

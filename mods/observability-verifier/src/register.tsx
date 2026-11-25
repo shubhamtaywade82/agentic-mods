@@ -1,7 +1,7 @@
 import { atom, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { readJsonFile, stateRelativePath, truncate } from '@agentic-mods/core'
+import { readJsonFile, stateRelativePath, truncate, registerCommand } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 type Check = { name: string; url: string; expectStatus: number }
@@ -31,7 +31,7 @@ async function checksOf($: EngineInterface): Promise<Check[] | { error: string }
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'observe',
       description: 'Health checks after a change: /observe check',
     })

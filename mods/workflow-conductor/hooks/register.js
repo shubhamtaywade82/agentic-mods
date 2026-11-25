@@ -29,8 +29,22 @@ function stateRelativePath(relative) {
 }
 
 // packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
 function isJsonObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
 }
 
 // packages/core/src/config.ts
@@ -770,15 +784,15 @@ function statusText(definition, run, blockers) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: "workflow",
       description: "Delivery workflow: /workflow start|status|advance|defer|cancel"
     });
-    await $.command.register({
+    await registerCommand($, {
       name: "record",
       description: "Append to a task artifact: /record <file.md> <text>"
     });
-    await $.command.register({
+    await registerCommand($, {
       name: "decision",
       description: "Record a decision: /decision <title> | <decision> | <consequences>"
     });

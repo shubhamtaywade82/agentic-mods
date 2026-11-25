@@ -7,6 +7,7 @@ import {
   loadConfig,
   stateRelativePath,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 
 const PLUGIN = 'mod-firewall'
@@ -58,7 +59,7 @@ async function decide(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'firewall',
       description: 'Show recent network and process decisions made for other mods',
     })

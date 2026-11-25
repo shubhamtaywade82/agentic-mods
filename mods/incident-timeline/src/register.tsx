@@ -1,7 +1,14 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { appendJsonLine, auditLine, redact, stateRelativePath, truncate } from '@agentic-mods/core'
+import {
+  appendJsonLine,
+  auditLine,
+  redact,
+  stateRelativePath,
+  truncate,
+  registerCommand,
+} from '@agentic-mods/core'
 import type { IncidentState } from '../types'
 
 const PLUGIN = 'incident-timeline'
@@ -102,7 +109,7 @@ async function writePostmortem($: EngineInterface): Promise<string> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'incident',
       description: 'Open, log, mitigate, recover and close an incident, or write its postmortem',
     })

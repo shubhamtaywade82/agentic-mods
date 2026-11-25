@@ -1,7 +1,7 @@
 import { atom, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { normalizePath, stateRelativePath, truncate } from '@agentic-mods/core'
+import { normalizePath, stateRelativePath, truncate, registerCommand } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 type Plan = {
@@ -36,7 +36,7 @@ function verdictOf(plan: Plan): GateState['verdict'] {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'change-plan',
       description:
         'Change plan: /change-plan set <objective> | <files> | <tests> | <risks>, /change-plan show, /change-plan contract',

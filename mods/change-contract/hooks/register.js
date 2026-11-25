@@ -99,12 +99,26 @@ function isCheckName(value) {
 }
 
 // packages/core/src/util.ts
+function errorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "unknown error";
+}
 function isJsonObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function appendCapped(list, item, cap) {
   const next = [...list, item];
   return next.length > cap ? next.slice(next.length - cap) : next;
+}
+async function registerCommand(host, spec) {
+  try {
+    await host.command.register(spec);
+    return true;
+  } catch (error) {
+    host.ui.toast(`/${spec.name} is unavailable: ${errorMessage(error)}`);
+    return false;
+  }
 }
 
 // packages/core/src/config.ts
@@ -442,7 +456,7 @@ async function guardWrite($, path) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: "contract",
       description: "Show, set or amend the change contract: /contract show|set|allow|forbid|mode|violations|close"
     });

@@ -1,7 +1,7 @@
 import { atom, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import { redact, stateRelativePath, truncate } from '@agentic-mods/core'
+import { redact, stateRelativePath, truncate, registerCommand } from '@agentic-mods/core'
 import type { GateState } from '../types'
 
 const CONTRACT_FILE =
@@ -35,7 +35,7 @@ async function commandsOf($: EngineInterface): Promise<Record<string, string[]>>
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'compat',
       description:
         'Compatibility checks: /compat run [name] (tools from .agentic-mods/compat.json)',

@@ -15,6 +15,7 @@ import {
   stateRelativePath,
   type WorkflowDefinition,
   truncate,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { ContractStatus } from '../../change-contract/types'
@@ -309,15 +310,15 @@ function statusText(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'workflow',
       description: 'Delivery workflow: /workflow start|status|advance|defer|cancel',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'record',
       description: 'Append to a task artifact: /record <file.md> <text>',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'decision',
       description: 'Record a decision: /decision <title> | <decision> | <consequences>',
     })

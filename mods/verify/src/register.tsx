@@ -16,6 +16,7 @@ import {
   renderStatus,
   runChecks,
 } from './lib/policy'
+import { registerCommand } from '@agentic-mods/core'
 
 const runs: RunOutcome[] = []
 
@@ -51,12 +52,12 @@ function pickInitialRoute(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'verify-run',
       description:
         'Run a command and verify it exits 0, retrying transient failures: /verify-run <command> [args...]',
     })
-    await $.command.register({
+    await registerCommand($, {
       name: 'verify-status',
       description: 'Show the outcomes of every verify-run this session',
     })

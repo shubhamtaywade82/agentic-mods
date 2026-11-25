@@ -2,13 +2,14 @@ import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
 import type { Steps } from '../types'
+import { registerCommand } from '@agentic-mods/core'
 
 const IDLE: Steps = { texts: [] }
 const steps = atom({ plugin: 'next-steps', key: 'steps' } as const, IDLE, { shape: 'steps-1' })
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'next-steps', description: 'Show suggested next prompts' })
+    await registerCommand($, { name: 'next-steps', description: 'Show suggested next prompts' })
     return next(e)
   })
 

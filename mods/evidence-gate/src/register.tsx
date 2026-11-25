@@ -20,6 +20,7 @@ import {
   overallVerdict,
   type Verdict,
   workingTreeChanges,
+  registerCommand,
 } from '@agentic-mods/core'
 import type { EvidenceStatus } from '../types'
 
@@ -152,7 +153,7 @@ function summaryOf(snap: Snapshot): string {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
+    await registerCommand($, {
       name: 'evidence',
       description: 'Show or run the verification checks: /evidence [run [check...] | clear]',
     })

@@ -27,9 +27,9 @@ function stubEngine(on: Parameters<Parameters<typeof test>[1]>[1]): void {
   on('ui.status', () => ({ value: undefined }))
 }
 
-test('/release answers with text when run with no arguments', async ($, on) => {
+test('/release-gate answers with text when run with no arguments', async ($, on) => {
   stubEngine(on)
-  const answer = await $.command.run(commandInput('release'))
+  const answer = await $.command.run(commandInput('release-gate'))
   expect(typeof answer.text).toBe('string')
   expect(answer.text.length).toBeGreaterThan(0)
 })
