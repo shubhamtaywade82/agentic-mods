@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 
+// typescript-eslint 8.74 refuses TypeScript 7.0, so the repo pins TypeScript 5.9 until it does.
 export default tseslint.config(
   {
     ignores: [
@@ -8,6 +9,7 @@ export default tseslint.config(
       '**/dist/**',
       'mods/*/hooks/register.js',
       'packages/tooling/engine-types/**',
+      'plugins/**',
       '.remember/**',
       '.omc/**',
     ],
@@ -15,7 +17,11 @@ export default tseslint.config(
   js.configs.recommended,
   {
     files: ['**/*.mjs'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { console: 'readonly', process: 'readonly', Buffer: 'readonly' },
+    },
   },
   ...tseslint.configs.recommended,
   {

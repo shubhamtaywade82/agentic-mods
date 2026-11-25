@@ -104,8 +104,14 @@ async function runTests($, testPath) {
   const command = await commandOf($);
   if (command === null)
     return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.';
-  const result = await $.process.run([...command, normalizePath(testPath)], { timeoutMs: 6e5 });
-  return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr };
+  try {
+    const result = await $.process.run([...command, normalizePath(testPath)], {
+      timeoutMs: 6e5
+    });
+    return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr };
+  } catch (error) {
+    return `Could not run the test command: ${error instanceof Error ? error.message : "unknown error"}`;
+  }
 }
 async function guardProduction($, path) {
   if (isTestPath(path)) return null;

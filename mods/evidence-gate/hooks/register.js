@@ -20,6 +20,31 @@ function describeDecision(decision) {
   return decision.remediation === void 0 ? head : `${head} ${decision.remediation}`;
 }
 
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+var DEFAULT_PROTECTED_GLOBS = [
+  "**/.env",
+  "**/.env.*",
+  "**/*.pem",
+  "**/*.key",
+  "**/*.p12",
+  "**/*.pfx",
+  "**/*.keystore",
+  "**/id_rsa",
+  "**/id_rsa.*",
+  "**/id_ed25519",
+  "**/id_ed25519.*",
+  "**/.npmrc",
+  "**/.netrc",
+  "**/credentials",
+  "**/credentials.*"
+];
+var DEFAULT_PROTECTED_EXCEPTIONS = [
+  "**/.env.example",
+  "**/.env.sample",
+  "**/.env.template"
+];
+
 // packages/core/src/classify.ts
 var CHECKS = ["build", "test", "lint", "typecheck", "security"];
 function isCheckName(value) {
@@ -310,31 +335,6 @@ function analyzeCommand(command) {
   }
   return { checks, gitActions, dangers };
 }
-
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
-var DEFAULT_PROTECTED_GLOBS = [
-  "**/.env",
-  "**/.env.*",
-  "**/*.pem",
-  "**/*.key",
-  "**/*.p12",
-  "**/*.pfx",
-  "**/*.keystore",
-  "**/id_rsa",
-  "**/id_rsa.*",
-  "**/id_ed25519",
-  "**/id_ed25519.*",
-  "**/.npmrc",
-  "**/.netrc",
-  "**/credentials",
-  "**/credentials.*"
-];
-var DEFAULT_PROTECTED_EXCEPTIONS = [
-  "**/.env.example",
-  "**/.env.sample",
-  "**/.env.template"
-];
 
 // packages/core/src/util.ts
 function isJsonObject(value) {
@@ -728,7 +728,10 @@ async function snapshotOf($) {
     await $.clock.now(),
     config.evidence.maxAgeMinutes * 6e4
   );
-  return { config, statuses, overall: overallVerdict(statuses), fingerprint };
+  const configured = Object.values(config.evidence.commands).some(
+    (list) => Array.isArray(list) && list.length > 0
+  );
+  return { config, configured, statuses, overall: overallVerdict(statuses), fingerprint };
 }
 async function publish($, snap) {
   await update($, status, () => ({
@@ -772,7 +775,8 @@ async function runCheck($, config, check) {
 }
 function summaryOf(snap) {
   const lines = snap.statuses.map((item) => `${item.check}: ${item.verdict} (${item.reason})`);
-  return [`evidence: ${snap.overall}`, ...lines].join("\n");
+  const notice = snap.configured ? [] : ["No evidence commands are configured in .agentic-mods/config.json, so git gates only warn."];
+  return [`evidence: ${snap.overall}`, ...lines, ...notice].join("\n");
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
@@ -817,7 +821,8 @@ function register(on) {
     const snap = await snapshotOf($);
     await publish($, snap);
     for (const action of actions) {
-      const decision = gateDecision(action, snap.statuses, snap.config.evidence.gateMode);
+      const mode = snap.configured ? snap.config.evidence.gateMode : "warn";
+      const decision = gateDecision(action, snap.statuses, mode);
       if (decision.decision === "block") return { deny: describeDecision(decision) };
       if (decision.decision === "warn") $.ui.toast(describeDecision(decision));
     }

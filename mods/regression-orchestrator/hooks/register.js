@@ -192,7 +192,16 @@ function register(on) {
           results.push(`${name}: not configured in .agentic-mods/regression.json`);
           continue;
         }
-        const result = await $.process.run(argv, { timeoutMs: 6e5 });
+        let result;
+        try {
+          result = await $.process.run(argv, { timeoutMs: 6e5 });
+        } catch (error) {
+          result = {
+            exitCode: -1,
+            stdout: "",
+            stderr: error instanceof Error ? error.message : "could not start"
+          };
+        }
         if (result.exitCode !== 0) verdict = "FAIL";
         results.push(
           `${name}: ${result.exitCode === 0 ? "passed" : `failed (exit ${result.exitCode})`}`

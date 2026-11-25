@@ -52,7 +52,13 @@ export function register(on: On): void {
       return { text: 'Usage: /migration check <path to a migration file>' }
     }
     const path = normalizePath(rest.join(' '))
-    const findings = classifyMigrationSql(await $.fs.read(path))
+    let sql: string
+    try {
+      sql = await $.fs.read(path)
+    } catch {
+      return { text: `Cannot read ${path}. Check the path, relative to the repository root.` }
+    }
+    const findings = classifyMigrationSql(sql)
     await publish($, path, findings)
     if (findings.length === 0) return { text: `${path}: no destructive or locking patterns found.` }
     return {

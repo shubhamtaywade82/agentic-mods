@@ -34,6 +34,7 @@ const status = atom({ plugin: 'evidence-gate', key: 'status' } as const, IDLE, {
 
 type Snapshot = {
   config: AgenticConfig
+  configured: boolean
   statuses: CheckStatus[]
   overall: Verdict
   fingerprint: string | null
@@ -88,7 +89,10 @@ async function snapshotOf($: EngineInterface): Promise<Snapshot> {
     await $.clock.now(),
     config.evidence.maxAgeMinutes * 60_000,
   )
-  return { config, statuses, overall: overallVerdict(statuses), fingerprint }
+  const configured = Object.values(config.evidence.commands).some(
+    (list) => Array.isArray(list) && list.length > 0,
+  )
+  return { config, configured, statuses, overall: overallVerdict(statuses), fingerprint }
 }
 
 async function publish($: EngineInterface, snap: Snapshot): Promise<void> {
@@ -140,7 +144,10 @@ async function runCheck(
 
 function summaryOf(snap: Snapshot): string {
   const lines = snap.statuses.map((item) => `${item.check}: ${item.verdict} (${item.reason})`)
-  return [`evidence: ${snap.overall}`, ...lines].join('\n')
+  const notice = snap.configured
+    ? []
+    : ['No evidence commands are configured in .agentic-mods/config.json, so git gates only warn.']
+  return [`evidence: ${snap.overall}`, ...lines, ...notice].join('\n')
 }
 
 export function register(on: On): void {
@@ -196,7 +203,9 @@ export function register(on: On): void {
     const snap = await snapshotOf($)
     await publish($, snap)
     for (const action of actions) {
-      const decision = gateDecision(action, snap.statuses, snap.config.evidence.gateMode)
+      // Without configured commands no check can ever pass, so enforcing would refuse every commit.
+      const mode = snap.configured ? snap.config.evidence.gateMode : 'warn'
+      const decision = gateDecision(action, snap.statuses, mode)
       if (decision.decision === 'block') return { deny: describeDecision(decision) }
       if (decision.decision === 'warn') $.ui.toast(describeDecision(decision))
     }

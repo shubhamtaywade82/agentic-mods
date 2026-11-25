@@ -24,7 +24,8 @@ in a public issue. Include the mod name, the steps to reproduce and the Claude C
 
 ## Known gaps
 
-- Bash commands that read secret files (for example `cat .env`) are not inspected.
+- Shell commands that read or copy protected files with common verbs (`cat`, `grep`, `cp`, `curl` and
+  similar) are refused. Reads through an interpreter (for example `python -c open('.env')`) are not inspected.
 - A confirm-level command decision depends on the tier the person chooses. `always-block` commands
   are refused in every tier.
 - Command names are checked against the engine's reserved list at validation time. Run

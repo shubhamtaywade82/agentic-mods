@@ -1,3 +1,5 @@
+import { isProtectedPath } from './paths'
+
 /** The checks a repository can be verified with. Evidence is recorded per check. */
 export const CHECKS = ['build', 'test', 'lint', 'typecheck', 'security'] as const
 export type CheckName = (typeof CHECKS)[number]
@@ -351,6 +353,64 @@ export function analyzeCommand(command: string): CommandAnalysis {
   }
 
   return { checks, gitActions, dangers }
+}
+
+const READ_VERBS = new Set([
+  'cat',
+  'less',
+  'more',
+  'head',
+  'tail',
+  'grep',
+  'egrep',
+  'fgrep',
+  'rg',
+  'sed',
+  'awk',
+  'source',
+  'xxd',
+  'od',
+  'strings',
+  'base64',
+  'bat',
+  'nl',
+  'tac',
+  'cut',
+  'sort',
+  'diff',
+  'cp',
+  'mv',
+  'tar',
+  'zip',
+  'scp',
+  'rsync',
+  'curl',
+  'wget',
+])
+
+/**
+ * Protected files a shell command would read or copy. Only the file-reading verbs above are
+ * matched, and only file arguments that equal a protected path. Reads through an interpreter
+ * (`python -c open(...)`) are not detected; that gap is documented in SECURITY.md.
+ */
+export function secretFileReads(
+  command: string,
+  protectedGlobs: readonly string[],
+  exceptions: readonly string[],
+): string[] {
+  const hits: string[] = []
+  for (const segment of splitSegments(command)) {
+    const argv = argvOf(segment)
+    const verb = (argv[0] ?? '').replace(/^.*\//, '')
+    if (!READ_VERBS.has(verb)) continue
+    for (const token of argv.slice(1)) {
+      if (token.startsWith('-')) continue
+      const candidate = token.replace(/^[<>]+/, '')
+      if (candidate !== '' && isProtectedPath(candidate, protectedGlobs, exceptions))
+        hits.push(candidate)
+    }
+  }
+  return [...new Set(hits)]
 }
 
 /** Dangers ordered by severity: always-block first. */

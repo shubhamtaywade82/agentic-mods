@@ -127,8 +127,8 @@ var encoder = new TextEncoder();
 // mods/turn-replay/src/register.tsx
 var PANE = "turn-replay";
 var MAX_CHANGES = 20;
-var MAX_LINES2 = 200;
-var MAX_LINE_LENGTH = 300;
+var MAX_LINES2 = 60;
+var MAX_LINE_LENGTH = 200;
 var IDLE = { turn: 0, changes: [] };
 var replay = atom({ plugin: "turn-replay", key: "replay" }, IDLE, { shape: "replay-1" });
 var cursor = atom({ plugin: "turn-replay", key: "cursor" }, 0, { shape: "cursor-1" });

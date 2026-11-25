@@ -44,7 +44,13 @@ export function register(on: On): void {
       return { text: 'Usage: /spec check <path to the specification> | /spec template' }
     }
     const path = normalizePath(rest.join(' '))
-    const report = validateSpec(await $.fs.read(path))
+    let text: string
+    try {
+      text = await $.fs.read(path)
+    } catch {
+      return { text: `Cannot read ${path}. Check the path, relative to the repository root.` }
+    }
+    const report = validateSpec(text)
     await update($, gate, () => ({
       verdict: report.verdict,
       phase: 'specified',

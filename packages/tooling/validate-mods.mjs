@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { listMods, ROOT, run } from './lib/repo.mjs'
 import { VENDORED } from './lib/vendored.mjs'
+import { BUILTIN_COMMANDS, commandNamesIn, unhandledCommandsIn } from './lib/builtin-commands.mjs'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
@@ -40,6 +41,19 @@ const vendoredListed = [
 allOk =
   run('vendored list matches lib/vendored.mjs', {
     ok: JSON.stringify(vendoredListed) === JSON.stringify(VENDORED),
+  }) && allOk
+const collisions = []
+for (const mod of listMods()) {
+  const source = readFileSync(join(mod.dir, 'src', 'register.tsx'), 'utf8')
+  for (const name of commandNamesIn(source))
+    if (BUILTIN_COMMANDS.has(name)) collisions.push(`${mod.name}: /${name}`)
+  for (const name of unhandledCommandsIn(source))
+    collisions.push(`${mod.name}: /${name} has no handler`)
+}
+allOk =
+  run('commands: no built-in shadowing, every command answered', {
+    ok: collisions.length === 0,
+    note: collisions.join(', ') || undefined,
   }) && allOk
 const folders = listMods().map((mod) => mod.name)
 const listed = nativeNames()

@@ -1,12 +1,6 @@
 // mods/session-meter/src/register.tsx
 import { atom, read, update } from "claude-code";
 
-// packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
-function isCheckName(value) {
-  return typeof value === "string" && CHECKS.includes(value);
-}
-
 // packages/core/src/paths.ts
 var STATE_DIR = ".agentic-mods";
 var DEFAULT_PROTECTED_GLOBS = [
@@ -31,6 +25,12 @@ var DEFAULT_PROTECTED_EXCEPTIONS = [
   "**/.env.sample",
   "**/.env.template"
 ];
+
+// packages/core/src/classify.ts
+var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+function isCheckName(value) {
+  return typeof value === "string" && CHECKS.includes(value);
+}
 
 // packages/core/src/util.ts
 function isJsonObject(value) {

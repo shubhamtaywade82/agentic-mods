@@ -27,9 +27,9 @@ function stubEngine(on: Parameters<Parameters<typeof test>[1]>[1]): void {
   on('ui.status', () => ({ value: undefined }))
 }
 
-test('/next answers with text when run with no arguments', async ($, on) => {
+test('/next-steps answers with text when run with no arguments', async ($, on) => {
   stubEngine(on)
-  const answer = await $.command.run(commandInput('next'))
+  const answer = await $.command.run(commandInput('next-steps'))
   expect(typeof answer.text).toBe('string')
   expect(answer.text.length).toBeGreaterThan(0)
 })

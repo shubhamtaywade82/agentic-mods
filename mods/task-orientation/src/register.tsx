@@ -20,10 +20,16 @@ const COMMANDS: Readonly<Record<string, Field>> = {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    for (const name of ['goal', 'task', 'blocker', 'next', 'orientation']) {
+    for (const name of [
+      'orient-goal',
+      'orient-task',
+      'orient-blocker',
+      'orient-next',
+      'orient-show',
+    ]) {
       await $.command.register({
         name,
-        description: `task-orientation: ${name === 'orientation' ? 'show the pane' : `set the ${name}`}`,
+        description: `task-orientation: ${name === 'orient-show' ? 'show the pane' : `set the ${name.replace('orient-', '')}`}`,
       })
     }
     return next(e)
@@ -43,7 +49,7 @@ export function register(on: On): void {
     return next(e)
   })
 
-  on('command.run', { command: 'goal' }, async ($, e) => {
+  on('command.run', { command: 'orient-goal' }, async ($, e) => {
     await update($, orientation, (current) => ({
       ...current,
       goal: truncate(e.args.trim(), 300) || null,
@@ -51,7 +57,7 @@ export function register(on: On): void {
     return { text: 'Goal updated.' }
   })
 
-  on('command.run', { command: 'task' }, async ($, e) => {
+  on('command.run', { command: 'orient-task' }, async ($, e) => {
     await update($, orientation, (current) => ({
       ...current,
       task: truncate(e.args.trim(), 300) || null,
@@ -59,7 +65,7 @@ export function register(on: On): void {
     return { text: 'Current task updated.' }
   })
 
-  on('command.run', { command: 'blocker' }, async ($, e) => {
+  on('command.run', { command: 'orient-blocker' }, async ($, e) => {
     const text = e.args.trim()
     await update($, orientation, (current) => ({
       ...current,
@@ -68,7 +74,7 @@ export function register(on: On): void {
     return { text: 'Blocker updated.' }
   })
 
-  on('command.run', { command: 'next' }, async ($, e) => {
+  on('command.run', { command: 'orient-next' }, async ($, e) => {
     await update($, orientation, (current) => ({
       ...current,
       next: truncate(e.args.trim(), 300) || null,
@@ -76,7 +82,7 @@ export function register(on: On): void {
     return { text: 'Next step updated.' }
   })
 
-  on('command.run', { command: 'orientation' }, async ($) => {
+  on('command.run', { command: 'orient-show' }, async ($) => {
     await $.ui.open({ id: PANE, title: 'Where am I' })
     return { text: 'Task orientation pane opened.' }
   })

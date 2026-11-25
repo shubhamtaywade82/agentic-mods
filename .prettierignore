@@ -2,3 +2,5 @@ mods/*/hooks/register.js
 packages/tooling/engine-types/
 .omc/
 .remember/
+registry/
+.claude-plugin/marketplace.json

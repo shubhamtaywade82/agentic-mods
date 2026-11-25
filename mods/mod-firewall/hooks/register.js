@@ -1,9 +1,3 @@
-// packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
-function isCheckName(value) {
-  return typeof value === "string" && CHECKS.includes(value);
-}
-
 // packages/core/src/paths.ts
 var STATE_DIR = ".agentic-mods";
 var DEFAULT_PROTECTED_GLOBS = [
@@ -51,6 +45,12 @@ function stateRelativePath(relative) {
     throw new PathGuardError(`refusing a state path outside ${STATE_DIR}: ${relative}`);
   }
   return `${STATE_DIR}/${path}`;
+}
+
+// packages/core/src/classify.ts
+var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+function isCheckName(value) {
+  return typeof value === "string" && CHECKS.includes(value);
 }
 
 // packages/core/src/util.ts

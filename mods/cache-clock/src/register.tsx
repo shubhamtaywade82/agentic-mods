@@ -7,16 +7,25 @@ import type { CacheClockState } from '../types'
 const IDLE: CacheClockState = { lastWriteAt: null, ttlMs: 300_000, remainingMs: null }
 const clock = atom({ plugin: 'cache-clock', key: 'clock' } as const, IDLE, { shape: 'clock-1' })
 
+let stopCountdown: (() => void) | null = null
+
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     // Refresh the countdown. This only redraws the estimate; no request is sent.
-    $.clock.every(15_000, async () => {
+    const handle = $.clock.every(15_000, async () => {
       const state = await read($, clock)
       if (state.lastWriteAt === null) return
       const now = await $.clock.now()
       const remaining = cacheState(state.lastWriteAt, state.ttlMs, now).remainingMs
       await update($, clock, (current) => ({ ...current, remainingMs: remaining }))
     })
+    stopCountdown = () => handle.cancel()
+    return next(e)
+  })
+
+  on('session.end', (_$, e, next) => {
+    stopCountdown?.()
+    stopCountdown = null
     return next(e)
   })
 

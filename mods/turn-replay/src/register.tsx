@@ -6,8 +6,8 @@ import type { ReplayChange, ReplayState } from '../types'
 
 const PANE = 'turn-replay'
 const MAX_CHANGES = 20
-const MAX_LINES = 200
-const MAX_LINE_LENGTH = 300
+const MAX_LINES = 60
+const MAX_LINE_LENGTH = 200
 
 const IDLE: ReplayState = { turn: 0, changes: [] }
 const replay = atom({ plugin: 'turn-replay', key: 'replay' } as const, IDLE, { shape: 'replay-1' })

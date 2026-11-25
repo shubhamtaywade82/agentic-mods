@@ -1,6 +1,6 @@
 {
   "name": "tdd-conductor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Runs the RED, GREEN and REFACTOR cycle. RED counts only when the test fails for a behavioral reason. Production edits are refused outside the implementation and refactor phases, unless an exception is recorded. Publishes the TDD gate.",
   "types": "./types/index.d.ts",
   "author": {

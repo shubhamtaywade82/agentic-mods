@@ -4,10 +4,13 @@ Claude Code mods for engineering work: safety guards, verification evidence, gov
 checks, and delivery workflows. Each mod is an independent plugin built from one shared,
 dependency-free core library.
 
-**Status:** all 47 mods and the 4 vendored plugins build, type-check and pass `claude plugin validate`
-(Claude Code 2.1.332). Every mod loads under the test harness and survives ordinary Bash, Read, Write and
-Edit calls. Seven mods (guardian, trace, verify, sdlc, pulse, design-patterns, mod-template) have
-behaviour tests; the rest have not been exercised in a live session. CI runs `scripts/check.sh`.
+**Status:** version 0.2.0, a production candidate. `pnpm check` runs the full release gate: strict
+typecheck, bundle build, lint, the engine validator, command-name checks and the registry. All 47 mods
+and the 4 vendored plugins pass `claude plugin validate` (Claude Code 2.1.332) and `claude plugin test`:
+every mod has tests that run its commands and pass an ordinary tool call through, and guardian, trace,
+verify, sdlc, pulse, design-patterns and mod-template have deeper behaviour tests. GitHub Actions runs
+`scripts/check.sh` on every pull request and on pushes to `main` (`.github/workflows/check.yml`). The
+mods have not been exercised beyond load and hot reload in a live session. See `CHANGELOG.md`.
 
 ## Install
 
@@ -116,6 +119,8 @@ Commands are argv arrays and run without a shell. Other state files live under `
 
 - Evidence is only PASS after a configured command exits 0 under `/evidence run`. Observed tool
   output is never treated as a pass, because the engine's Bash result carries no exit code.
+- With no evidence commands configured, git gates warn instead of blocking. Configure `evidence.commands`
+  and the gate enforces `gateMode`.
 - Completion of a turn cannot be blocked. Gates attach to git commit, push and PR creation instead.
 - Architecture and migration checks read the text of an edit. For an Edit that is only the new text,
   a violation that spans the edit boundary can be missed.

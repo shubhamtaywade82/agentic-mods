@@ -1,12 +1,6 @@
 // mods/cache-clock/src/register.tsx
 import { atom, read, update } from "claude-code";
 
-// packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
-function isCheckName(value) {
-  return typeof value === "string" && CHECKS.includes(value);
-}
-
 // packages/core/src/paths.ts
 var STATE_DIR = ".agentic-mods";
 var DEFAULT_PROTECTED_GLOBS = [
@@ -31,6 +25,12 @@ var DEFAULT_PROTECTED_EXCEPTIONS = [
   "**/.env.sample",
   "**/.env.template"
 ];
+
+// packages/core/src/classify.ts
+var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+function isCheckName(value) {
+  return typeof value === "string" && CHECKS.includes(value);
+}
 
 // packages/core/src/util.ts
 function isJsonObject(value) {
@@ -297,15 +297,22 @@ function cacheState(lastWriteAt, ttlMs, now) {
 // mods/cache-clock/src/register.tsx
 var IDLE = { lastWriteAt: null, ttlMs: 3e5, remainingMs: null };
 var clock = atom({ plugin: "cache-clock", key: "clock" }, IDLE, { shape: "clock-1" });
+var stopCountdown = null;
 function register(on) {
   on("session.start", async ($, e, next) => {
-    $.clock.every(15e3, async () => {
+    const handle = $.clock.every(15e3, async () => {
       const state = await read($, clock);
       if (state.lastWriteAt === null) return;
       const now = await $.clock.now();
       const remaining = cacheState(state.lastWriteAt, state.ttlMs, now).remainingMs;
       await update($, clock, (current) => ({ ...current, remainingMs: remaining }));
     });
+    stopCountdown = () => handle.cancel();
+    return next(e);
+  });
+  on("session.end", (_$, e, next) => {
+    stopCountdown?.();
+    stopCountdown = null;
     return next(e);
   });
   on("turn.complete", async ($, e, next) => {

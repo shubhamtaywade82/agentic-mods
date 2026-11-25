@@ -1,6 +1,87 @@
 // mods/command-guard/src/register.tsx
 import { atom, read } from "claude-code";
 
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+var DEFAULT_PROTECTED_GLOBS = [
+  "**/.env",
+  "**/.env.*",
+  "**/*.pem",
+  "**/*.key",
+  "**/*.p12",
+  "**/*.pfx",
+  "**/*.keystore",
+  "**/id_rsa",
+  "**/id_rsa.*",
+  "**/id_ed25519",
+  "**/id_ed25519.*",
+  "**/.npmrc",
+  "**/.netrc",
+  "**/credentials",
+  "**/credentials.*"
+];
+var DEFAULT_PROTECTED_EXCEPTIONS = [
+  "**/.env.example",
+  "**/.env.sample",
+  "**/.env.template"
+];
+var PathGuardError = class extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "PathGuardError";
+  }
+};
+function normalizePath(input) {
+  let path = input.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/");
+  while (path.startsWith("./")) path = path.slice(2);
+  return path;
+}
+function isAbsolutePath(path) {
+  return path.startsWith("/") || /^[A-Za-z]:\//.test(path);
+}
+function hasParentSegment(path) {
+  return normalizePath(path).split("/").includes("..");
+}
+function stateRelativePath(relative) {
+  const path = normalizePath(relative);
+  if (path === "" || isAbsolutePath(path) || hasParentSegment(path)) {
+    throw new PathGuardError(`refusing a state path outside ${STATE_DIR}: ${relative}`);
+  }
+  return `${STATE_DIR}/${path}`;
+}
+function globToRegExp(glob) {
+  const source = normalizePath(glob);
+  let pattern = "";
+  for (let i = 0; i < source.length; i++) {
+    const ch = source.charAt(i);
+    if (ch === "*") {
+      if (source.charAt(i + 1) === "*") {
+        if (source.charAt(i + 2) === "/") {
+          pattern += "(?:.*/)?";
+          i += 2;
+        } else {
+          pattern += ".*";
+          i += 1;
+        }
+      } else {
+        pattern += "[^/]*";
+      }
+    } else if (ch === "?") {
+      pattern += "[^/]";
+    } else {
+      pattern += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  return new RegExp(`^${pattern}$`);
+}
+function matchesAnyGlob(path, globs) {
+  const normalized = normalizePath(path);
+  return globs.some((glob) => globToRegExp(glob).test(normalized));
+}
+function isProtectedPath(path, protectedGlobs = DEFAULT_PROTECTED_GLOBS, exceptions = DEFAULT_PROTECTED_EXCEPTIONS) {
+  return matchesAnyGlob(path, protectedGlobs) && !matchesAnyGlob(path, exceptions);
+}
+
 // packages/core/src/classify.ts
 var CHECKS = ["build", "test", "lint", "typecheck", "security"];
 function isCheckName(value) {
@@ -291,91 +372,57 @@ function analyzeCommand(command) {
   }
   return { checks, gitActions, dangers };
 }
+var READ_VERBS = /* @__PURE__ */ new Set([
+  "cat",
+  "less",
+  "more",
+  "head",
+  "tail",
+  "grep",
+  "egrep",
+  "fgrep",
+  "rg",
+  "sed",
+  "awk",
+  "source",
+  "xxd",
+  "od",
+  "strings",
+  "base64",
+  "bat",
+  "nl",
+  "tac",
+  "cut",
+  "sort",
+  "diff",
+  "cp",
+  "mv",
+  "tar",
+  "zip",
+  "scp",
+  "rsync",
+  "curl",
+  "wget"
+]);
+function secretFileReads(command, protectedGlobs, exceptions) {
+  const hits = [];
+  for (const segment of splitSegments(command)) {
+    const argv = argvOf(segment);
+    const verb = (argv[0] ?? "").replace(/^.*\//, "");
+    if (!READ_VERBS.has(verb)) continue;
+    for (const token of argv.slice(1)) {
+      if (token.startsWith("-")) continue;
+      const candidate = token.replace(/^[<>]+/, "");
+      if (candidate !== "" && isProtectedPath(candidate, protectedGlobs, exceptions))
+        hits.push(candidate);
+    }
+  }
+  return [...new Set(hits)];
+}
 function sortDangers(dangers) {
   return [...dangers].sort(
     (a, b) => a.level === b.level ? 0 : a.level === "always-block" ? -1 : 1
   );
-}
-
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
-var DEFAULT_PROTECTED_GLOBS = [
-  "**/.env",
-  "**/.env.*",
-  "**/*.pem",
-  "**/*.key",
-  "**/*.p12",
-  "**/*.pfx",
-  "**/*.keystore",
-  "**/id_rsa",
-  "**/id_rsa.*",
-  "**/id_ed25519",
-  "**/id_ed25519.*",
-  "**/.npmrc",
-  "**/.netrc",
-  "**/credentials",
-  "**/credentials.*"
-];
-var DEFAULT_PROTECTED_EXCEPTIONS = [
-  "**/.env.example",
-  "**/.env.sample",
-  "**/.env.template"
-];
-var PathGuardError = class extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "PathGuardError";
-  }
-};
-function normalizePath(input) {
-  let path = input.trim().replace(/\\/g, "/").replace(/\/{2,}/g, "/");
-  while (path.startsWith("./")) path = path.slice(2);
-  return path;
-}
-function isAbsolutePath(path) {
-  return path.startsWith("/") || /^[A-Za-z]:\//.test(path);
-}
-function hasParentSegment(path) {
-  return normalizePath(path).split("/").includes("..");
-}
-function stateRelativePath(relative) {
-  const path = normalizePath(relative);
-  if (path === "" || isAbsolutePath(path) || hasParentSegment(path)) {
-    throw new PathGuardError(`refusing a state path outside ${STATE_DIR}: ${relative}`);
-  }
-  return `${STATE_DIR}/${path}`;
-}
-function globToRegExp(glob) {
-  const source = normalizePath(glob);
-  let pattern = "";
-  for (let i = 0; i < source.length; i++) {
-    const ch = source.charAt(i);
-    if (ch === "*") {
-      if (source.charAt(i + 1) === "*") {
-        if (source.charAt(i + 2) === "/") {
-          pattern += "(?:.*/)?";
-          i += 2;
-        } else {
-          pattern += ".*";
-          i += 1;
-        }
-      } else {
-        pattern += "[^/]*";
-      }
-    } else if (ch === "?") {
-      pattern += "[^/]";
-    } else {
-      pattern += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-    }
-  }
-  return new RegExp(`^${pattern}$`);
-}
-function matchesAnyGlob(path, globs) {
-  const normalized = normalizePath(path);
-  return globs.some((glob) => globToRegExp(glob).test(normalized));
-}
-function isProtectedPath(path, protectedGlobs = DEFAULT_PROTECTED_GLOBS, exceptions = DEFAULT_PROTECTED_EXCEPTIONS) {
-  return matchesAnyGlob(path, protectedGlobs) && !matchesAnyGlob(path, exceptions);
 }
 
 // packages/core/src/util.ts
@@ -775,6 +822,17 @@ function register(on) {
     return { text: lines.join("\n") };
   });
   on("tool.call", { tool: "Bash" }, async ($, e, next) => {
+    const config = await configOf($);
+    const reads = secretFileReads(
+      e.command,
+      config.guard.protectedPaths,
+      config.guard.protectedExceptions
+    );
+    if (reads.length > 0) {
+      const text = `command-guard: ${reads.join(", ")} is a protected secret file and this command would read it. Read it yourself, or add an exception in .agentic-mods/config.json.`;
+      await recordBlock($, "Bash", text);
+      return { deny: text };
+    }
     const judgement = await judgeCommand($, e.command);
     if (judgement.kind === "deny") {
       await recordBlock($, "Bash", judgement.text);

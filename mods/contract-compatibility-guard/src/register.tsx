@@ -57,7 +57,16 @@ export function register(on: On): void {
     let verdict: GateState['verdict'] = 'PASS'
     for (const name of names) {
       const argv = commands[name] ?? []
-      const result = await $.process.run(argv, { timeoutMs: 300_000 })
+      let result: { exitCode: number; stdout: string; stderr: string }
+      try {
+        result = await $.process.run(argv, { timeoutMs: 300_000 })
+      } catch (error) {
+        result = {
+          exitCode: -1,
+          stdout: '',
+          stderr: error instanceof Error ? error.message : 'could not start',
+        }
+      }
       if (result.exitCode !== 0) verdict = 'FAIL'
       const tail = redact(`${result.stdout}\n${result.stderr}`).split('\n').slice(-6).join('\n')
       lines.push(

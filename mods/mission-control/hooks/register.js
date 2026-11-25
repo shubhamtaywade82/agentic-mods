@@ -1,6 +1,9 @@
 // mods/mission-control/src/register.tsx
 import { atom, read, update } from "claude-code";
 
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+
 // packages/core/src/coordination.ts
 function spawnAgent(nodes2, input) {
   const next = new Map(nodes2);
@@ -63,9 +66,6 @@ function agentTree(nodes2) {
   visit(null, 0);
   return out;
 }
-
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
 
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;

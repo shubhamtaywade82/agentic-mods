@@ -8,13 +8,8 @@ const steps = atom({ plugin: 'next-steps', key: 'steps' } as const, IDLE, { shap
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'next', description: 'Show suggested next prompts' })
+    await $.command.register({ name: 'next-steps', description: 'Show suggested next prompts' })
     return next(e)
-  })
-
-  on('command.run', { command: 'next' }, async ($) => {
-    const { texts } = await read($, steps)
-    return { text: texts.length === 0 ? 'No suggestions yet.' : texts.join('\n') }
   })
 
   on('turn.start', async ($, e, next) => {
@@ -43,6 +38,13 @@ export function register(on: On): void {
         : ['Summarise the open risks in this session.']
     await update($, steps, () => ({ texts }))
     return next(e)
+  })
+
+  on('command.run', { command: 'next-steps' }, async ($) => {
+    const current = await read($, steps)
+    if (current.texts.length === 0)
+      return { text: 'No suggestions yet: they appear after a turn that changes files.' }
+    return { text: current.texts.map((text, index) => `${index + 1}. ${text}`).join('\n') }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {

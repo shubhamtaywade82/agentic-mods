@@ -133,7 +133,12 @@ function register(on) {
       };
     }
     const path = normalizePath(rest.join(" "));
-    const log = await $.fs.read(path);
+    let log;
+    try {
+      log = await $.fs.read(path);
+    } catch {
+      return { text: `Cannot read ${path}. Download the failed job log and pass its path.` };
+    }
     const result = triageLog(log);
     const lines = [
       `category: ${result.category}`,

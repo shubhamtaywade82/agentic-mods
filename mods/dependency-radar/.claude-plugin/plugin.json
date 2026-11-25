@@ -1,6 +1,6 @@
 {
   "name": "dependency-radar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Diffs direct dependencies when a manifest or lockfile is edited (added, removed, major-version changes), and reads scanner results saved under .agentic-mods/scans. It never contacts the network.",
   "types": "./types/index.d.ts",
   "author": {
