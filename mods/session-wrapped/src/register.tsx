@@ -1,10 +1,10 @@
-import type { On } from 'claude-code'
+import type { EngineInterface, On } from 'claude-code'
 
 import { formatDuration } from '@agentic-mods/core'
 
 const COUNTERS = ['turns', 'tools', 'edits'] as const
 
-async function counter($: Parameters<On>[0] extends never ? never : import('claude-code').EngineInterface, key: string): Promise<number> {
+async function counter($: Parameters<On>[0] extends never ? never : EngineInterface, key: string): Promise<number> {
   return Number((await $.store.get(key)) ?? 0)
 }
 

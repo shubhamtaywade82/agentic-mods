@@ -18,7 +18,7 @@ type Row = { at: string; plugin: string; kind: Kind; text: string; id: string }
 
 async function writeLine($: EngineInterface, id: string, kind: Kind, text: string): Promise<void> {
   const path = stateRelativePath(`incidents/${id}.jsonl`)
-  let existing = ''
+  let existing: string
   try {
     existing = await $.fs.read(path)
   } catch {
@@ -61,7 +61,7 @@ async function writePostmortem($: EngineInterface): Promise<string> {
   const state = await read($, incident)
   const id = state.id ?? (await $.store.get('lastIncident'))
   if (typeof id !== 'string' || !ID_PATTERN.test(id)) return 'No incident to write up.'
-  let raw = ''
+  let raw: string
   try {
     raw = await $.fs.read(stateRelativePath(`incidents/${id}.jsonl`))
   } catch {

@@ -54,7 +54,7 @@ async function gateHistoryCommand(
   $: EngineInterface,
   command: string,
 ): Promise<{ deny: string } | null> {
-  let diffText = ''
+  let diffText: string
   try {
     const res = await $.process.run(['git', 'diff', '--cached'])
     diffText = res.stdout ?? ''
@@ -148,7 +148,7 @@ export function register(on: On): void {
     return { deny: 'guardian failed; refusing this call' }
   })
 
-  on('tool.call', { tool: 'Write' }, async ($, e, next) => {
+  on('tool.call', { tool: 'Write' }, async (_$, e, next) => {
     const content: string = typeof e.content === 'string' ? e.content : ''
     const findings = scan(content)
     if (findings.length > 0) {

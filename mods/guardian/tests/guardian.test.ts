@@ -35,7 +35,7 @@ test('does not touch ordinary commands', () => {
 test('deny message names the impact without echoing the command', () => {
   const m = checkCommand('rm -rf /')
   expect(m).not.toBeNull()
-  const msg = denyMessage(m!)
+  const msg = denyMessage(m as NonNullable<typeof m>)
   expect(msg).toContain('rm-rf')
   expect(msg).toContain('recursively force-deletes')
   expect(msg).not.toContain('rm -rf /')
@@ -61,9 +61,9 @@ test('scan finds multiple distinct secrets of the same kind', () => {
   const aws = findings.filter((f) => f.kind === 'aws-access-key')
   expect(aws.length).toBe(2)
   // Value-anchored: the exact substrings must be found, not just the kind.
-  expect(aws[0]!.value).toBe('AKIAIOSFODNN7EXAMPLE')
-  expect(aws[1]!.value).toBe('AKIAI44QH8DHBEXAMPLE')
-  expect(aws[0]!.index).toBeLessThan(aws[1]!.index)
+  expect(aws[0]?.value).toBe('AKIAIOSFODNN7EXAMPLE')
+  expect(aws[1]?.value).toBe('AKIAI44QH8DHBEXAMPLE')
+  expect(aws[0]?.index).toBeLessThan(aws[1]?.index as number)
 })
 
 test('scan does not match prose or short strings', () => {

@@ -208,7 +208,7 @@ async function ensureArtifact($: EngineInterface, task: string, file: string, ti
 
 async function appendArtifact($: EngineInterface, task: string, file: string, text: string): Promise<void> {
   const path = stateRelativePath(`tasks/${task}/${file}`)
-  let existing = ''
+  let existing: string
   try {
     existing = await $.fs.read(path)
   } catch {

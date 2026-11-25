@@ -335,7 +335,7 @@ async function loadConfig(read2) {
 
 // packages/core/src/git.ts
 function parseNameList(output) {
-  return output.split(/\u0000|\n/).map((path) => path.trim()).filter((path) => path.length > 0);
+  return output.split(/[\0\n]/).map((path) => path.trim()).filter((path) => path.length > 0);
 }
 
 // packages/core/src/governance.ts

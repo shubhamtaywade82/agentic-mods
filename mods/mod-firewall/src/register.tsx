@@ -26,7 +26,7 @@ function executableOf(argv: readonly string[]): string {
 
 async function audit($: EngineInterface, record: Record<string, unknown>): Promise<void> {
   const path = stateRelativePath('audit/firewall.jsonl')
-  let existing = ''
+  let existing: string
   try {
     existing = await $.fs.read(path)
   } catch {

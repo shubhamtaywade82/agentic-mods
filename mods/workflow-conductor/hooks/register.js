@@ -533,7 +533,7 @@ Task: ${task}
 }
 async function appendArtifact($, task, file, text) {
   const path = stateRelativePath(`tasks/${task}/${file}`);
-  let existing = "";
+  let existing;
   try {
     existing = await $.fs.read(path);
   } catch {

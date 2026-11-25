@@ -80,7 +80,7 @@ function parseStatusZ(output) {
   return entries;
 }
 function parseNameList(output) {
-  return output.split(/\u0000|\n/).map((path) => path.trim()).filter((path) => path.length > 0);
+  return output.split(/[\0\n]/).map((path) => path.trim()).filter((path) => path.length > 0);
 }
 async function workingTreeChanges(run) {
   const result = await run(["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"]);

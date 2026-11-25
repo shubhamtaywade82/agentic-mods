@@ -26,7 +26,7 @@ function isActive(spec: ContractSpec): boolean {
 /** The contract file when it is valid, otherwise the configured contract. */
 async function loadContract($: EngineInterface): Promise<ContractSpec> {
   const configured = (await loadConfig(path => $.fs.read(path))).value.contract
-  let fromFile: ContractSpec | null = null
+  let fromFile: ContractSpec | null
   try {
     fromFile = parseContractJson(await $.fs.read(stateRelativePath('contract.json')))
   } catch {

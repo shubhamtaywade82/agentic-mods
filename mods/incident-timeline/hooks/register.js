@@ -85,7 +85,7 @@ var incident = atom({ plugin: "incident-timeline", key: "incident" }, IDLE, {
 });
 async function writeLine($, id, kind, text) {
   const path = stateRelativePath(`incidents/${id}.jsonl`);
-  let existing = "";
+  let existing;
   try {
     existing = await $.fs.read(path);
   } catch {
@@ -124,7 +124,7 @@ async function writePostmortem($) {
   const state = await read($, incident);
   const id = state.id ?? await $.store.get("lastIncident");
   if (typeof id !== "string" || !ID_PATTERN.test(id)) return "No incident to write up.";
-  let raw = "";
+  let raw;
   try {
     raw = await $.fs.read(stateRelativePath(`incidents/${id}.jsonl`));
   } catch {

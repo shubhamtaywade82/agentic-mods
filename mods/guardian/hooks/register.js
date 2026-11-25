@@ -212,7 +212,7 @@ async function requestApproval(_$, _command, _reason, _preview) {
   return "deny";
 }
 async function gateHistoryCommand($, command) {
-  let diffText = "";
+  let diffText;
   try {
     const res = await $.process.run(["git", "diff", "--cached"]);
     diffText = res.stdout ?? "";
@@ -295,7 +295,7 @@ function register(on) {
   }).catch(async (_$) => {
     return { deny: "guardian failed; refusing this call" };
   });
-  on("tool.call", { tool: "Write" }, async ($, e, next) => {
+  on("tool.call", { tool: "Write" }, async (_$, e, next) => {
     const content = typeof e.content === "string" ? e.content : "";
     const findings = scan(content);
     if (findings.length > 0) {

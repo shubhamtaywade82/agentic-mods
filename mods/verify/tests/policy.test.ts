@@ -95,14 +95,12 @@ test('the engine completes on the first attempt when verification passes', async
 })
 
 test('the engine escalates the route on a route-mismatch failure', async () => {
-  let executed = 0
   const seenModels: string[] = []
   const outcome = await verifyEngine.run({
     initial: { model: 'claude-haiku-4.5', effort: 'low' },
     policy: DEFAULT_POLICY,
     classifyFailure: heuristicClassifyFailure,
     execute: async (route) => {
-      executed += 1
       seenModels.push(route.model)
       // Pass only on the strongest model (the last fallback route).
       return route.model === 'claude-opus-4.1' ? 'good' : 'weak'

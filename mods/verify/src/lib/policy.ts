@@ -6,7 +6,6 @@
 // deterministic verification checks, policy presets, and report rendering.
 
 import type {
-  AttemptRecord,
   ClassifyInput,
   ClassifyResult,
   EscalationPolicy,

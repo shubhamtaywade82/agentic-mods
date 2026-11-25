@@ -421,7 +421,7 @@ function executableOf(argv) {
 }
 async function audit($, record) {
   const path = stateRelativePath("audit/firewall.jsonl");
-  let existing = "";
+  let existing;
   try {
     existing = await $.fs.read(path);
   } catch {

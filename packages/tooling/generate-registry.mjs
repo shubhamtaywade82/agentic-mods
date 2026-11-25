@@ -2,7 +2,7 @@
  * Generates the registry and the marketplace from the mods' own manifests, and validates every
  * preset against the native list. Fails if a preset names a mod that does not exist.
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod'
 import { listMods, readJson, ROOT, run } from './lib/repo.mjs'

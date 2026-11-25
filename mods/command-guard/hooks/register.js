@@ -691,7 +691,7 @@ async function blockedCount($) {
 async function recordBlock($, tool, reason) {
   await $.store.set("blocked", await blockedCount($) + 1);
   const path = stateRelativePath("audit/command-guard.jsonl");
-  let existing = "";
+  let existing;
   try {
     existing = await $.fs.read(path);
   } catch {

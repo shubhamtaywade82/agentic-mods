@@ -396,7 +396,7 @@ function isActive(spec) {
 }
 async function loadContract($) {
   const configured = (await loadConfig((path) => $.fs.read(path))).value.contract;
-  let fromFile = null;
+  let fromFile;
   try {
     fromFile = parseContractJson(await $.fs.read(stateRelativePath("contract.json")));
   } catch {

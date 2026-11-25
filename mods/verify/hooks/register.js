@@ -180,13 +180,9 @@ function register(on) {
       initial,
       policy: DEFAULT_POLICY,
       classifyFailure: (f) => heuristicClassifyFailure(f),
-      execute: async (_route) => {
-        try {
-          const res = await $.process.run(["bash", "-c", task]);
-          return res.stdout || res.stderr;
-        } catch (err) {
-          throw err;
-        }
+      execute: async () => {
+        const res = await $.process.run(["bash", "-c", task]);
+        return res.stdout || res.stderr;
       },
       verify: async (output) => {
         const keyword = task.split(" ")[0] ?? "task";

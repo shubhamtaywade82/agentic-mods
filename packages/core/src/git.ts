@@ -36,7 +36,7 @@ export function parseStatusZ(output: string): StatusEntry[] {
 /** Lines of `git diff --name-only -z` or similar, as paths. */
 export function parseNameList(output: string): string[] {
   return output
-    .split(/\u0000|\n/)
+    .split(/[\0\n]/)
     .map(path => path.trim())
     .filter(path => path.length > 0)
 }
