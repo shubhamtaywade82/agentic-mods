@@ -73,42 +73,74 @@ var InMemoryTrace = class {
     return false;
   }
 };
-function renderTree(snap) {
-  if (snap.nodes.length === 0) return "trace: (empty)";
+function treeLines(snap) {
   const byParent = /* @__PURE__ */ new Map();
   for (const n of snap.nodes) {
     const list = byParent.get(n.parentId) ?? [];
     list.push(n);
     byParent.set(n.parentId, list);
   }
-  const lines = ["trace:"];
-  const render = (parentId, depth) => {
+  const lines = [];
+  const walk = (parentId, indent, isRoot) => {
     const children = byParent.get(parentId) ?? [];
-    for (const c of children) {
-      const indent = "  ".repeat(depth);
-      const icon = iconFor(c.status);
-      const files = c.files.length > 0 ? ` · ${c.files.length} file(s)` : "";
-      const note = c.note ? ` — ${c.note}` : "";
-      lines.push(
-        `${indent}${icon} ${c.label} [${c.status}${c.durationMs ? ` ${c.durationMs}ms` : ""}]${files}${note}`
-      );
-      render(c.id, depth + 1);
-    }
+    children.forEach((node, index) => {
+      const isLast = index === children.length - 1;
+      lines.push({ prefix: isRoot ? "" : `${indent}${isLast ? "└─ " : "├─ "}`, node });
+      walk(node.id, isRoot ? "" : `${indent}${isLast ? "   " : "│  "}`, false);
+    });
   };
-  render(null, 0);
-  return lines.join("\n");
+  walk(null, "", true);
+  return lines;
+}
+function durationLabel(node) {
+  if (node.status === "running" || node.durationMs === 0) return "";
+  return `${(node.durationMs / 1e3).toFixed(1)}s`;
+}
+function renderTree(snap) {
+  if (snap.nodes.length === 0) return "(empty)";
+  return treeLines(snap).map(({ prefix, node }) => {
+    const files = node.files.length > 0 ? ` · ${node.files.length} file(s)` : "";
+    const note = node.note ? ` — ${node.note}` : "";
+    const duration = durationLabel(node);
+    return `${prefix}${iconFor(node.status)} ${node.label}  ${node.status}${duration ? ` ${duration}` : ""}${files}${note}`;
+  }).join("\n");
 }
 function iconFor(status) {
   switch (status) {
     case "running":
-      return "▸";
+      return "●";
     case "completed":
       return "✓";
     case "failed":
       return "✗";
     case "cancelled":
-      return "·";
+      return "⊘";
   }
+}
+
+// packages/core/src/ui.tsx
+var STATUSES = {
+  running: { tone: "claude", glyph: "●" },
+  completed: { tone: "success", glyph: "✓" },
+  failed: { tone: "error", glyph: "✗" },
+  cancelled: { tone: "inactive", glyph: "⊘" },
+  stopped: { tone: "inactive", glyph: "⊘" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function statusLook(status) {
+  return STATUSES[status] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
 }
 
 // mods/trace/src/lib/summary.ts
@@ -192,6 +224,7 @@ var CONFIG_PATH = `${STATE_DIR}/config.json`;
 var encoder = new TextEncoder();
 
 // mods/trace/src/register.tsx
+var PANE = "trace";
 var trace = new InMemoryTrace();
 var openTools = /* @__PURE__ */ new Set();
 var agentNodes = /* @__PURE__ */ new Map();
@@ -226,7 +259,7 @@ function register(on) {
     else trace.close(id, { status: "failed", note: strField(res, "deny") ?? "not started" });
     return res;
   });
-  on("tool.call", async (_$, e, next) => {
+  on("tool.call", async ($, e, next) => {
     const parentId = agentNodes.get(strField(e, "agentId") ?? "") ?? mainId;
     const id = openTool(trace, parentId, strField(e, "tool"), strField(e, "command"));
     openTools.add(id);
@@ -242,6 +275,7 @@ function register(on) {
       throw err;
     } finally {
       openTools.delete(id);
+      $.ui.invalidate("ui.render");
     }
   });
   on("turn.complete", async ($, e, next) => {
@@ -261,11 +295,32 @@ function register(on) {
   on("ui.render", { component: "Spinner" }, async (_$, e, next) => {
     return next({ ...e, props: { ...e.props, suffix: traceSpinnerSuffix(summarize(trace)) } });
   });
-  on("command.run", { command: "trace-tree" }, async () => {
+  on("command.run", { command: "trace-tree" }, async ($) => {
     if (!trace.get("main")) {
       mainId = trace.open({ kind: "main", label: "main", parentId: null });
     }
+    await $.ui.open({ id: PANE, title: "Trace" }).catch(() => void 0);
     return { text: renderTree(trace.snapshot()) };
+  });
+  on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
+    const lines = treeLines(trace.snapshot());
+    if (lines.length === 0)
+      return empty(kit, "Nothing has run yet.", "work in the session, then /trace-tree");
+    const s = summarize(trace);
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Trace",
+      meta: `${s.agents} agent(s) · ${s.tools} tool(s)`,
+      badge: s.failed > 0 ? chip(kit, `${s.failed} failed`, statusLook("failed")) : chip(
+        kit,
+        `${s.running} running`,
+        statusLook(s.running > 0 ? "running" : "completed")
+      )
+    }), lines.map(({ prefix, node }) => {
+      const look = statusLook(node.status);
+      return /* @__PURE__ */ h(Box, { key: node.id, flexDirection: "row", justifyContent: "space-between" }, /* @__PURE__ */ h(Text, { wrap: "truncate-end" }, /* @__PURE__ */ h(Text, { dimColor: true }, prefix), /* @__PURE__ */ h(Text, { color: look.tone }, look.glyph, " "), /* @__PURE__ */ h(Text, { weight: node.kind === "tool" ? "regular" : "bold" }, node.label), node.files.length > 0 ? /* @__PURE__ */ h(Text, { dimColor: true }, `  ${node.files.length} file(s)`) : null), /* @__PURE__ */ h(Text, { dimColor: true }, durationLabel(node)));
+    }));
   });
   on("command.run", { command: "trace-summary" }, async () => {
     const s = summarize(trace);

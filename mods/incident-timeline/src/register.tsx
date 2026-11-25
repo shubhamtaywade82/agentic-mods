@@ -10,6 +10,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { IncidentState } from '../types'
+import { band } from '../../../packages/core/src/ui'
 
 const PLUGIN = 'incident-timeline'
 const TIMELINE_CAP = 2000
@@ -119,14 +120,11 @@ export function register(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const state = await read($, incident)
     if (!state.isOpen) return next(e)
-    const { Box, Text } = $.ui.resolve(e)
-    return (
-      <Box>
-        <Text>
-          INCIDENT {state.id ?? 'unnamed'} · strict command profile on · /incident close to end
-        </Text>
-      </Box>
-    )
+    return band($.ui.resolve(e), 'incident', [
+      { text: `■ ${state.id ?? 'unnamed'} open`, tone: 'error', bold: true },
+      { text: 'strict command profile on', tone: 'warning' },
+      { text: '/incident close to end', tone: 'suggestion' },
+    ])
   })
 
   on('command.run', { command: 'incident' }, async ($, e) => {

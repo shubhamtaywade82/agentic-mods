@@ -291,6 +291,23 @@ function rateLevel(percentUsed, warnAt) {
   return percentUsed >= warnAt ? "warn" : "ok";
 }
 
+// packages/core/src/ui.tsx
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+function gauge(percent, width = 10) {
+  const filled = Math.round(Math.max(0, Math.min(100, percent)) / 100 * width);
+  return `${"▰".repeat(filled)}${"▱".repeat(width - filled)}`;
+}
+
 // mods/session-meter/src/register.tsx
 var IDLE = { contextPercent: null, usd: null, rateLimits: [], warning: null };
 var meter = atom({ plugin: "session-meter", key: "meter" }, IDLE, { shape: "meter-1" });
@@ -334,13 +351,23 @@ function register(on) {
     if (state.contextPercent === null && state.usd === null && state.rateLimits.length === 0) {
       return next(e);
     }
-    const { Box, Text } = $.ui.resolve(e);
-    const parts = [];
-    if (state.contextPercent !== null) parts.push(`context ${formatPercent(state.contextPercent)}`);
-    if (state.usd !== null) parts.push(`cost ${formatUsd(state.usd)}`);
-    for (const limit of state.rateLimits)
-      parts.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`);
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: state.warning === null }, parts.join(" · "), state.warning === null ? "" : ` · warning: ${state.warning}`));
+    const segments = [];
+    if (state.contextPercent !== null) {
+      const tone = state.contextPercent >= 90 ? "error" : state.contextPercent >= 70 ? "warning" : "success";
+      segments.push({
+        text: `${gauge(state.contextPercent)} ${formatPercent(state.contextPercent)} context`,
+        tone,
+        bold: true
+      });
+    }
+    if (state.usd !== null) segments.push({ text: `cost ${formatUsd(state.usd)}` });
+    for (const limit of state.rateLimits) {
+      const tone = limit.percentUsed >= 80 ? "warning" : "subtle";
+      segments.push({ text: `${limit.kind} ${formatPercent(limit.percentUsed)}`, tone });
+    }
+    if (state.warning !== null)
+      segments.push({ text: `▲ ${state.warning}`, tone: "warning", bold: true });
+    return band($.ui.resolve(e), "session", segments);
   });
 }
 export {

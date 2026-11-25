@@ -91,6 +91,19 @@ function auditLine(record, at) {
   return JSON.stringify(safe);
 }
 
+// packages/core/src/ui.tsx
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+
 // mods/incident-timeline/src/register.tsx
 var PLUGIN = "incident-timeline";
 var TIMELINE_CAP = 2e3;
@@ -186,8 +199,11 @@ function register(on) {
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const state = await read($, incident);
     if (!state.isOpen) return next(e);
-    const { Box, Text } = $.ui.resolve(e);
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, null, "INCIDENT ", state.id ?? "unnamed", " · strict command profile on · /incident close to end"));
+    return band($.ui.resolve(e), "incident", [
+      { text: `■ ${state.id ?? "unnamed"} open`, tone: "error", bold: true },
+      { text: "strict command profile on", tone: "warning" },
+      { text: "/incident close to end", tone: "suggestion" }
+    ]);
   });
   on("command.run", { command: "incident" }, async ($, e) => {
     const [subcommand = "", ...rest] = e.args.trim().split(/\s+/);

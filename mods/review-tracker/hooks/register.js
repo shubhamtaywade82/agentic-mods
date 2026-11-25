@@ -105,8 +105,57 @@ function gateFindings(findings) {
   };
 }
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/review-tracker/src/register.tsx
 var PANE = "review-tracker";
+var SEVERITY_LOOK = {
+  high: { tone: "error", glyph: "■" },
+  medium: { tone: "warning", glyph: "▲" },
+  low: { tone: "inactive", glyph: "●" }
+};
 var FILE = "findings.json";
 var ACTIONS = ["start", "fix", "verify", "reject", "defer", "reopen"];
 var SEVERITIES = ["high", "medium", "low"];
@@ -227,9 +276,30 @@ function register(on) {
     return { text: "Usage: /finding add|set|list" };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const current = await read($, gate);
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "Review gate: ", current.verdict, " · ", current.reason), /* @__PURE__ */ h(Text, { dimColor: true }, "Use /finding add, /finding set and /finding list."));
+    const loaded = await loadFindings($);
+    const findings = loaded.ok ? loaded.findings : [];
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Review findings",
+      meta: `${current.open} open · ${current.openHigh} high`,
+      badge: chip(kit, current.verdict, verdictLook(current.verdict))
+    }), loaded.ok ? null : card(kit, {
+      key: "unreadable",
+      title: "Findings file unreadable",
+      look: verdictLook("FAIL"),
+      lines: [loaded.reason]
+    }), findings.length === 0 && loaded.ok ? empty(kit, "No findings recorded.", "/finding add high|medium|low <title>") : findings.map(
+      (finding) => card(kit, {
+        key: finding.id,
+        title: `${finding.id}  ${finding.title}`,
+        look: SEVERITY_LOOK[finding.severity],
+        lines: [
+          `${finding.severity} · ${finding.status}${finding.reason ? ` · ${finding.reason}` : ""}`
+        ]
+      })
+    ), /* @__PURE__ */ h(Text, { dimColor: true }, "/finding set ", "<id>", " start|fix|verify|reject|defer|reopen"));
   });
 }
 export {

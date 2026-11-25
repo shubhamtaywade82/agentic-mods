@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### Design
+
+- One look across the catalog: `packages/core/src/ui.tsx` holds the palette (theme keys, so colors
+  follow the person's theme), the glyphs (✓ ✗ ○ ● ▲ ⊘) and the blocks every surface is built from:
+  title rows with verdict chips, bordered state cards, meters, one-line bands and empty states
+  that name the command to run.
+- Every pane is rebuilt on it: mission-control (agent cards, files touched, a live band while
+  agents run), trace (a connector-drawn tree with durations, in a pane), engineering-cockpit (gate
+  chips and a gates-passing meter), workflow-conductor (a stage stepper), evidence-gate,
+  review-tracker (finding cards by severity), test-impact, turn-replay (colored diff with
+  previous/next), pr-readiness, task-orientation, debug-timeline, architecture-guard and
+  markdown-preview. Every band above the prompt uses the same one-line form, and session-meter draws
+  a context gauge.
+- Each redesigned surface has a render test that mounts it on the terminal and the desktop app.
+
+### Fixed
+
+- Approval questions could appear twice for one command: guardian and command-guard each opened
+  their own question. They now ask through Claude Code's permission dialog (`tool.check`), so guards
+  that hold the same command share one dialog, and an ask nobody can answer is a deny.
+  command-guard's typed-code tier still asks for its code. The vendored `sdlc-guard` asks on its
+  own and then through the dialog as well; that needs a fix upstream in agentic-sdlc-kit.
+
 ### Fixed (from the manual live pass)
 
 - Every preset left out some of its mods' dependencies; `engineering-cockpit` alone needs eight. Since

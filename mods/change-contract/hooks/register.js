@@ -401,6 +401,19 @@ function contractDecision(contract, path) {
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
 
+// packages/core/src/ui.tsx
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+
 // mods/change-contract/src/register.tsx
 var MAX_VIOLATIONS = 50;
 var IDLE = { active: false, objective: "", violations: 0, mode: "warn" };
@@ -523,8 +536,15 @@ function register(on) {
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const current = await read($, status);
     if (!current.active || current.violations === 0) return next(e);
-    const { Box, Text } = $.ui.resolve(e);
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, null, "contract ", current.mode, ": ", current.violations, " write", current.violations === 1 ? "" : "s", " ", "outside scope"));
+    return band($.ui.resolve(e), "contract", [
+      {
+        text: `✗ ${current.violations} write${current.violations === 1 ? "" : "s"} outside scope`,
+        tone: "error",
+        bold: true
+      },
+      { text: `${current.mode} mode`, tone: "subtle" },
+      { text: "/contract show", tone: "suggestion" }
+    ]);
   });
 }
 export {

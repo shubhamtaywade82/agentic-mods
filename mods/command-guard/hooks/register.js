@@ -771,7 +771,7 @@ async function recordBlock($, tool, reason) {
     )
   );
 }
-async function judgeCommand($, command) {
+async function judgeCommand($, command, phase) {
   const analysis = analyzeCommand(command);
   const [top] = sortDangers(analysis.dangers);
   if (top === void 0) return ALLOW;
@@ -794,15 +794,10 @@ async function judgeCommand($, command) {
         kind: "deny",
         text: `command-guard: held for the person, not run. Command: ${command}. Reason: ${reasons}.`
       };
-    case "button": {
-      const answer = await $.ui.ask(`Run this command? ${command}
-Reason: ${reasons}`, [
-        "Proceed",
-        "Cancel"
-      ]);
-      return answer === "Proceed" ? ALLOW : { kind: "deny", text: "command-guard: cancelled by the person." };
-    }
+    case "button":
+      return { kind: "ask", text: `command-guard: ${reasons}. Run ${command}?` };
     case "typed-code": {
+      if (phase === "check") return ALLOW;
       const code = await shortCode(command, 6);
       const answer = await $.ui.ask(`${reasons}
 To run it, type ${code}. Command: ${command}`);
@@ -847,7 +842,7 @@ function register(on) {
       await recordBlock($, "Bash", text);
       return { deny: text };
     }
-    const judgement = await judgeCommand($, e.command);
+    const judgement = await judgeCommand($, e.command, "call");
     if (judgement.kind === "deny") {
       await recordBlock($, "Bash", judgement.text);
       return { deny: judgement.text };
@@ -856,6 +851,16 @@ function register(on) {
   }).catch(
     (_$, e, next) => next.called ? next(e) : { deny: "command-guard failed closed: the command was not judged." }
   );
+  on("tool.check", { tool: "Bash" }, async ($, e, next) => {
+    const input = e.input;
+    if (typeof input.command !== "string") return next(e);
+    const judgement = await judgeCommand($, input.command, "check");
+    if (judgement.kind !== "ask") return next(e);
+    return { decision: "ask", reason: judgement.text };
+  }).catch(async () => ({
+    decision: "deny",
+    reason: "command-guard failed closed: the command was not judged."
+  }));
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     const denial = await protectedDenial($, "Edit", e.file_path);
     return denial === null ? next(e) : { deny: denial };

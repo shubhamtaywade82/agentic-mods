@@ -3,6 +3,7 @@ import type { On } from 'claude-code'
 
 import { cacheState, cacheTtlMs, formatDuration, loadConfig } from '@agentic-mods/core'
 import type { CacheClockState } from '../types'
+import { band } from '../../../packages/core/src/ui'
 
 const IDLE: CacheClockState = { lastWriteAt: null, ttlMs: 300_000, remainingMs: null }
 const clock = atom({ plugin: 'cache-clock', key: 'clock' } as const, IDLE, { shape: 'clock-1' })
@@ -43,15 +44,18 @@ export function register(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const state = await read($, clock)
     if (state.lastWriteAt === null || state.remainingMs === null) return next(e)
-    const { Box, Text } = $.ui.resolve(e)
-    const label =
-      state.remainingMs > 0
-        ? `prompt cache: about ${formatDuration(state.remainingMs)} left (estimate)`
-        : 'prompt cache: expired; the next turn rewrites it (estimate)'
-    return (
-      <Box>
-        <Text dimColor>{label}</Text>
-      </Box>
-    )
+    const kit = $.ui.resolve(e)
+    if (state.remainingMs <= 0) {
+      return band(kit, 'cache', [
+        { text: '⌛ expired', tone: 'error', bold: true },
+        { text: 'the next turn rewrites it (estimate)', tone: 'subtle' },
+      ])
+    }
+    // Under five minutes left, the next turn is worth sending soon.
+    const tone = state.remainingMs < 5 * 60_000 ? 'warning' : 'success'
+    return band(kit, 'cache', [
+      { text: `⏱ ${formatDuration(state.remainingMs)} left`, tone, bold: true },
+      { text: 'estimate', tone: 'subtle' },
+    ])
   })
 }

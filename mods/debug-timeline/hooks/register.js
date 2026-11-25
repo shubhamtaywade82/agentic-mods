@@ -57,8 +57,46 @@ function truncate(text, max) {
   return `${text.slice(0, Math.max(0, max - 1))}…`;
 }
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/debug-timeline/src/register.tsx
 var PANE = "debug-timeline";
+var COMMAND_LOOK = { tone: "inactive", glyph: "$" };
+var ENTRY_LOOK = {
+  command: { tone: "inactive", glyph: "$" },
+  hypothesis: { tone: "claude", glyph: "?" },
+  result: { tone: "suggestion", glyph: "=" },
+  open: { tone: "warning", glyph: "?" },
+  confirmed: { tone: "success", glyph: "✓" },
+  rejected: { tone: "error", glyph: "✗" }
+};
 var MAX_ENTRIES = 200;
 var REPEAT_WINDOW = 20;
 var REPEAT_THRESHOLD = 3;
@@ -151,12 +189,25 @@ function register(on) {
     return { text: "Debug timeline pane opened." };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const current = await read($, timeline);
     if (current.entries.length === 0) {
-      return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "Nothing recorded yet. Commands are recorded as they run."));
+      return empty(
+        kit,
+        "Nothing recorded yet. Commands are recorded as they run.",
+        "/hypothesis <text>"
+      );
     }
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, current.entries.slice(-40).map((entry) => /* @__PURE__ */ h(Text, { key: entry.id, dimColor: entry.kind === "command" }, entry.id, " ", entry.kind, entry.outcome === null ? "" : ` [${entry.outcome}]`, ": ", entry.text)), current.repeated.length > 0 ? /* @__PURE__ */ h(Text, null, "Repeated commands: ", current.repeated.length) : null);
+    const open = current.entries.filter((entry) => entry.outcome === "open").length;
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Debug timeline",
+      meta: `${current.entries.length} entries · ${open} open hypothesis(es)`,
+      badge: current.repeated.length > 0 ? chip(kit, `${current.repeated.length} repeated`, verdictLook("WARN")) : void 0
+    }), current.entries.slice(-40).map((entry) => {
+      const look = ENTRY_LOOK[entry.outcome ?? entry.kind] ?? COMMAND_LOOK;
+      return /* @__PURE__ */ h(Box, { key: entry.id, flexDirection: "row", gap: 1 }, /* @__PURE__ */ h(Text, { color: look.tone }, look.glyph), /* @__PURE__ */ h(Box, { width: 6 }, /* @__PURE__ */ h(Text, { dimColor: true }, entry.id)), /* @__PURE__ */ h(Text, { dimColor: entry.kind === "command", wrap: "truncate-end" }, entry.text));
+    }));
   });
 }
 export {

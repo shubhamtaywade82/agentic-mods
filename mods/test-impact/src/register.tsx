@@ -11,6 +11,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { ImpactStatus } from '../types'
+import { chip, header, mark, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'test-impact'
 const MAX_FILES = 3000
@@ -105,18 +106,35 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const current = await read($, impact)
     return (
       <Box flexDirection="column">
-        <Text>{current.full ? 'Full suite required' : 'Targeted selection'}</Text>
+        {header(kit, {
+          title: 'Test impact',
+          meta: current.full ? 'full suite' : `${current.selection.length} test(s)`,
+          badge: current.full
+            ? chip(kit, 'FULL SUITE', verdictLook('WARN'))
+            : chip(
+                kit,
+                current.untested.length > 0 ? `${current.untested.length} untested` : 'covered',
+                verdictLook(current.untested.length > 0 ? 'WARN' : 'PASS'),
+              ),
+        })}
         <Text dimColor>{current.reason}</Text>
-        {current.selection.map((path) => (
-          <Text key={`test-${path}`}>test {path}</Text>
-        ))}
-        {current.untested.map((path) => (
-          <Text key={`gap-${path}`}>gap {path}</Text>
-        ))}
+        {current.selection.length === 0 ? null : (
+          <Box flexDirection="column" marginTop={1}>
+            <Text weight="bold">Tests to run</Text>
+            {current.selection.map((path) => mark(kit, path, verdictLook('PASS')))}
+          </Box>
+        )}
+        {current.untested.length === 0 ? null : (
+          <Box flexDirection="column" marginTop={1}>
+            <Text weight="bold">Changed code no test reaches</Text>
+            {current.untested.map((path) => mark(kit, path, verdictLook('WARN')))}
+          </Box>
+        )}
       </Box>
     )
   })

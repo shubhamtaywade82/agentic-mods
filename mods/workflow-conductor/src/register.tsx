@@ -36,6 +36,15 @@ import release from '../../../workflows/release.json'
 import hotfix from '../../../workflows/hotfix.json'
 import incidentResponse from '../../../workflows/incident-response.json'
 import gatesCatalogue from '../../../gates/gates.json'
+import {
+  band,
+  card,
+  chip,
+  empty,
+  header,
+  statusLook,
+  verdictLook,
+} from '../../../packages/core/src/ui'
 
 const PANE = 'workflow-conductor'
 const RAW_WORKFLOWS: readonly unknown[] = [
@@ -460,31 +469,64 @@ export function register(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const current = await read($, conductor)
     if (!current.active) return next(e)
-    const { Box, Text } = $.ui.resolve(e)
-    const blocked =
-      current.blockers.length > 0 ? ` · blocked: ${current.blockers[0]}` : ' · ready to advance'
-    return (
-      <Box>
-        <Text>
-          workflow {current.workflow} · {current.task} · stage {current.stage}
-          {blocked}
-        </Text>
-      </Box>
-    )
+    const isBlocked = current.blockers.length > 0
+    return band($.ui.resolve(e), 'workflow', [
+      { text: `${current.workflow} · ${current.task}`, tone: 'claude', bold: true },
+      { text: `stage ${current.stage}` },
+      isBlocked
+        ? { text: `✗ blocked: ${current.blockers[0]}`, tone: 'error' }
+        : { text: '✓ ready to advance', tone: 'success' },
+    ])
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const current = await read($, conductor)
+    if (current.workflow === '')
+      return empty(kit, 'No workflow is running.', '/workflow start <workflow> <task>')
+    const stages = WORKFLOWS.get(current.workflow)?.stages ?? []
+    const at = stages.findIndex((stage) => stage.id === current.stage)
+    const isDone = current.status === 'completed'
     return (
       <Box flexDirection="column">
-        <Text>
-          {current.workflow || 'no workflow'} · {current.task || '-'} · stage {current.stage || '-'}{' '}
-          · {current.status}
-        </Text>
-        {current.blockers.map((item) => (
-          <Text key={item}>blocked: {item}</Text>
-        ))}
+        {header(kit, {
+          title: `Workflow ${current.workflow}`,
+          meta: current.task,
+          badge: chip(
+            kit,
+            current.status,
+            current.blockers.length > 0
+              ? verdictLook('BLOCKED')
+              : statusLook(
+                  isDone ? 'completed' : current.status === 'cancelled' ? 'cancelled' : 'running',
+                ),
+          ),
+        })}
+        {stages.map((stage, index) => {
+          const look =
+            isDone || index < at
+              ? statusLook('completed')
+              : index === at
+                ? statusLook('running')
+                : { tone: 'inactive' as const, glyph: '○' }
+          return (
+            <Box key={stage.id} flexDirection="row" gap={1}>
+              <Text color={look.tone}>{look.glyph}</Text>
+              <Text weight={index === at ? 'bold' : 'regular'} dimColor={index > at && !isDone}>
+                {stage.name}
+              </Text>
+              {stage.gate === null ? null : <Text dimColor>· {stage.gate}</Text>}
+            </Box>
+          )
+        })}
+        {current.blockers.length === 0 ? null : (
+          <Box flexDirection="column" marginTop={1}>
+            {current.blockers.map((item) =>
+              card(kit, { key: item, title: 'Blocked', look: verdictLook('FAIL'), lines: [item] }),
+            )}
+          </Box>
+        )}
       </Box>
     )
   })

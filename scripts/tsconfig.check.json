@@ -36,5 +36,6 @@
     "../mods/verify/tests",
     "./stub/claude-code.d.ts",
     "./stub/claude-code-testing.d.ts"
-  ]
+  ],
+  "exclude": ["../packages/core/src/ui.tsx"]
 }

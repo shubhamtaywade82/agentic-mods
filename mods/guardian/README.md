@@ -2,7 +2,7 @@
 
 A tool governance mod for Claude Code. It inspects `Bash`, `Write`, `Edit` and tool-result traffic and enforces five fail-closed policies:
 
-1. **Blast-radius approval tier** — destructive shell commands (`rm -rf`, `git push --force`, history rewrites, schema migrations, prod database writes, `chmod -R 777 /`, `dd` to devices, `git clean -f`) are **held** with an impact preview and proceed only on explicit human approval. Non-interactive sessions (no approval capability, or a timeout) deny the op — never silently allow.
+1. **Blast-radius approval tier** — destructive shell commands (`rm -rf`, `git push --force`, history rewrites, schema migrations, prod database writes, `chmod -R 777 /`, `dd` to devices, `git clean -f`) are **held** in Claude Code's permission dialog with an impact preview, and proceed only on explicit human approval. Non-interactive sessions (no approval capability, or a timeout) deny the op — never silently allow.
 2. **Command-line secret redaction** — scans Bash command lines for credential shapes (AWS keys, GitHub PATs, Slack tokens, Google API keys, private key headers, JWT-style bearer tokens, `PASSWORD=`/`TOKEN=` assignments). High-confidence secrets block the call; lower-confidence matches are redacted in place.
 3. **Git diff gate** — `git commit`/`push`/`tag` whose staged diff contains a secret are held or blocked before the secret enters history. Oversized diffs (above 256 KiB) are refused because they could not be scanned.
 4. **Write/Edit secret protection** — file writes embedding a high-signal secret are denied; maybe-findings are redacted.
@@ -14,8 +14,7 @@ A `/guardian-report` command summarizes what was blocked, held, approved and red
 
 ## Combining with other guards
 
-guardian, `command-guard` and the vendored `sdlc-guard` each hold destructive commands for approval.
-Load one of them: with two, the same command asks twice, once per guard. The presets use `sdlc-guard`.
+guardian asks through Claude Code's own permission dialog (`tool.check`), so when another guard that does the same (such as `command-guard`) also holds the command, you get one dialog, not one per guard. The vendored `sdlc-guard` opens its own question and then a permission ask as well, so with it loaded the same command can still be asked about more than once; load guardian or `sdlc-guard`, not both.
 
 ## Scope and honesty
 

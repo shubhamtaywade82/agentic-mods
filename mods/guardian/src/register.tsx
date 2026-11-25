@@ -1,9 +1,8 @@
 import type { EngineInterface, On } from 'claude-code'
-import { checkCommand, denyMessage } from './lib/blast'
+import { checkCommand } from './lib/blast'
 import { denyReason, hasHighSignal, redact, redactResult, scan, summarize } from './lib/secrets'
 import {
   DEFAULT_DIFF_LIMIT,
-  decideNoninteractive,
   diffStat,
   holdForBlast,
   holdForOversizedDiff,
@@ -36,76 +35,44 @@ function mergeKinds(kinds: Record<string, number>): void {
   for (const [k, n] of Object.entries(kinds)) stats.kinds[k] = (stats.kinds[k] ?? 0) + n
 }
 
-/** Asks the person to approve a held command; Cancel is listed first so any default answer denies. */
-async function requestApproval(
-  $: EngineInterface,
-  command: string,
-  reason: string,
-  preview: string,
-): Promise<'approve' | 'deny'> {
-  try {
-    const answer = await $.ui.ask(`Run this command? ${command}\nReason: ${reason}\n${preview}`, [
-      'Cancel',
-      'Proceed',
-    ])
-    return answer === 'Proceed' ? 'approve' : 'deny'
-  } catch {
-    return 'deny'
-  }
-}
+type Verdict = { decision: 'ask' | 'deny'; reason: string }
 
-async function gateHistoryCommand(
-  $: EngineInterface,
-  command: string,
-): Promise<{ deny: string } | null> {
+// Commands held for the person, by tool_use_id; one that reaches tool.call was approved.
+const heldCalls = new Set<string>()
+
+/** The staged diff of a commit or push: refused if it holds a high-signal secret, held otherwise. */
+async function gateHistoryCommand($: EngineInterface, command: string): Promise<Verdict | null> {
   let diffText: string
   try {
     const res = await $.process.run(['git', 'diff', '--cached'])
     diffText = res.stdout ?? ''
   } catch {
-    stats.commandsBlocked += 1
     return {
-      deny: 'guardian: could not inspect the staged diff for secrets; refusing this commit/push. Stage the diff and retry.',
+      decision: 'deny',
+      reason:
+        'guardian: could not inspect the staged diff for secrets; refusing this commit/push. Stage the diff and retry.',
     }
   }
-
   if (diffText.length > DEFAULT_DIFF_LIMIT) {
-    stats.commandsHeld += 1
-    const held = holdForOversizedDiff(command, diffText.length, DEFAULT_DIFF_LIMIT)
-    const decision = await requestApproval($, held.command, 'diff-oversized', held.preview)
-    if (decision === 'approve') return null
-    stats.commandsBlocked += 1
-    return { deny: held.preview }
+    return {
+      decision: 'ask',
+      reason: holdForOversizedDiff(command, diffText.length, DEFAULT_DIFF_LIMIT).preview,
+    }
   }
-
   const findings = scan(diffText)
   if (findings.length === 0) return null
+  const highSignal = findings.filter((f) => hasHighSignal([f]))
+  const kinds = (highSignal.length > 0 ? highSignal : findings).map((f) => f.kind)
+  const preview = holdForSecretDiff(command, kinds, diffStat(diffText)).preview
+  return { decision: highSignal.length > 0 ? 'deny' : 'ask', reason: preview }
+}
 
-  if (hasHighSignal(findings)) {
-    stats.commandsBlocked += 1
-    const stat = diffStat(diffText)
-    const held = holdForSecretDiff(
-      command,
-      findings.filter((f) => hasHighSignal([f])).map((f) => f.kind),
-      stat,
-    )
-    return { deny: held.preview }
-  }
-
-  stats.commandsHeld += 1
-  const stat = diffStat(diffText)
-  const held = holdForSecretDiff(
-    command,
-    findings.map((f) => f.kind),
-    stat,
-  )
-  const decision = await requestApproval($, held.command, 'diff-contains-secret', held.preview)
-  if (decision === 'approve') {
-    stats.commandsApproved += 1
-    return null
-  }
-  stats.commandsBlocked += 1
-  return { deny: decideNoninteractive(held) === 'approve' ? '' : held.preview }
+/** guardian's verdict on a Bash command before it runs, or null to leave it to the others. */
+async function verdictFor($: EngineInterface, command: string): Promise<Verdict | null> {
+  const blast = checkCommand(command)
+  if (blast) return { decision: 'ask', reason: holdForBlast(command, blast).preview }
+  if (isHistoryMutating(command)) return gateHistoryCommand($, command)
+  return null
 }
 
 export function register(on: On): void {
@@ -130,39 +97,33 @@ export function register(on: On): void {
     return { ...ran, result: scrubbed.result, text }
   })
 
-  on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
-    const command: string = typeof e.command === 'string' ? e.command : ''
-
-    const blast = checkCommand(command)
-    if (blast) {
+  // Approval goes through tool.check, so Claude Code shows one permission dialog per call even
+  // when other guards ask about the same command; where nobody can answer, an ask is a deny.
+  on('tool.check', { tool: 'Bash' }, async ($, e, next) => {
+    const input = e.input as { command?: unknown }
+    const command = typeof input.command === 'string' ? input.command : ''
+    const verdict = await verdictFor($, command)
+    if (verdict === null) return next(e)
+    if (verdict.decision === 'deny') stats.commandsBlocked += 1
+    else {
       stats.commandsHeld += 1
-      const held = holdForBlast(command, blast)
-      const decision = await requestApproval($, held.command, 'destructive-command', held.preview)
-      if (decision === 'approve') {
-        stats.commandsApproved += 1
-        return next(e)
-      }
-      stats.commandsBlocked += 1
-      return { deny: denyMessage(blast) }
+      if (e.tool_use_id !== undefined) heldCalls.add(e.tool_use_id)
     }
+    return verdict
+  }).catch(async () => ({ decision: 'deny', reason: 'guardian failed; refusing this call' }))
 
+  on('tool.call', { tool: 'Bash' }, async (_$, e, next) => {
+    if (heldCalls.delete(e.tool_use_id)) stats.commandsApproved += 1
+    const command: string = typeof e.command === 'string' ? e.command : ''
     const cmdFindings = scan(command)
-    if (cmdFindings.length > 0) {
-      mergeKinds(summarize(cmdFindings))
-      if (denyReason(cmdFindings)) {
-        stats.commandsBlocked += 1
-        return { deny: denyReason(cmdFindings) ?? 'guardian: refusing this call' }
-      }
-      stats.secretsRedacted += cmdFindings.length
-      return next({ ...e, command: redact(command, cmdFindings) })
+    if (cmdFindings.length === 0) return next(e)
+    mergeKinds(summarize(cmdFindings))
+    if (denyReason(cmdFindings)) {
+      stats.commandsBlocked += 1
+      return { deny: denyReason(cmdFindings) ?? 'guardian: refusing this call' }
     }
-
-    if (isHistoryMutating(command)) {
-      const gate = await gateHistoryCommand($, command)
-      if (gate) return gate
-    }
-
-    return next(e)
+    stats.secretsRedacted += cmdFindings.length
+    return next({ ...e, command: redact(command, cmdFindings) })
   }).catch(async (_$) => {
     return { deny: 'guardian failed; refusing this call' }
   })

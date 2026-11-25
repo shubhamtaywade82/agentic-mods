@@ -205,24 +205,24 @@ function parseConfig(input) {
     asString,
     value.architecture.baselineFile
   );
-  const meter = section(input, "meter");
+  const meter2 = section(input, "meter");
   value.meter.contextWarnPercent = read2(
-    meter,
+    meter2,
     "meter",
     "contextWarnPercent",
     asPositive,
     value.meter.contextWarnPercent
   );
   value.meter.contextCriticalPercent = read2(
-    meter,
+    meter2,
     "meter",
     "contextCriticalPercent",
     asPositive,
     value.meter.contextCriticalPercent
   );
-  value.meter.costWarnUsd = read2(meter, "meter", "costWarnUsd", asPositive, value.meter.costWarnUsd);
+  value.meter.costWarnUsd = read2(meter2, "meter", "costWarnUsd", asPositive, value.meter.costWarnUsd);
   value.meter.rateWarnPercent = read2(
-    meter,
+    meter2,
     "meter",
     "rateWarnPercent",
     asPositive,
@@ -326,6 +326,45 @@ function assessReadiness(input) {
   const overall = worstVerdict(items.map((item) => item.verdict));
   const verdict = overall === "PASS" ? "READY" : overall === "FAIL" ? "NOT READY" : "UNKNOWN";
   return { verdict, items };
+}
+
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function meter(kit, label, percent, look) {
+  const { Progress } = kit;
+  const clamped = Math.max(0, Math.min(100, percent));
+  return /* @__PURE__ */ h(
+    Progress,
+    {
+      label,
+      value: clamped,
+      max: 100,
+      valueText: `${Math.round(clamped)}%`,
+      color: look.tone
+    }
+  );
 }
 
 // mods/engineering-cockpit/src/register.tsx
@@ -445,7 +484,9 @@ function register(on) {
       await $.ui.open({ id: PANE, title: "Engineering cockpit" });
       const rows = await rowsOf($);
       return {
-        text: rows.map((row) => `${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`).join("\n")
+        text: rows.map(
+          (row) => `${verdictLook(row.verdict).glyph} ${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`
+        ).join("\n")
       };
     }
     if (subcommand === "doctor") {
@@ -472,10 +513,22 @@ function register(on) {
     return { text: "Usage: /agentic status | doctor | privacy" };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const rows = await rowsOf($);
     const readiness = assessReadiness(await readinessInput($));
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "Release: ", readiness.verdict), rows.map((row) => /* @__PURE__ */ h(Text, { key: row.label }, row.label.padEnd(13), " ", row.verdict.padEnd(9), " ", row.detail)));
+    const passing = rows.filter((row) => row.verdict === "PASS").length;
+    const failing = rows.filter((row) => row.verdict === "FAIL").length;
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Engineering cockpit",
+      meta: `${passing} pass · ${failing} fail · ${rows.length - passing - failing} unknown`,
+      badge: chip(kit, readiness.verdict, verdictLook(readiness.verdict))
+    }), meter(
+      kit,
+      "Gates passing",
+      passing / Math.max(1, rows.length) * 100,
+      verdictLook(failing > 0 ? "FAIL" : passing === rows.length ? "PASS" : "WARN")
+    ), /* @__PURE__ */ h(Box, { flexDirection: "column", marginTop: 1 }, rows.map((row) => /* @__PURE__ */ h(Box, { key: row.label, flexDirection: "row", gap: 1 }, /* @__PURE__ */ h(Box, { width: 14 }, /* @__PURE__ */ h(Text, { weight: "bold" }, row.label)), /* @__PURE__ */ h(Box, { width: 12 }, chip(kit, row.verdict, verdictLook(row.verdict))), /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, row.detail)))));
   });
 }
 export {

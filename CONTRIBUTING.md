@@ -16,12 +16,13 @@ file kind follows, and how to verify and submit a change.
 
 Every mod must keep this separation:
 
-| Layer     | Path                     | Rule                                                                                            |
-| --------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| Adapter   | `src/register.tsx`       | The ONLY file that imports `claude-code`. Thin: match events, call lib functions, shape results |
-| Logic     | `src/lib/*.ts`           | Pure TypeScript. No `claude-code` imports. Strict mode clean                                    |
-| Reference | `skills/`, `references/` | Markdown Claude reads; SKILL.md entry point per skill                                           |
-| Tests     | `tests/*.test.ts`        | Lib unit tests + session interception tests                                                     |
+| Layer     | Path                       | Rule                                                                                            |
+| --------- | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| Adapter   | `src/register.tsx`         | The ONLY file that imports `claude-code`. Thin: match events, call lib functions, shape results |
+| Look      | `packages/core/src/ui.tsx` | Shared design kit: chips, cards, bands, meters. Draw panes and bands with it                    |
+| Logic     | `src/lib/*.ts`             | Pure TypeScript. No `claude-code` imports. Strict mode clean                                    |
+| Reference | `skills/`, `references/`   | Markdown Claude reads; SKILL.md entry point per skill                                           |
+| Tests     | `tests/*.test.ts`          | Lib unit tests + session interception tests                                                     |
 
 If you find yourself writing logic inside `register.ts`, move it to `lib/` and
 test it. The offline type-check (`tsc -p scripts/tsconfig.check.json`) covers

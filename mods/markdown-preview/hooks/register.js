@@ -331,6 +331,16 @@ async function loadConfig(read2) {
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
 
+// packages/core/src/ui.tsx
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/markdown-preview/src/register.tsx
 var PANE = "markdown-preview";
 var MAX_BYTES = 2e5;
@@ -370,12 +380,11 @@ function register(on) {
     return { text: `Previewing ${path}.` };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Markdown, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Markdown } = kit;
     const current = await read($, document);
-    if (current.path === "") {
-      return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "Run /preview with a Markdown file path."));
-    }
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true }, current.path), /* @__PURE__ */ h(Markdown, { key: "document", text: current.text }));
+    if (current.path === "") return empty(kit, "No document open.", "/preview <file.md>");
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, { title: current.path.split("/").pop() ?? current.path, meta: current.path }), /* @__PURE__ */ h(Markdown, { key: "document", text: current.text }));
   });
 }
 export {

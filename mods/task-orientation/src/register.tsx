@@ -3,6 +3,7 @@ import type { On } from 'claude-code'
 
 import { truncate, registerCommand } from '@agentic-mods/core'
 import type { Orientation } from '../types'
+import { card, header, type Tone } from '../../../packages/core/src/ui'
 
 const PANE = 'task-orientation'
 const IDLE: Orientation = { goal: null, task: null, blocker: null, next: null }
@@ -88,21 +89,27 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box } = kit
     const state = await read($, orientation)
-    const rows: Array<[string, string | null]> = [
-      ['Goal', state.goal],
-      ['Current task', state.task],
-      ['Blocker', state.blocker],
-      ['Next step', state.next],
+    const rows: Array<[string, string | null, Tone]> = [
+      ['Goal', state.goal, 'claude'],
+      ['Task', state.task, 'suggestion'],
+      ['Blocker', state.blocker, 'error'],
+      ['Next', state.next, 'success'],
     ]
+    const set = rows.filter(([, value]) => value !== null).length
     return (
       <Box flexDirection="column">
-        {rows.map(([label, value]) => (
-          <Text key={label}>
-            {label}: {value ?? 'not set'}
-          </Text>
-        ))}
+        {header(kit, { title: 'Orientation', meta: `${set} of 4 set` })}
+        {rows.map(([label, value, tone]) =>
+          card(kit, {
+            key: label,
+            title: label,
+            look: value === null ? { tone: 'inactive', glyph: '○' } : { tone, glyph: '●' },
+            lines: [value ?? `not set · /orient-${label.toLowerCase()} <text>`],
+          }),
+        )}
       </Box>
     )
   })

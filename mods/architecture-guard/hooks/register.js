@@ -487,6 +487,46 @@ function resolveJavaImport(specifier, known) {
   return null;
 }
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+
 // mods/architecture-guard/src/register.tsx
 var PANE = "architecture-guard";
 var MAX_SCAN_FILES = 2e3;
@@ -615,9 +655,19 @@ function register(on) {
     (_$, e, next) => next.called ? next(e) : { deny: "architecture-guard failed closed on Write." }
   );
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box } = kit;
     const current = await read($, status);
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "Architecture: ", current.verdict), /* @__PURE__ */ h(Text, { dimColor: true }, current.reason, " · baseline ", current.baseline));
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Architecture",
+      meta: "import layer rules",
+      badge: chip(kit, current.verdict, verdictLook(current.verdict))
+    }), card(kit, {
+      key: "status",
+      title: current.fresh > 0 ? `${current.fresh} new violation(s)` : "No new violations",
+      look: verdictLook(current.fresh > 0 ? "FAIL" : current.verdict),
+      lines: [current.reason, `${current.baseline} grandfathered in the baseline`]
+    }));
   });
 }
 export {

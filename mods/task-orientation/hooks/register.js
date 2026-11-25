@@ -32,6 +32,27 @@ function truncate(text, max) {
   return `${text.slice(0, Math.max(0, max - 1))}…`;
 }
 
+// packages/core/src/ui.tsx
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+
 // mods/task-orientation/src/register.tsx
 var PANE = "task-orientation";
 var IDLE = { goal: null, task: null, blocker: null, next: null };
@@ -106,15 +127,24 @@ function register(on) {
     return { text: "Task orientation pane opened." };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box } = kit;
     const state = await read($, orientation);
     const rows = [
-      ["Goal", state.goal],
-      ["Current task", state.task],
-      ["Blocker", state.blocker],
-      ["Next step", state.next]
+      ["Goal", state.goal, "claude"],
+      ["Task", state.task, "suggestion"],
+      ["Blocker", state.blocker, "error"],
+      ["Next", state.next, "success"]
     ];
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, rows.map(([label, value]) => /* @__PURE__ */ h(Text, { key: label }, label, ": ", value ?? "not set")));
+    const set = rows.filter(([, value]) => value !== null).length;
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, { title: "Orientation", meta: `${set} of 4 set` }), rows.map(
+      ([label, value, tone]) => card(kit, {
+        key: label,
+        title: label,
+        look: value === null ? { tone: "inactive", glyph: "○" } : { tone, glyph: "●" },
+        lines: [value ?? `not set · /orient-${label.toLowerCase()} <text>`]
+      })
+    ));
   });
   void COMMANDS;
 }

@@ -10,6 +10,7 @@ import {
   spawnAgent,
   registerCommand,
 } from '@agentic-mods/core'
+import { band, card, chip, empty, header, mark, statusLook } from '../../../packages/core/src/ui'
 import type { AgentRow } from '../types'
 
 const PANE = 'mission-control'
@@ -98,26 +99,64 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const rows = await read($, agents)
     if (rows.length === 0) {
-      return (
-        <Box>
-          <Text dimColor>No subagents have run in this session.</Text>
-        </Box>
-      )
+      return empty(kit, 'No subagents have run in this session.', 'ask Claude to use a subagent')
     }
+    const running = rows.filter((row) => row.status === 'running').length
+    const files = filesByAgentCount(rows)
     return (
       <Box flexDirection="column">
+        {header(kit, {
+          title: 'Mission control',
+          meta: `${rows.length} agent(s) · ${totalToolCalls()} tools`,
+          badge: chip(kit, `${running} running`, statusLook(running > 0 ? 'running' : 'completed')),
+        })}
         {rows.map((row) => (
-          <Text key={row.id} dimColor={row.status !== 'running'}>
-            {'  '.repeat(row.depth)}
-            {row.isReview ? '[review] ' : ''}
-            {row.line}
-          </Text>
+          <Box key={row.id} marginLeft={row.depth * 2}>
+            {card(kit, {
+              key: `card-${row.id}`,
+              title: `${row.isReview ? '[review] ' : ''}${row.subagentType}: ${row.description}`,
+              look: statusLook(row.status),
+              lines: [
+                `${row.toolCalls} tool call(s) · ${row.files.length} file(s) · ${row.status}`,
+                row.line,
+              ],
+            })}
+          </Box>
         ))}
-        <Text dimColor>{totalToolCalls()} subagent tool calls this session</Text>
+        {files.length === 0 ? null : (
+          <Box flexDirection="column" marginTop={1}>
+            <Text weight="bold">Code touched</Text>
+            {files.map(([file, count]) =>
+              mark(kit, `${file}  (${count} agent(s))`, statusLook('completed')),
+            )}
+          </Box>
+        )}
       </Box>
     )
   })
+
+  // A live line above the prompt while any subagent works; quiet otherwise.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const rows = await read($, agents)
+    const running = rows.filter((row) => row.status === 'running')
+    const current = running[running.length - 1]
+    if (current === undefined) return next(e)
+    return band($.ui.resolve(e), 'mission', [
+      { text: `${running.length}/${rows.length} agents`, tone: 'claude', bold: true },
+      { text: `${totalToolCalls()} tools` },
+      { text: `${current.subagentType}: ${current.description}`, tone: 'subtle' },
+    ])
+  })
+}
+
+/** Each touched file and how many agents touched it, most-shared first. */
+function filesByAgentCount(rows: readonly AgentRow[]): Array<[string, number]> {
+  const counts = new Map<string, number>()
+  for (const row of rows)
+    for (const file of new Set(row.files)) counts.set(file, (counts.get(file) ?? 0) + 1)
+  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 12)
 }

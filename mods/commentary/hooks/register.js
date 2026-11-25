@@ -313,6 +313,19 @@ var CONFIG_PATH = `${STATE_DIR}/config.json`;
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
 
+// packages/core/src/ui.tsx
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+
 // mods/commentary/src/register.tsx
 var LINES = {
   sport: {
@@ -377,8 +390,7 @@ function register(on) {
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const text = await read($, latest);
     if (text === "") return next(e);
-    const { Box, Text } = $.ui.resolve(e);
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, text));
+    return band($.ui.resolve(e), "commentary", [{ text, tone: "subtle" }]);
   });
 }
 export {

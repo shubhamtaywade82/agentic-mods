@@ -3,6 +3,7 @@ import type { On } from 'claude-code'
 
 import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { Mood } from '../types'
+import { band } from '../../../packages/core/src/ui'
 
 const EVIDENCE_IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
 const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, {
@@ -45,13 +46,9 @@ export function register(on: On): void {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, _next) => {
     const current = await read($, mood)
-    const { Box, Text } = $.ui.resolve(e)
-    return (
-      <Box>
-        <Text dimColor>
-          {FACES[current]} code-pet is {current}
-        </Text>
-      </Box>
-    )
+    return band($.ui.resolve(e), 'pet', [
+      { text: FACES[current], tone: 'claude', bold: true },
+      { text: `code-pet is ${current}`, tone: 'subtle' },
+    ])
   })
 }

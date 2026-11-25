@@ -18,6 +18,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { ArchitectureStatus } from '../types'
+import { card, chip, header, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'architecture-guard'
 const MAX_SCAN_FILES = 2000
@@ -165,14 +166,22 @@ export function register(on: On): void {
   )
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box } = kit
     const current = await read($, status)
     return (
       <Box flexDirection="column">
-        <Text>Architecture: {current.verdict}</Text>
-        <Text dimColor>
-          {current.reason} · baseline {current.baseline}
-        </Text>
+        {header(kit, {
+          title: 'Architecture',
+          meta: 'import layer rules',
+          badge: chip(kit, current.verdict, verdictLook(current.verdict)),
+        })}
+        {card(kit, {
+          key: 'status',
+          title: current.fresh > 0 ? `${current.fresh} new violation(s)` : 'No new violations',
+          look: verdictLook(current.fresh > 0 ? 'FAIL' : current.verdict),
+          lines: [current.reason, `${current.baseline} grandfathered in the baseline`],
+        })}
       </Box>
     )
   })

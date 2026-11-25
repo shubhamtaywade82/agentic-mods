@@ -50,9 +50,22 @@ declare module 'claude-code/testing' {
     }
     tool: {
       call(input: { tool: string; [k: string]: unknown }): Promise<ToolCallResult>
+      check(input: { tool: string; input: Record<string, unknown> }): Promise<{
+        decision: 'allow' | 'ask' | 'deny'
+        reason?: string
+      }>
     }
     turn: {
       complete(input: never): Promise<unknown>
+    }
+    ui: {
+      mount(input: Record<string, unknown>): Promise<{
+        find(query: { type: string; text?: RegExp }): Promise<{ text?: string } | undefined>
+        unmount(): Promise<void>
+      }>
+    }
+    agent: {
+      spawn(input: never): Promise<unknown>
     }
     session: {
       usage(): Promise<{

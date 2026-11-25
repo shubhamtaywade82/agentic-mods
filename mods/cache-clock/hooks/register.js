@@ -294,6 +294,19 @@ function cacheState(lastWriteAt, ttlMs, now) {
   return { remainingMs: Math.max(0, remainingMs), isExpired: remainingMs <= 0 };
 }
 
+// packages/core/src/ui.tsx
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+
 // mods/cache-clock/src/register.tsx
 var IDLE = { lastWriteAt: null, ttlMs: 3e5, remainingMs: null };
 var clock = atom({ plugin: "cache-clock", key: "clock" }, IDLE, { shape: "clock-1" });
@@ -328,9 +341,18 @@ function register(on) {
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const state = await read($, clock);
     if (state.lastWriteAt === null || state.remainingMs === null) return next(e);
-    const { Box, Text } = $.ui.resolve(e);
-    const label = state.remainingMs > 0 ? `prompt cache: about ${formatDuration(state.remainingMs)} left (estimate)` : "prompt cache: expired; the next turn rewrites it (estimate)";
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, label));
+    const kit = $.ui.resolve(e);
+    if (state.remainingMs <= 0) {
+      return band(kit, "cache", [
+        { text: "⌛ expired", tone: "error", bold: true },
+        { text: "the next turn rewrites it (estimate)", tone: "subtle" }
+      ]);
+    }
+    const tone = state.remainingMs < 5 * 6e4 ? "warning" : "success";
+    return band(kit, "cache", [
+      { text: `⏱ ${formatDuration(state.remainingMs)} left`, tone, bold: true },
+      { text: "estimate", tone: "subtle" }
+    ]);
   });
 }
 export {

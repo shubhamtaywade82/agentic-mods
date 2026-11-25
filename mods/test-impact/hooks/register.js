@@ -220,6 +220,35 @@ function dependentsOf(graph, changed) {
   return seen;
 }
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function mark(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { color: look.tone }, look.glyph, " ", label);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+
 // mods/test-impact/src/register.tsx
 var PANE = "test-impact";
 var MAX_FILES = 3e3;
@@ -296,9 +325,18 @@ function register(on) {
     return { text: lines.join("\n") };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const current = await read($, impact);
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, current.full ? "Full suite required" : "Targeted selection"), /* @__PURE__ */ h(Text, { dimColor: true }, current.reason), current.selection.map((path) => /* @__PURE__ */ h(Text, { key: `test-${path}` }, "test ", path)), current.untested.map((path) => /* @__PURE__ */ h(Text, { key: `gap-${path}` }, "gap ", path)));
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Test impact",
+      meta: current.full ? "full suite" : `${current.selection.length} test(s)`,
+      badge: current.full ? chip(kit, "FULL SUITE", verdictLook("WARN")) : chip(
+        kit,
+        current.untested.length > 0 ? `${current.untested.length} untested` : "covered",
+        verdictLook(current.untested.length > 0 ? "WARN" : "PASS")
+      )
+    }), /* @__PURE__ */ h(Text, { dimColor: true }, current.reason), current.selection.length === 0 ? null : /* @__PURE__ */ h(Box, { flexDirection: "column", marginTop: 1 }, /* @__PURE__ */ h(Text, { weight: "bold" }, "Tests to run"), current.selection.map((path) => mark(kit, path, verdictLook("PASS")))), current.untested.length === 0 ? null : /* @__PURE__ */ h(Box, { flexDirection: "column", marginTop: 1 }, /* @__PURE__ */ h(Text, { weight: "bold" }, "Changed code no test reaches"), current.untested.map((path) => mark(kit, path, verdictLook("WARN")))));
   });
 }
 export {

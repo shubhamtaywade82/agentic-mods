@@ -9,6 +9,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { ReplayChange, ReplayState } from '../types'
+import { empty, header } from '../../../packages/core/src/ui'
 
 const PANE = 'turn-replay'
 const MAX_CHANGES = 20
@@ -92,13 +93,14 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Button, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Button, Text } = kit
     const state = await read($, replay)
     if (state.changes.length === 0) {
-      return (
-        <Box>
-          <Text dimColor>No file changes recorded in this session yet.</Text>
-        </Box>
+      return empty(
+        kit,
+        'No file changes recorded in this session yet.',
+        'ask Claude to edit a file',
       )
     }
     const index = Math.min(await read($, cursor), state.changes.length - 1)
@@ -107,24 +109,42 @@ export function register(on: On): void {
     const last = state.changes.length - 1
     return (
       <Box flexDirection="column">
-        <Text>
-          {`Change ${index + 1} of ${state.changes.length} · turn ${change.turn} · ${change.file} · +${change.added} −${change.removed}`}
-        </Text>
-        {change.lines.map((row, position) => (
-          <Text key={`row-${position}`} dimColor={row.kind === 'equal'}>
-            {row.kind === 'insert' ? '+ ' : row.kind === 'delete' ? '- ' : '  '}
-            {row.line}
-          </Text>
-        ))}
-        <Box>
+        {header(kit, {
+          title: change.file,
+          meta: `change ${index + 1}/${state.changes.length} · turn ${change.turn}`,
+          badge: (
+            <Text>
+              <Text color="diffAdded">+{change.added}</Text>{' '}
+              <Text color="diffRemoved">−{change.removed}</Text>
+            </Text>
+          ),
+        })}
+        <Box flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1}>
+          {change.lines.map((row) => (
+            <Text
+              color={
+                row.kind === 'insert'
+                  ? 'diffAdded'
+                  : row.kind === 'delete'
+                    ? 'diffRemoved'
+                    : undefined
+              }
+              dimColor={row.kind === 'equal'}
+            >
+              {row.kind === 'insert' ? '+ ' : row.kind === 'delete' ? '- ' : '  '}
+              {row.line}
+            </Text>
+          ))}
+        </Box>
+        <Box flexDirection="row" gap={1} marginTop={1}>
           <Button
             key="previous"
-            label="Previous"
+            label="← Previous"
             onPress={() => update($, cursor, (current) => Math.max(0, current - 1))}
           />
           <Button
             key="next"
-            label="Next"
+            label="Next →"
             onPress={() => update($, cursor, (current) => Math.min(last, current + 1))}
           />
         </Box>

@@ -82,6 +82,46 @@ function describeEvidence(input) {
   return lines.join("\n");
 }
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+
 // mods/pr-readiness/src/register.tsx
 var PANE = "pr-readiness";
 var EVIDENCE_IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
@@ -143,9 +183,22 @@ function register(on) {
     return { text: lines.join("\n") };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const result = assessReadiness(await inputOf($));
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "PR readiness: ", result.verdict), result.items.map((item) => /* @__PURE__ */ h(Text, { key: item.label }, item.label, ": ", item.verdict, " · ", item.detail)));
+    const passing = result.items.filter((item) => item.verdict === "PASS").length;
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "PR readiness",
+      meta: `${passing}/${result.items.length} checks pass`,
+      badge: chip(kit, result.verdict, verdictLook(result.verdict))
+    }), result.items.map(
+      (item) => card(kit, {
+        key: item.label,
+        title: `${item.label}  ${item.verdict}`,
+        look: verdictLook(item.verdict),
+        lines: [item.detail]
+      })
+    ), /* @__PURE__ */ h(Text, { dimColor: true }, "/pr-ready [description] drafts the verification section"));
   });
 }
 export {
