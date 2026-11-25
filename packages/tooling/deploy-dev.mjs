@@ -6,12 +6,32 @@
  */
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { DEV_MODS_ROOT, listMods, run } from './lib/repo.mjs'
+import { DEV_MODS_ROOT, listMods, ROOT, run } from './lib/repo.mjs'
+import { VENDORED } from './lib/vendored.mjs'
 
 const EXCLUDED = new Set(['src', 'tsconfig.json', 'node_modules', '.claude-plugin/types'])
 
 mkdirSync(DEV_MODS_ROOT, { recursive: true })
 let allOk = true
+
+// Vendored plugins load their TypeScript directly and need no build step.
+for (const name of VENDORED) {
+  const from = join(ROOT, 'plugins', name)
+  const target = join(DEV_MODS_ROOT, name)
+  if (!existsSync(join(from, '.claude-plugin', 'plugin.json'))) {
+    allOk = run(`deploy plugins/${name} (missing)`, { ok: false }) && allOk
+    continue
+  }
+  rmSync(target, { recursive: true, force: true })
+  cpSync(from, target, {
+    recursive: true,
+    filter: source => {
+      const rel = source.slice(from.length + 1).replace(/\\/g, '/')
+      return rel === '' || !(rel === '.claude-plugin/types' || rel.startsWith('.claude-plugin/types/'))
+    },
+  })
+  allOk = run(`deploy plugins/${name} -> ${target}`, { ok: true }) && allOk
+}
 
 for (const mod of listMods()) {
   if (!existsSync(join(mod.dir, 'hooks', 'register.js'))) {
