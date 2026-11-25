@@ -45,3 +45,9 @@ claude plugin test ./mods/verify
 ```
 
 Requires Claude Code v2.1.287 or later.
+
+## Install
+
+```
+/plugin install verify --marketplace shubhamtaywade82/agentic-mods
+```

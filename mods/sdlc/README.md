@@ -38,3 +38,9 @@ claude plugin test ./mods/sdlc      # registry, slugify, prompt builder, registe
 ```
 
 Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+
+## Install
+
+```
+/plugin install sdlc --marketplace shubhamtaywade82/agentic-mods
+```

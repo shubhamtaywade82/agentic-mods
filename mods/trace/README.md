@@ -31,3 +31,9 @@ claude plugin test ./mods/trace
 ```
 
 Requires Claude Code v2.1.287 or later.
+
+## Install
+
+```
+/plugin install trace --marketplace shubhamtaywade82/agentic-mods
+```

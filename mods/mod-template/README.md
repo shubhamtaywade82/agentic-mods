@@ -54,3 +54,9 @@ Or run `scripts/check.sh` from the folder above (`STRICT=1` for strict, `CI=1` t
 - Do not shadow `on` inside `register`.
 
 Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+
+## Install
+
+```
+/plugin install mod-template --marketplace shubhamtaywade82/agentic-mods
+```

@@ -29,3 +29,9 @@ claude plugin test ./mods/design-patterns   # index + renderer tests
 ```
 
 Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+
+## Install
+
+```
+/plugin install design-patterns --marketplace shubhamtaywade82/agentic-mods
+```

@@ -28,3 +28,9 @@ claude plugin test ./mods/pulse     # stats unit tests + command tests
 ```
 
 Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+
+## Install
+
+```
+/plugin install pulse --marketplace shubhamtaywade82/agentic-mods
+```
