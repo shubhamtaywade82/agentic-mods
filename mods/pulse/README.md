@@ -14,8 +14,8 @@ All telemetry is in-memory and resets when the mod reloads; nothing is written t
 
 ## Architecture
 
-- `hooks/lib/stats.ts` — `ToolStats`, pressure bands, renderers (pure, unit-tested)
-- `hooks/register.ts` — thin adapter: `tool.call` records, `ui.render` Spinner rewrites the suffix, two `command.run` answerers
+- `src/lib/stats.ts` — `ToolStats`, pressure bands, renderers (pure, unit-tested)
+- `src/register.tsx` — thin adapter (bundled to `hooks/register.js` by `pnpm build`): `tool.call` records, `ui.render` Spinner rewrites the suffix, two `command.run` answerers
 
 The lib has no Claude Code imports, so it type-checks and unit-tests without a session.
 
@@ -27,7 +27,7 @@ claude plugin validate ./mods/pulse
 claude plugin test ./mods/pulse     # stats unit tests + command tests
 ```
 
-Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+Requires Claude Code v2.1.330 or later. Tested with 2.1.332.
 
 ## Install
 

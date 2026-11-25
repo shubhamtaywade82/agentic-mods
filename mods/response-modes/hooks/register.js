@@ -4,29 +4,35 @@ var STYLE_TEXT = {
   simple: "Write in plain language: short sentences, no unexplained jargon. Define a technical term in a few words the first time you use it."
 };
 var COMMANDS = [
-  ["tldr", "tldr", "Concise responses: five sentences at most"],
-  ["mode-simple", "simple", "Plain-language responses"],
-  ["mode-off", null, "Return to the default response style"]
+  ["tldr", "Concise responses: five sentences at most"],
+  ["mode-simple", "Plain-language responses"],
+  ["mode-off", "Return to the default response style"]
 ];
+var CONFIRMATION = {
+  tldr: "Concise response style on.",
+  simple: "Plain-language response style on.",
+  off: "Default response style restored."
+};
+async function setStyle($, style) {
+  if (style === null) await $.store.delete("style");
+  else await $.store.set("style", style);
+  return { text: CONFIRMATION[style ?? "off"] };
+}
 function register(on) {
   on("session.start", async ($, e, next) => {
-    for (const [name, , description] of COMMANDS) {
+    for (const [name, description] of COMMANDS) {
       await $.command.register({ name, description });
+    }
+    const sessionId = await $.session.id();
+    if (await $.store.get("sessionId") !== sessionId) {
+      await $.store.set("sessionId", sessionId);
+      await $.store.delete("style");
     }
     return next(e);
   });
-  on("command.run", { command: "tldr" }, async ($) => {
-    await $.store.set("style", "tldr");
-    return { text: "Concise response style on." };
-  });
-  on("command.run", { command: "mode-simple" }, async ($) => {
-    await $.store.set("style", "simple");
-    return { text: "Plain-language response style on." };
-  });
-  on("command.run", { command: "mode-off" }, async ($) => {
-    await $.store.delete("style");
-    return { text: "Default response style restored." };
-  });
+  on("command.run", { command: "tldr" }, ($) => setStyle($, "tldr"));
+  on("command.run", { command: "mode-simple" }, ($) => setStyle($, "simple"));
+  on("command.run", { command: "mode-off" }, ($) => setStyle($, null));
   on("prompt.compose", async ($, e, next) => {
     const composed = await next(e);
     const style = await $.store.get("style");

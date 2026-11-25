@@ -129,7 +129,7 @@ function register(on) {
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e);
     const result = assessReadiness(await inputOf($));
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "Release readiness: ", result.verdict), result.items.map((item) => /* @__PURE__ */ h(Text, { key: item.label }, item.label, ": ", item.verdict, " · ", item.detail)));
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "PR readiness: ", result.verdict), result.items.map((item) => /* @__PURE__ */ h(Text, { key: item.label }, item.label, ": ", item.verdict, " · ", item.detail)));
   });
 }
 export {

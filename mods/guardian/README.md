@@ -33,7 +33,7 @@ claude plugin validate ./mods/guardian
 claude plugin test ./mods/guardian    # pattern tests + interception tests
 ```
 
-Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+Requires Claude Code v2.1.330 or later. Tested with 2.1.332.
 
 ## Install
 

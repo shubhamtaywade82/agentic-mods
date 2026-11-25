@@ -13,7 +13,14 @@ async function counter(
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.store.set('startedAt', await $.clock.now())
+    // $.store outlives the session and a hot reload re-runs session.start, so reset only when the
+    // session id changes.
+    const sessionId = await $.session.id()
+    if ((await $.store.get('sessionId')) !== sessionId) {
+      await $.store.set('sessionId', sessionId)
+      await $.store.set('startedAt', await $.clock.now())
+      for (const key of COUNTERS) await $.store.set(key, 0)
+    }
     await $.command.register({
       name: 'wrapped',
       description: 'Summarise this session: turns, tool calls, edits',

@@ -294,6 +294,7 @@ function rateLevel(percentUsed, warnAt) {
 // mods/session-meter/src/register.tsx
 var IDLE = { contextPercent: null, usd: null, rateLimits: [], warning: null };
 var meter = atom({ plugin: "session-meter", key: "meter" }, IDLE, { shape: "meter-1" });
+var crossedKinds = "";
 function register(on) {
   on("session.measure", async ($, e, next) => {
     const config = (await loadConfig((path) => $.fs.read(path))).value.meter;
@@ -306,21 +307,26 @@ function register(on) {
       percentUsed: limit.percentUsed
     }));
     const warnings = [];
+    const kinds = [];
     if (contextPercent !== null && levelOf(contextPercent, config.contextWarnPercent, config.contextCriticalPercent) !== "ok") {
       warnings.push(`context ${formatPercent(contextPercent)}`);
+      kinds.push("context");
     }
-    if (usd !== null && usd >= config.costWarnUsd) warnings.push(`cost ${formatUsd(usd)}`);
+    if (usd !== null && usd >= config.costWarnUsd) {
+      warnings.push(`cost ${formatUsd(usd)}`);
+      kinds.push("cost");
+    }
     for (const limit of rateLimits) {
       if (rateLevel(limit.percentUsed, config.rateWarnPercent) !== "ok") {
         warnings.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`);
+        kinds.push(limit.kind);
       }
     }
     const warning = warnings.length > 0 ? warnings.join(", ") : null;
-    const previous = await read($, meter);
     await update($, meter, () => ({ contextPercent, usd, rateLimits, warning }));
-    if (warning !== null && warning !== previous.warning) {
-      $.ui.toast(`session-meter: ${warning}`);
-    }
+    const kindsNow = kinds.join(",");
+    if (warning !== null && kindsNow !== crossedKinds) $.ui.toast(`session-meter: ${warning}`);
+    crossedKinds = kindsNow;
     return next(e);
   });
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {

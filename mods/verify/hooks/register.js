@@ -108,28 +108,11 @@ var DEFAULT_POLICY = {
     { model: "claude-opus-4.1", effort: "high" }
   ]
 };
-var nonEmptyCheck = {
-  name: "non-empty-output",
-  run(output) {
-    if (typeof output === "string" && output.trim().length > 0) return { passed: true, reason: "" };
-    if (typeof output === "object" && output !== null) {
-      const obj = output;
-      const field = obj.result ?? obj.text ?? obj.output;
-      if (typeof field === "string" && field.trim().length > 0) return { passed: true, reason: "" };
-    }
-    return { passed: false, reason: "output was empty", evidence: [] };
-  }
-};
-function containsCheck(substring) {
+function predicateCheck(name, pred, reason) {
   return {
-    name: `contains:${substring}`,
+    name,
     run(output) {
-      const text = typeof output === "string" ? output : JSON.stringify(output);
-      return text.includes(substring) ? { passed: true, reason: "" } : {
-        passed: false,
-        reason: `output did not contain "${substring}"`,
-        evidence: [text.slice(0, 200)]
-      };
+      return pred(output) ? { passed: true, reason: "" } : { passed: false, reason, evidence: [] };
     }
   };
 }
@@ -176,6 +159,14 @@ function renderStatus(runs2) {
 
 // mods/verify/src/register.tsx
 var runs = [];
+var exitZeroCheck = predicateCheck(
+  "exit-code-0",
+  (output) => output.exitCode === 0,
+  "command exited non-zero"
+);
+function failureDetail(run) {
+  return `exit ${run.exitCode}: ${run.output.trim().slice(-200)}`;
+}
 function strField(e, key) {
   if (typeof e !== "object" || e === null) return void 0;
   const v = e[key];
@@ -189,7 +180,7 @@ function register(on) {
   on("session.start", async ($, e, next) => {
     await $.command.register({
       name: "verify-run",
-      description: "Run a task through the verify-escalate engine: classify, route, execute, verify, escalate"
+      description: "Run a command and verify it exits 0, retrying transient failures: /verify-run <command> [args...]"
     });
     await $.command.register({
       name: "verify-status",
@@ -200,7 +191,7 @@ function register(on) {
   });
   on("command.run", { command: "verify-run" }, async ($, e) => {
     const task = strField(e, "args") ?? "";
-    if (task.length === 0) return { text: "usage: /verify-run <task description>" };
+    if (task.trim().length === 0) return { text: "usage: /verify-run <command> [args...]" };
     const classifyInput = { task, agentType: "main" };
     const classification = heuristicClassify(classifyInput);
     const initial = pickInitialRoute(classification.effort, DEFAULT_POLICY);
@@ -208,13 +199,16 @@ function register(on) {
       initial,
       policy: DEFAULT_POLICY,
       classifyFailure: (f) => heuristicClassifyFailure(f),
+      // Split into argv and run without a shell, so the task text cannot chain extra commands.
       execute: async () => {
-        const res = await $.process.run(["bash", "-c", task]);
-        return res.stdout || res.stderr;
+        const argv = task.split(/\s+/).filter((word) => word.length > 0);
+        const res = await $.process.run(argv);
+        return { exitCode: res.exitCode ?? 1, output: `${res.stdout ?? ""}${res.stderr ?? ""}` };
       },
       verify: async (output) => {
-        const keyword = task.split(" ")[0] ?? "task";
-        return runChecks(output, [nonEmptyCheck, containsCheck(keyword)]);
+        const result = await runChecks(output, [exitZeroCheck]);
+        if (result.passed) return result;
+        return { ...result, failures: [failureDetail(output)] };
       }
     });
     runs.push(outcome);

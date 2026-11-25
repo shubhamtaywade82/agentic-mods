@@ -107,10 +107,10 @@ export class InMemoryTrace implements ExecutionTrace {
 
   close(id: string, close: { status: NodeStatus; note?: string; durationMs?: number }): void {
     const n = this.nodes.get(id)
-    if (!n) return
+    if (!n || n.status !== 'running') return
     n.status = close.status
     if (close.note !== undefined) n.note = close.note
-    n.durationMs = close.durationMs ?? n.durationMs
+    n.durationMs = close.durationMs ?? Date.now() - n.startedAt
   }
 
   touchFile(id: string, touch: FileTouch): void {

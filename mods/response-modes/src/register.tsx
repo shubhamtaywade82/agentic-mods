@@ -1,4 +1,4 @@
-import type { On } from 'claude-code'
+import type { EngineInterface, On } from 'claude-code'
 
 type Style = 'tldr' | 'simple'
 
@@ -8,34 +8,43 @@ const STYLE_TEXT: Readonly<Record<Style, string>> = {
     'Write in plain language: short sentences, no unexplained jargon. Define a technical term in a few words the first time you use it.',
 }
 
-const COMMANDS: ReadonlyArray<readonly [string, Style | null, string]> = [
-  ['tldr', 'tldr', 'Concise responses: five sentences at most'],
-  ['mode-simple', 'simple', 'Plain-language responses'],
-  ['mode-off', null, 'Return to the default response style'],
+const COMMANDS: ReadonlyArray<readonly [string, string]> = [
+  ['tldr', 'Concise responses: five sentences at most'],
+  ['mode-simple', 'Plain-language responses'],
+  ['mode-off', 'Return to the default response style'],
 ]
+
+const CONFIRMATION: Readonly<Record<Style | 'off', string>> = {
+  tldr: 'Concise response style on.',
+  simple: 'Plain-language response style on.',
+  off: 'Default response style restored.',
+}
+
+async function setStyle($: EngineInterface, style: Style | null): Promise<{ text: string }> {
+  if (style === null) await $.store.delete('style')
+  else await $.store.set('style', style)
+  return { text: CONFIRMATION[style ?? 'off'] }
+}
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    for (const [name, , description] of COMMANDS) {
+    for (const [name, description] of COMMANDS) {
       await $.command.register({ name, description })
+    }
+    // $.store outlives the session; the style is meant to last one session, and a hot reload
+    // re-runs session.start, so clear it only when the session id changes.
+    const sessionId = await $.session.id()
+    if ((await $.store.get('sessionId')) !== sessionId) {
+      await $.store.set('sessionId', sessionId)
+      await $.store.delete('style')
     }
     return next(e)
   })
 
-  on('command.run', { command: 'tldr' }, async ($) => {
-    await $.store.set('style', 'tldr')
-    return { text: 'Concise response style on.' }
-  })
-
-  on('command.run', { command: 'mode-simple' }, async ($) => {
-    await $.store.set('style', 'simple')
-    return { text: 'Plain-language response style on.' }
-  })
-
-  on('command.run', { command: 'mode-off' }, async ($) => {
-    await $.store.delete('style')
-    return { text: 'Default response style restored.' }
-  })
+  // Literal names, so the repository's static command check can see every handler.
+  on('command.run', { command: 'tldr' }, ($) => setStyle($, 'tldr'))
+  on('command.run', { command: 'mode-simple' }, ($) => setStyle($, 'simple'))
+  on('command.run', { command: 'mode-off' }, ($) => setStyle($, null))
 
   on('prompt.compose', async ($, e, next) => {
     const composed = await next(e)

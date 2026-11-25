@@ -40,3 +40,15 @@ test('a denied tool call is recorded as failed', async ($, on) => {
   const answer = await $.command.run(summaryInput)
   expect(answer.text).toContain('failed')
 })
+
+test('a tool that finished stays completed after the turn ends', async ($, on) => {
+  on('tool.call', () => ({ result: 'ok' }))
+  on('turn.complete', () => ({ text: 'done' }))
+
+  await $.tool.call({ tool: 'Bash', command: 'ls' })
+  await $.turn.complete({ reason: 'answer', answer: 'done' } as never).catch(() => undefined)
+
+  const answer = await $.command.run(summaryInput)
+  expect(answer.text).toContain('1 completed')
+  expect(answer.text).not.toContain('cancelled')
+})

@@ -94,3 +94,9 @@ test('every registered command has a prompt builder case', () => {
 test('unknown sdlc command is rejected explicitly', () => {
   expect(buildCommandPrompt('sdlc-nonsense', '').startsWith('Unknown sdlc command')).toBe(true)
 })
+
+test('no prompt points at skill files the mod does not ship', () => {
+  for (const command of COMMANDS) {
+    expect(buildCommandPrompt(command.name, 'checkout')).not.toMatch(/sdlc skill|skill template/)
+  }
+})

@@ -18,8 +18,8 @@ Every mod must keep this separation:
 
 | Layer     | Path                     | Rule                                                                                            |
 | --------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| Adapter   | `hooks/register.ts`      | The ONLY file that imports `claude-code`. Thin: match events, call lib functions, shape results |
-| Logic     | `hooks/lib/*.ts`         | Pure TypeScript. No `claude-code` imports. Strict mode clean                                    |
+| Adapter   | `src/register.tsx`       | The ONLY file that imports `claude-code`. Thin: match events, call lib functions, shape results |
+| Logic     | `src/lib/*.ts`           | Pure TypeScript. No `claude-code` imports. Strict mode clean                                    |
 | Reference | `skills/`, `references/` | Markdown Claude reads; SKILL.md entry point per skill                                           |
 | Tests     | `tests/*.test.ts`        | Lib unit tests + session interception tests                                                     |
 
@@ -57,7 +57,7 @@ bash scripts/new-mod.sh my-mod
 This scaffolds from `mods/mod-template`, renames plugin and commands, and
 registers the mod in `.claude-plugin/marketplace.json`. Then:
 
-1. Replace the counter/usage logic with your own `hooks/lib/` module.
+1. Replace the counter/usage logic with your own `src/lib/` module.
 2. Keep `register.ts` thin (see the architecture rule).
 3. Add tests: unit tests for the lib + session tests for interception.
 4. Add your mod's directories to `scripts/tsconfig.check.json` `include`.

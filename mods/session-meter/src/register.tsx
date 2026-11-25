@@ -7,6 +7,10 @@ import type { MeterState } from '../types'
 const IDLE: MeterState = { contextPercent: null, usd: null, rateLimits: [], warning: null }
 const meter = atom({ plugin: 'session-meter', key: 'meter' } as const, IDLE, { shape: 'meter-1' })
 
+// Which thresholds are crossed, without the live values, so a toast fires on a crossing and not
+// on every measurement. Resets on reload, which at worst repeats one toast.
+let crossedKinds = ''
+
 export function register(on: On): void {
   on('session.measure', async ($, e, next) => {
     const config = (await loadConfig((path) => $.fs.read(path))).value.meter
@@ -20,25 +24,30 @@ export function register(on: On): void {
     }))
 
     const warnings: string[] = []
+    const kinds: string[] = []
     if (
       contextPercent !== null &&
       levelOf(contextPercent, config.contextWarnPercent, config.contextCriticalPercent) !== 'ok'
     ) {
       warnings.push(`context ${formatPercent(contextPercent)}`)
+      kinds.push('context')
     }
-    if (usd !== null && usd >= config.costWarnUsd) warnings.push(`cost ${formatUsd(usd)}`)
+    if (usd !== null && usd >= config.costWarnUsd) {
+      warnings.push(`cost ${formatUsd(usd)}`)
+      kinds.push('cost')
+    }
     for (const limit of rateLimits) {
       if (rateLevel(limit.percentUsed, config.rateWarnPercent) !== 'ok') {
         warnings.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`)
+        kinds.push(limit.kind)
       }
     }
     const warning = warnings.length > 0 ? warnings.join(', ') : null
 
-    const previous = await read($, meter)
     await update($, meter, () => ({ contextPercent, usd, rateLimits, warning }))
-    if (warning !== null && warning !== previous.warning) {
-      $.ui.toast(`session-meter: ${warning}`)
-    }
+    const kindsNow = kinds.join(',')
+    if (warning !== null && kindsNow !== crossedKinds) $.ui.toast(`session-meter: ${warning}`)
+    crossedKinds = kindsNow
     return next(e)
   })
 

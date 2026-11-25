@@ -22,14 +22,16 @@ It stops at `maxAttempts` (exhausted) or on a non-retryable failure (aborted).
 
 ## Commands
 
-- `/verify-run <task>` — run a task through the full classify → execute → verify → escalate loop; returns the outcome (status, attempts, final route)
-- `/verify-status` — session summary (completed / escalated / exhausted / aborted counts, avg attempts per run)
+- `/verify-run <command> [args...]`: run the command (split into argv, no shell) and pass only when it exits 0. A failure whose output mentions a timeout or a retry is retried; any other failure aborts. Returns the outcome: status, attempts and the route each attempt recorded.
+- `/verify-status`: session summary (completed / escalated / exhausted / aborted counts, average attempts per run).
+
+The command adapter runs local commands, so the route it records (model and effort) is bookkeeping only; it does not change which model runs anything. The model and effort ladder takes effect when the engine is driven by an agent runtime that supplies its own `execute`.
 
 ## Architecture
 
-- `packages/core/src/verification.ts` — the `VerifyEngine`, `verifyEngine` reference impl, `RunOutcome`, `EscalationPolicy`, `ClassifyResult` (pure, runtime-agnostic)
-- `hooks/lib/policy.ts` — `heuristicClassify`, `heuristicClassifyFailure`, `DEFAULT_POLICY`/`STRICT_POLICY` presets, built-in checks (`nonEmptyCheck`, `containsCheck`, `predicateCheck`), `runChecks`, renderers (pure)
-- `hooks/register.ts` — thin adapter exposing the engine as commands; supplies the `execute` (host `$.tool.call`) and `verify` (runChecks) effects
+- `src/lib/verification.ts`: the `VerifyEngine`, `verifyEngine` reference implementation, `RunOutcome`, `EscalationPolicy`, `ClassifyResult` (pure, runtime-agnostic)
+- `src/lib/policy.ts`: `heuristicClassify`, `heuristicClassifyFailure`, `DEFAULT_POLICY`/`STRICT_POLICY` presets, built-in checks, `runChecks`, renderers (pure)
+- `src/register.tsx`: the adapter that exposes the engine as commands, with `$.process.run` as `execute` and an exit-code check as `verify`
 
 ## Why this matters
 
@@ -45,7 +47,7 @@ claude plugin validate ./mods/verify
 claude plugin test ./mods/verify
 ```
 
-Requires Claude Code v2.1.287 or later.
+Requires Claude Code v2.1.330 or later. Tested with 2.1.332.
 
 ## Install
 

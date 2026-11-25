@@ -9,16 +9,31 @@ import {
 import type { RoutingPolicy } from './lib/routing'
 import {
   DEFAULT_POLICY,
-  containsCheck,
   heuristicClassify,
   heuristicClassifyFailure,
-  nonEmptyCheck,
+  predicateCheck,
   renderOutcome,
   renderStatus,
   runChecks,
 } from './lib/policy'
 
 const runs: RunOutcome[] = []
+
+interface CommandRun {
+  exitCode: number
+  output: string
+}
+
+// The failure text is what heuristicClassifyFailure reads, so a "timed out" in stderr retries.
+const exitZeroCheck = predicateCheck(
+  'exit-code-0',
+  (output) => (output as CommandRun).exitCode === 0,
+  'command exited non-zero',
+)
+
+function failureDetail(run: CommandRun): string {
+  return `exit ${run.exitCode}: ${run.output.trim().slice(-200)}`
+}
 
 function strField(e: unknown, key: string): string | undefined {
   if (typeof e !== 'object' || e === null) return undefined
@@ -39,7 +54,7 @@ export function register(on: On): void {
     await $.command.register({
       name: 'verify-run',
       description:
-        'Run a task through the verify-escalate engine: classify, route, execute, verify, escalate',
+        'Run a command and verify it exits 0, retrying transient failures: /verify-run <command> [args...]',
     })
     await $.command.register({
       name: 'verify-status',
@@ -51,7 +66,7 @@ export function register(on: On): void {
 
   on('command.run', { command: 'verify-run' }, async ($, e) => {
     const task = strField(e, 'args') ?? ''
-    if (task.length === 0) return { text: 'usage: /verify-run <task description>' }
+    if (task.trim().length === 0) return { text: 'usage: /verify-run <command> [args...]' }
 
     const classifyInput: ClassifyInput = { task, agentType: 'main' }
     const classification = heuristicClassify(classifyInput)
@@ -61,13 +76,16 @@ export function register(on: On): void {
       initial,
       policy: DEFAULT_POLICY,
       classifyFailure: (f: VerificationResult) => heuristicClassifyFailure(f),
-      execute: async () => {
-        const res = await $.process.run(['bash', '-c', task])
-        return res.stdout || res.stderr
+      // Split into argv and run without a shell, so the task text cannot chain extra commands.
+      execute: async (): Promise<CommandRun> => {
+        const argv = task.split(/\s+/).filter((word) => word.length > 0)
+        const res = await $.process.run(argv)
+        return { exitCode: res.exitCode ?? 1, output: `${res.stdout ?? ''}${res.stderr ?? ''}` }
       },
       verify: async (output: unknown) => {
-        const keyword = task.split(' ')[0] ?? 'task'
-        return runChecks(output, [nonEmptyCheck, containsCheck(keyword)])
+        const result = await runChecks(output, [exitZeroCheck])
+        if (result.passed) return result
+        return { ...result, failures: [failureDetail(output as CommandRun)] }
       },
     })
     runs.push(outcome)

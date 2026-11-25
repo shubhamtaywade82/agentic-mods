@@ -24,17 +24,31 @@ const IDLE: ReviewGate = {
 }
 const gate = atom({ plugin: 'review-tracker', key: 'gate' } as const, IDLE, { shape: 'gate-1' })
 
-async function loadFindings($: EngineInterface): Promise<Finding[]> {
+type Loaded = { ok: true; findings: Finding[] } | { ok: false; reason: string }
+
+/** The recorded findings; a missing file is an empty list, an unreadable one is an error. */
+async function loadFindings($: EngineInterface): Promise<Loaded> {
+  const path = stateRelativePath(FILE)
   try {
-    const parsed: unknown = JSON.parse(await $.fs.read(stateRelativePath(FILE)))
-    return Array.isArray(parsed) ? (parsed as Finding[]) : []
+    await $.fs.stat(path)
   } catch {
-    return []
+    return { ok: true, findings: [] }
+  }
+  try {
+    const parsed: unknown = JSON.parse(await $.fs.read(path))
+    if (!Array.isArray(parsed)) throw new Error('expected a JSON array')
+    return { ok: true, findings: parsed as Finding[] }
+  } catch (error) {
+    const cause = error instanceof Error ? error.message : String(error)
+    // Refusing to continue keeps a later save from overwriting findings we could not read.
+    return {
+      ok: false,
+      reason: `${path} cannot be read (${cause}). Repair or remove it; no finding was changed.`,
+    }
   }
 }
 
-async function saveFindings($: EngineInterface, findings: readonly Finding[]): Promise<void> {
-  await $.fs.write(stateRelativePath(FILE), `${JSON.stringify(findings, null, 2)}\n`)
+async function publishGate($: EngineInterface, findings: readonly Finding[]): Promise<void> {
   const result = gateFindings(findings)
   await update($, gate, () => ({
     verdict: result.verdict,
@@ -42,6 +56,11 @@ async function saveFindings($: EngineInterface, findings: readonly Finding[]): P
     open: result.open,
     reason: result.reason,
   }))
+}
+
+async function saveFindings($: EngineInterface, findings: readonly Finding[]): Promise<void> {
+  await $.fs.write(stateRelativePath(FILE), `${JSON.stringify(findings, null, 2)}\n`)
+  await publishGate($, findings)
 }
 
 function nextId(findings: readonly Finding[]): string {
@@ -58,6 +77,8 @@ export function register(on: On): void {
       name: 'finding',
       description: 'Track review findings: /finding add|set|list',
     })
+    const loaded = await loadFindings($)
+    if (loaded.ok) await publishGate($, loaded.findings)
     return next(e)
   })
 
@@ -66,7 +87,9 @@ export function register(on: On): void {
       .trim()
       .split(/\s+/)
       .filter((word) => word.length > 0)
-    const findings = await loadFindings($)
+    const loaded = await loadFindings($)
+    if (!loaded.ok) return { text: loaded.reason }
+    const findings = loaded.findings
 
     if (subcommand === 'list') {
       await $.ui.open({ id: PANE, title: 'Review findings' })

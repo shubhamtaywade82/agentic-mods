@@ -51,11 +51,16 @@ declare module 'claude-code/testing' {
     tool: {
       call(input: { tool: string; [k: string]: unknown }): Promise<ToolCallResult>
     }
+    turn: {
+      complete(input: never): Promise<unknown>
+    }
     session: {
       usage(): Promise<{
         context: { tokens: number; window: number }
         rateLimits: Array<{ kind: string; percentUsed: number }>
       }>
+      start(input: never): Promise<unknown>
+      measure(input: never): Promise<unknown>
     }
     /**
      * Stubbed host approval. Default denies (fail-closed). Tests override by

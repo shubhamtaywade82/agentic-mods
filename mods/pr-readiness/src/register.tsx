@@ -79,7 +79,7 @@ export function register(on: On): void {
     const result = assessReadiness(await inputOf($))
     return (
       <Box flexDirection="column">
-        <Text>Release readiness: {result.verdict}</Text>
+        <Text>PR readiness: {result.verdict}</Text>
         {result.items.map((item) => (
           <Text key={item.label}>
             {item.label}: {item.verdict} · {item.detail}

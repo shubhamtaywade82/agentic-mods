@@ -62,10 +62,18 @@ function parseStatusZ(output) {
   }
   return entries;
 }
+function parseNameList(output) {
+  return output.split(/[\0\n]/).map((path) => path.trim()).filter((path) => path.length > 0);
+}
 async function workingTreeChanges(run) {
   const result = await run(["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"]);
   if (result.exitCode !== 0) return null;
   return parseStatusZ(result.stdout);
+}
+async function changedBetween(run, base, head) {
+  const result = await run(["git", "diff", "--name-only", "-z", `${base}...${head}`]);
+  if (result.exitCode !== 0) return null;
+  return parseNameList(result.stdout);
 }
 
 // packages/core/src/hash.ts
@@ -148,6 +156,20 @@ async function assetsOf($) {
     return { assets: [], rollbackFile: "ROLLBACK.md" };
   }
 }
+async function releaseChanges($) {
+  const run = runnerOf($);
+  const dirty = (await workingTreeChanges(run) ?? []).map((change) => change.path);
+  const tag = await run(["git", "describe", "--tags", "--abbrev=0"]);
+  const base = tag.exitCode === 0 && tag.stdout.trim() !== "" ? tag.stdout.trim() : "HEAD~1";
+  const committed = await changedBetween(run, base, "HEAD") ?? [];
+  return [...dirty, ...committed];
+}
+async function fileItem($, path, label, detail) {
+  if (isAbsolutePath(path) || hasParentSegment(path)) {
+    return { label, ok: false, detail: `refused: ${path} is outside the repository` };
+  }
+  return { label, ok: await exists($, path), detail };
+}
 function register(on) {
   on("session.start", async ($, e, next) => {
     await $.command.register({ name: "release", description: "Release readiness: /release check" });
@@ -166,26 +188,17 @@ function register(on) {
     ]);
     const input = { contract: ct, evidence: ev, review: rv, architecture: ar };
     const readiness = assessReadiness(input);
-    const changes = await workingTreeChanges(runnerOf($)) ?? [];
-    const changed = changes.map((change) => change.path);
+    const changed = await releaseChanges($);
     const { assets, rollbackFile } = await assetsOf($);
     const items = [
       {
         label: "changelog updated",
         ok: changed.some((path) => /(^|\/)CHANGELOG\.md$/i.test(path)),
-        detail: "CHANGELOG.md is part of this change"
+        detail: "CHANGELOG.md changed since the last tag"
       },
-      {
-        label: "rollback documented",
-        ok: await exists($, rollbackFile),
-        detail: `${rollbackFile} exists`
-      },
+      await fileItem($, rollbackFile, "rollback documented", `${rollbackFile} exists`),
       ...await Promise.all(
-        assets.map(async (asset) => ({
-          label: `asset ${asset}`,
-          ok: await exists($, asset),
-          detail: "listed in release.json"
-        }))
+        assets.map((asset) => fileItem($, asset, `asset ${asset}`, "listed in release.json"))
       ),
       {
         label: "migrations reviewed",

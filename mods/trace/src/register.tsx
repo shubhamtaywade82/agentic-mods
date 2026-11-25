@@ -9,7 +9,9 @@ import {
 } from './lib/summary'
 
 const trace = new InMemoryTrace()
-const openTools: string[] = []
+const openTools = new Set<string>()
+// Subagent id (from agent.spawn's result) -> its trace node.
+const agentNodes = new Map<string, string>()
 let mainId = trace.open({ kind: 'main', label: 'main', parentId: null })
 
 function strField(e: unknown, key: string): string | undefined {
@@ -29,21 +31,26 @@ export function register(on: On): void {
       description: 'One-line summary of the execution tree (counts, running nodes)',
     })
     trace.reset()
-    openTools.length = 0
+    openTools.clear()
+    agentNodes.clear()
     mainId = trace.open({ kind: 'main', label: 'main', parentId: null })
     return next(e)
   })
 
   on('agent.spawn', async (_$, e, next) => {
-    const parentId = strField(e, 'parentId') ?? mainId
-    openAgent(trace, parentId, strField(e, 'subagentType'), strField(e, 'description'))
-    return next(e)
-  }).catch(async (_$, e, next) => next(e))
+    const parentId = agentNodes.get(strField(e, 'parentAgentId') ?? '') ?? mainId
+    const id = openAgent(trace, parentId, strField(e, 'subagentType'), strField(e, 'description'))
+    const res = await next(e)
+    const agentId = strField(res, 'agentId')
+    if (agentId) agentNodes.set(agentId, id)
+    else trace.close(id, { status: 'failed', note: strField(res, 'deny') ?? 'not started' })
+    return res
+  })
 
   on('tool.call', async (_$, e, next) => {
-    const parentId = strField(e, 'parentId') ?? mainId
+    const parentId = agentNodes.get(strField(e, 'agentId') ?? '') ?? mainId
     const id = openTool(trace, parentId, strField(e, 'tool'), strField(e, 'command'))
-    openTools.push(id)
+    openTools.add(id)
     const touch = fileTouchFromTool(strField(e, 'tool'), strField(e, 'file_path'))
     if (touch) trace.touchFile(id, touch)
     try {
@@ -54,17 +61,25 @@ export function register(on: On): void {
     } catch (err) {
       trace.close(id, { status: 'failed', note: String(err) })
       throw err
+    } finally {
+      openTools.delete(id)
     }
-  }).catch(async (_$, e, next) => next(e))
+  })
 
   on('turn.complete', async ($, e, next) => {
-    while (openTools.length > 0) {
-      const id = openTools.pop() as string
-      trace.close(id, { status: 'cancelled', note: 'open at turn.complete' })
+    const agentId = strField(e, 'agentId')
+    const agentNode = agentNodes.get(agentId ?? '')
+    if (agentNode) {
+      trace.close(agentNode, { status: 'completed' })
+      agentNodes.delete(agentId as string)
+    } else {
+      for (const id of openTools)
+        trace.close(id, { status: 'cancelled', note: 'open at turn.complete' })
+      openTools.clear()
     }
     $.ui.invalidate('ui.render')
     return next(e)
-  }).catch(async (_$, e, next) => next(e))
+  })
 
   on('ui.render', { component: 'Spinner' }, async (_$, e, next) => {
     return next({ ...e, props: { ...e.props, suffix: traceSpinnerSuffix(summarize(trace)) } })

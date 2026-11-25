@@ -39,6 +39,8 @@ export function nextPhase(current: TddPhase, event: TddEvent): TddTransition {
       return { ok: false, reason: `RED is not valid from ${current}` }
     case 'green-verified':
       if (current === 'red') return { ok: true, phase: 'green' }
+      // A passing run during REFACTOR is the evidence that the refactor kept behavior.
+      if (current === 'refactor') return { ok: true, phase: 'refactor' }
       return { ok: false, reason: `GREEN is not valid from ${current}` }
     case 'refactor':
       if (current === 'green') return { ok: true, phase: 'refactor' }

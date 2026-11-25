@@ -59,6 +59,8 @@ async function runTests(
   const command = await commandOf($)
   if (command === null)
     return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.'
+  // A leading dash would reach the test runner as a flag, not a path.
+  if (testPath.startsWith('-')) return `Not a test path: ${testPath}`
   try {
     const result = await $.process.run([...command, normalizePath(testPath)], {
       timeoutMs: 600_000,
@@ -104,9 +106,11 @@ export function register(on: On): void {
       const reason = rest.join(' ').trim()
       if (reason === '') return { text: 'Usage: /tdd exception <reason>' }
       await $.store.set('exception', true)
+      const logPath = stateRelativePath('tdd-exceptions.log')
+      const earlier = await $.fs.read(logPath).catch(() => '')
       await $.fs.write(
-        stateRelativePath('tdd-exceptions.log'),
-        `${new Date(await $.clock.now()).toISOString()} ${truncate(reason, 300)}\n`,
+        logPath,
+        `${earlier}${new Date(await $.clock.now()).toISOString()} ${truncate(reason, 300)}\n`,
       )
       return { text: 'Exception recorded: production edits are allowed until the next RED.' }
     }
@@ -149,8 +153,9 @@ export function register(on: On): void {
         await publish($, phase, 'FAIL', `GREEN not reached: ${testPath} still fails`)
         return { text: `GREEN not reached: ${testPath} still fails.` }
       }
-      await publish($, transition.phase, 'PASS', `GREEN verified: ${testPath}`)
-      return { text: `GREEN verified: ${testPath} passes.` }
+      const label = transition.phase === 'refactor' ? 'REFACTOR verified' : 'GREEN verified'
+      await publish($, transition.phase, 'PASS', `${label}: ${testPath}`)
+      return { text: `${label}: ${testPath} passes.` }
     }
 
     if (subcommand === 'refactor') {
@@ -191,5 +196,12 @@ export function register(on: On): void {
     return denial === null ? next(e) : { deny: denial }
   }).catch((_$, e, next) =>
     next.called ? next(e) : { deny: 'tdd-conductor failed closed on Write.' },
+  )
+
+  on('tool.call', { tool: 'NotebookEdit' }, async ($, e, next) => {
+    const denial = await guardProduction($, e.notebook_path)
+    return denial === null ? next(e) : { deny: denial }
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'tdd-conductor failed closed on NotebookEdit.' },
   )
 }

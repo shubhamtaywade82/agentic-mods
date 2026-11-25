@@ -1,6 +1,6 @@
 # trace
 
-An execution observability mod for Claude Code. It listens to the session lifecycle (`session.start`, `turn.start`, `agent.spawn`, `tool.call`, `tool.result`, `turn.complete`) and builds a **bounded hierarchical runtime tree**: main agent → subagents → tool calls, with parent/child links, per-node status (running/completed/failed/cancelled), duration, and the files each node touched.
+An execution observability mod for Claude Code. It listens to the session lifecycle (`session.start`, `agent.spawn`, `tool.call`, `turn.complete`) and builds a **bounded hierarchical runtime tree**: main agent → subagents → tool calls, with parent/child links, per-node status (running/completed/failed/cancelled), duration, and the files each node touched.
 
 This is the architectural piece `pulse` was too flat to provide — `pulse` counts attempts, `trace` records the _shape_ of the run, so you can answer "which subagent did what, and where did it fail?".
 
@@ -12,9 +12,9 @@ This is the architectural piece `pulse` was too flat to provide — `pulse` coun
 
 ## Architecture
 
-- `packages/core/src/trace.ts` — the `ExecutionTrace` contract + `InMemoryTrace` store (pure, runtime-agnostic, bounded to 500 nodes by default with leaf-first eviction)
-- `hooks/lib/summary.ts` — event→store mapping helpers + summary stats (pure)
-- `hooks/register.ts` — thin adapter wiring host events to the store
+- `src/lib/trace.ts` — the `ExecutionTrace` contract + `InMemoryTrace` store (pure, runtime-agnostic, bounded to 500 nodes by default with leaf-first eviction)
+- `src/lib/summary.ts` — event→store mapping helpers + summary stats (pure)
+- `src/register.tsx` — thin adapter wiring host events to the store
 
 The store is pure TypeScript with no `claude-code` import, so the same contract can feed a future developer dashboard (Mission Control style) or any other runtime (Nexum, etc.).
 
@@ -30,7 +30,7 @@ claude plugin validate ./mods/trace
 claude plugin test ./mods/trace
 ```
 
-Requires Claude Code v2.1.287 or later.
+Requires Claude Code v2.1.330 or later. Tested with 2.1.332.
 
 ## Install
 

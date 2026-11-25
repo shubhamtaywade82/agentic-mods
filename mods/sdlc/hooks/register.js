@@ -32,7 +32,7 @@ function buildCommandPrompt(name, args) {
     case "sdlc-init":
       return [
         "Bootstrap the SDLC kit in this repository.",
-        "1. If AGENTS.md does not exist, create it from the sdlc skill template (agents/sdlc-AGENTS.md):",
+        "1. If AGENTS.md does not exist, create it with these sections:",
         "   project context, operating principles, code standards, testing rules, git/PR rules,",
         '   safety boundaries, definition of done, report format. Mark assumptions with "# ADJUST".',
         "2. Create docs/{prd,specs,plans,adr}/ and a docs/TODO.md.",
@@ -44,20 +44,19 @@ function buildCommandPrompt(name, args) {
       return [
         `Build this feature end-to-end: ${t}`,
         "",
-        "Follow the sdlc skill workflows in order, pausing for my approval at each gate:",
+        "Work through these stages in order, pausing for my approval at each gate:",
         "1. Clarify (planner) -> docs/prd/" + slug + ".md  [gate: I approve acceptance criteria]",
         "2. Spec (architect) -> docs/specs/" + slug + ".md  [gate: I approve the design]",
         "3. Plan (planner) -> docs/plans/" + slug + ".md  [gate: I approve the tasks]",
         "4. Create branch feat/" + slug + ". For each task: implementer (TDD), one commit per task.",
         "5. Review (reviewer + security if relevant) in a fresh context; fix Blockers/Majors.",
-        "6. Fill the PR template and show it to me before opening the PR."
+        "6. Draft the PR body and show it to me before opening the PR."
       ].join("\n");
     case "sdlc-prd":
       return [
         `Clarify and write a PRD for: ${t}`,
-        "Follow the sdlc skill workflow 01 (clarify-prd).",
         "- Ask me up to 5 clarifying questions first (users, scope, edge cases, non-goals, success metric).",
-        `- Then draft docs/prd/${slug}.md from the skill PRD template.`,
+        `- Then draft docs/prd/${slug}.md: problem, users, goals, acceptance criteria, non-goals, open questions.`,
         "- Acceptance criteria in Given/When/Then, each independently testable.",
         "- Explicit out-of-scope list and open questions at the end.",
         "Do not write any code."
@@ -65,10 +64,9 @@ function buildCommandPrompt(name, args) {
     case "sdlc-spec":
       return [
         `Write a tech spec for: ${t}`,
-        "Follow the sdlc skill workflow 02 (tech-spec).",
         `- Read the PRD (docs/prd/${slug}.md or the one I point at) and explore the codebase first;`,
         "  list the files you read and the patterns you will reuse.",
-        `- Draft docs/specs/${slug}.md from the skill tech-spec template.`,
+        `- Draft docs/specs/${slug}.md: context, design, data model, API contracts, risks, test strategy.`,
         "- For each significant decision: 2-3 options, trade-offs, a recommendation.",
         "- Cover data model, API contracts, failure modes, security, performance, rollout, test strategy.",
         "- Record major decisions as ADRs in docs/adr/. Do not write implementation code."
@@ -76,7 +74,6 @@ function buildCommandPrompt(name, args) {
     case "sdlc-plan":
       return [
         `Create a task plan for: ${t}`,
-        "Follow the sdlc skill workflow 03 (task-plan).",
         `- Read docs/specs/${slug}.md (or the spec I point at), then write docs/plans/${slug}.md.`,
         "- Tasks: max ~200 line diff each, dependency-ordered, one commit each, own test(s).",
         "- Each task lists goal, files, the failing test to write first, and done-criteria.",
@@ -87,7 +84,7 @@ function buildCommandPrompt(name, args) {
       return [
         "Implement the next task in the plan with strict TDD.",
         `Plan: ${topic || "the current plan in docs/plans/ (newest file)"}.`,
-        "Follow the sdlc skill workflow 04 (build-tdd):",
+        "Steps:",
         "1. State the task and the files you will touch.",
         "2. Red: write the failing test, run it, show the failure.",
         "3. Green: minimum code to pass. Run the test.",
@@ -99,17 +96,17 @@ function buildCommandPrompt(name, args) {
       return [
         "Review the current branch diff.",
         "Scope: " + (topic || "git diff main...HEAD"),
-        "Follow the sdlc skill workflow 05 (review):",
-        "- Check the diff against the spec and the code-review checklist.",
+        "Steps:",
+        "- Check the diff against the spec: correctness, error handling, naming, tests, scope creep.",
         "- Output findings as: Severity (Blocker/Major/Minor/Nit) | file:line | issue | fix.",
-        "- If the diff touches auth, input, data, payments or files, also run the security checklist.",
+        "- If the diff touches auth, input, data, payments or files, also check it against the OWASP Top 10.",
         "- List missing tests and spec mismatches. Verdict: Approve or Request changes.",
         "No praise, no full rewrites; be specific and actionable."
       ].join("\n");
     case "sdlc-debug":
       return [
         `Root-cause and fix this bug: ${t}`,
-        "Follow the sdlc skill workflow 06 (debug):",
+        "Steps:",
         "1. Reproduce: exact steps, expected vs actual, full error.",
         "2. Isolate the smallest failing case and write it as a failing test.",
         "3. List 3 ranked hypotheses, then test them one at a time.",
@@ -119,7 +116,7 @@ function buildCommandPrompt(name, args) {
     case "sdlc-refactor":
       return [
         `Refactor: ${t}`,
-        "Follow the sdlc skill workflow 07 (refactor):",
+        "Steps:",
         "1. Ensure the current behavior is covered; add characterization tests if not.",
         "2. State the smell and the target design in one paragraph.",
         "3. Refactor in tiny steps, running tests after each; no behavior change.",
@@ -129,15 +126,15 @@ function buildCommandPrompt(name, args) {
       return [
         "Prepare this work for shipping.",
         "1. Run full tests, lint, type-check; stop and report if anything fails.",
-        "2. Self-review against the definition-of-done checklist.",
-        "3. Draft the PR body from the PR template and a CHANGELOG entry.",
+        "2. Self-review: tests cover the change, no debug code, docs and config updated, no secrets.",
+        "3. Draft the PR body (summary, changes, verification, risks) and a CHANGELOG entry.",
         "4. Show me both. Only push/open the PR after I confirm.",
         ...topic ? [`Scope: ${t}`] : []
       ].join("\n");
     case "sdlc-audit":
       return [
         `Security audit: ${t}`,
-        "- Audit against the sdlc skill security checklist (OWASP-aligned) and report findings",
+        "- Audit against the OWASP Top 10 and report findings",
         "  as: severity, location, exploit scenario, concrete fix.",
         "- Cover input validation, injection, authn/authz, secrets, data exposure, dependencies.",
         "- Run the dependency audit tools available for this stack.",

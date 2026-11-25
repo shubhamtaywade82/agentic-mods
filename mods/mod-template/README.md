@@ -7,10 +7,11 @@ A TypeScript starter mod for the agentic-mods library. It counts the tool-call *
 ```text
 mod-template/
 ├── .claude-plugin/plugin.json   manifest (name must not start with "claude-")
-├── hooks/hooks.json             "modules" key points at the code; this makes it a mod
-├── hooks/register.ts            the adapter: export const register: Register; only file touching $
-├── hooks/lib/counter.ts         pure logic: attempt counting and labels
-├── hooks/lib/usage.ts           pure logic: usage formatting (defensive against bad data)
+├── hooks/hooks.json             "modules" points at hooks/register.js; this makes it a mod
+├── hooks/register.js            the bundle Claude Code loads, built from src/ by `pnpm build`
+├── src/register.tsx             the adapter: export function register(on); only file touching $
+├── src/lib/counter.ts           pure logic: attempt counting and labels
+├── src/lib/usage.ts             pure logic: usage formatting (defensive against bad data)
 ├── tests/mod-template.test.ts   session-level tests run by `claude plugin test`
 ├── tests/lib.test.ts            unit tests for the pure libs
 ├── tsconfig.json                editor and tsc settings for a hooks module
@@ -18,9 +19,9 @@ mod-template/
 └── .gitignore                   ignores the generated .claude-plugin/types/
 ```
 
-There is no build step. Claude Code loads `.ts` files directly.
+Edit `src/`, then run `pnpm build` to regenerate `hooks/register.js`: Claude Code loads the bundle, not the sources, so an edit has no effect until it is rebuilt.
 
-The `hooks/lib/` split is the pattern to keep: `register.ts` is a thin adapter over the Claude Code event API, and everything else is pure TypeScript you can type-check with a pinned `tsc` and test without a session. This is the same separation the whole library uses, so business logic stays portable to other agent runtimes.
+The `src/lib/` split is the pattern to keep: `register.tsx` is a thin adapter over the Claude Code event API, and everything else is pure TypeScript you can type-check with a pinned `tsc` and test without a session. This is the same separation the whole library uses, so business logic stays portable to other agent runtimes.
 
 ## Develop
 
@@ -53,7 +54,7 @@ Or run `scripts/check.sh` from the folder above (`STRICT=1` for strict, `CI=1` t
 - ES modules only. Relative imports inside this folder, plus the type-only import `claude-code`. No `import()`.
 - Do not shadow `on` inside `register`.
 
-Requires Claude Code v2.1.287 or later. Tested with 2.1.328.
+Requires Claude Code v2.1.330 or later. Tested with 2.1.332.
 
 ## Install
 

@@ -3,6 +3,9 @@ import type { EngineInterface, On } from 'claude-code'
 
 import {
   assessReadiness,
+  changedBetween,
+  hasParentSegment,
+  isAbsolutePath,
   stateRelativePath,
   type ReadinessInput,
   workingTreeChanges,
@@ -71,6 +74,24 @@ async function assetsOf($: EngineInterface): Promise<Assets> {
   }
 }
 
+/** Paths changed in the working tree or committed since the last tag (or the last commit). */
+async function releaseChanges($: EngineInterface): Promise<string[]> {
+  const run = runnerOf($)
+  const dirty = ((await workingTreeChanges(run)) ?? []).map((change) => change.path)
+  const tag = await run(['git', 'describe', '--tags', '--abbrev=0'])
+  const base = tag.exitCode === 0 && tag.stdout.trim() !== '' ? tag.stdout.trim() : 'HEAD~1'
+  const committed = (await changedBetween(run, base, 'HEAD')) ?? []
+  return [...dirty, ...committed]
+}
+
+async function fileItem($: EngineInterface, path: string, label: string, detail: string) {
+  // release.json lives in the repository, so its paths must stay inside it.
+  if (isAbsolutePath(path) || hasParentSegment(path)) {
+    return { label, ok: false, detail: `refused: ${path} is outside the repository` }
+  }
+  return { label, ok: await exists($, path), detail }
+}
+
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'release', description: 'Release readiness: /release check' })
@@ -91,26 +112,17 @@ export function register(on: On): void {
     const input: ReadinessInput = { contract: ct, evidence: ev, review: rv, architecture: ar }
     const readiness = assessReadiness(input)
 
-    const changes = (await workingTreeChanges(runnerOf($))) ?? []
-    const changed = changes.map((change) => change.path)
+    const changed = await releaseChanges($)
     const { assets, rollbackFile } = await assetsOf($)
     const items: Array<{ label: string; ok: boolean; detail: string }> = [
       {
         label: 'changelog updated',
         ok: changed.some((path) => /(^|\/)CHANGELOG\.md$/i.test(path)),
-        detail: 'CHANGELOG.md is part of this change',
+        detail: 'CHANGELOG.md changed since the last tag',
       },
-      {
-        label: 'rollback documented',
-        ok: await exists($, rollbackFile),
-        detail: `${rollbackFile} exists`,
-      },
+      await fileItem($, rollbackFile, 'rollback documented', `${rollbackFile} exists`),
       ...(await Promise.all(
-        assets.map(async (asset) => ({
-          label: `asset ${asset}`,
-          ok: await exists($, asset),
-          detail: 'listed in release.json',
-        })),
+        assets.map((asset) => fileItem($, asset, `asset ${asset}`, 'listed in release.json')),
       )),
       {
         label: 'migrations reviewed',

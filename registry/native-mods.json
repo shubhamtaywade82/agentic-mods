@@ -235,7 +235,7 @@
     {
       "name": "release-conductor",
       "version": "0.2.0",
-      "description": "Assembles release readiness from the evidence, review, architecture, migration, dependency and performance states, plus a changelog, a rollback note and the deployment assets the repository lists. Checks only: it never deploys.",
+      "description": "Assembles release readiness from the evidence, review, architecture, migration, dependency and performance states, plus a changelog, a rollback note and the deployment assets the repository lists. Checks only: it never deploys, and writes the checklist to .agentic-mods/release/checklist.md. The changelog counts when CHANGELOG.md changed in the working tree or since the last tag.",
       "types": "./types/index.d.ts",
       "dependencies": [
         "evidence-gate",

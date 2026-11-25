@@ -102,16 +102,25 @@ var IDLE = {
 };
 var gate = atom({ plugin: "review-tracker", key: "gate" }, IDLE, { shape: "gate-1" });
 async function loadFindings($) {
+  const path = stateRelativePath(FILE);
   try {
-    const parsed = JSON.parse(await $.fs.read(stateRelativePath(FILE)));
-    return Array.isArray(parsed) ? parsed : [];
+    await $.fs.stat(path);
   } catch {
-    return [];
+    return { ok: true, findings: [] };
+  }
+  try {
+    const parsed = JSON.parse(await $.fs.read(path));
+    if (!Array.isArray(parsed)) throw new Error("expected a JSON array");
+    return { ok: true, findings: parsed };
+  } catch (error) {
+    const cause = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      reason: `${path} cannot be read (${cause}). Repair or remove it; no finding was changed.`
+    };
   }
 }
-async function saveFindings($, findings) {
-  await $.fs.write(stateRelativePath(FILE), `${JSON.stringify(findings, null, 2)}
-`);
+async function publishGate($, findings) {
   const result = gateFindings(findings);
   await update($, gate, () => ({
     verdict: result.verdict,
@@ -119,6 +128,11 @@ async function saveFindings($, findings) {
     open: result.open,
     reason: result.reason
   }));
+}
+async function saveFindings($, findings) {
+  await $.fs.write(stateRelativePath(FILE), `${JSON.stringify(findings, null, 2)}
+`);
+  await publishGate($, findings);
 }
 function nextId(findings) {
   const highest = findings.reduce((max, finding) => {
@@ -133,11 +147,15 @@ function register(on) {
       name: "finding",
       description: "Track review findings: /finding add|set|list"
     });
+    const loaded = await loadFindings($);
+    if (loaded.ok) await publishGate($, loaded.findings);
     return next(e);
   });
   on("command.run", { command: "finding" }, async ($, e) => {
     const [subcommand = "list", ...rest] = e.args.trim().split(/\s+/).filter((word) => word.length > 0);
-    const findings = await loadFindings($);
+    const loaded = await loadFindings($);
+    if (!loaded.ok) return { text: loaded.reason };
+    const findings = loaded.findings;
     if (subcommand === "list") {
       await $.ui.open({ id: PANE, title: "Review findings" });
       if (findings.length === 0) return { text: "No findings recorded." };

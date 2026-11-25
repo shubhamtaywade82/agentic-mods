@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+Fixes from the review of the full catalog. Each fix has a test under the mod's `tests/`.
+
+### Fixed
+
+- `review-tracker`: an unreadable `findings.json` read as "no findings", so the next `/finding add`
+  overwrote every recorded finding. It is now reported and left untouched; the gate is rebuilt from
+  the file at session start.
+- `verify`: `/verify-run` ran its text through `bash -c`, ignored the exit code, and checked for the
+  task's first word. It now runs argv without a shell and passes only on exit 0.
+- `trace`: every finished tool was re-closed as cancelled at the end of the turn, and subagents never
+  closed. Tools keep their status, subagents close on their own `turn.complete`, nodes get a duration.
+- `test-impact`: new untracked files were never reported as untested, an edited test was never
+  selected, and a failing `git status` read as "nothing changed".
+- `tdd-conductor` / `workflow-conductor`: `/tdd green` during REFACTOR was rejected, so the refactor
+  gate could never pass. It now verifies the refactor. NotebookEdit is gated like Edit and Write, the
+  exception log appends, and a test path starting with `-` is refused.
+- `release-conductor`: a changelog committed since the last tag counts as updated; paths in
+  `release.json` outside the repository are refused instead of probed.
+- `sdlc`: prompts pointed at skill files the mod does not ship; they are now self-contained.
+- `session-wrapped` and `response-modes`: counters and the chosen style leaked into later sessions.
+- `session-meter`: a crossed threshold toasted on every measurement; it now toasts once per crossing.
+- `worktree-orchestrator`: a failed `git status` showed as "0 uncommitted"; it now says unknown.
+- `pr-readiness`: the pane said "Release readiness". README paths now point at `src/`.
+
 ## 0.2.0 — production candidate
 
 Hardening after the first full build. Verified by `pnpm check` (typecheck, build, lint, engine validation,

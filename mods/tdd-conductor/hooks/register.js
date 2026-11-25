@@ -58,6 +58,7 @@ function nextPhase(current, event) {
       return { ok: false, reason: `RED is not valid from ${current}` };
     case "green-verified":
       if (current === "red") return { ok: true, phase: "green" };
+      if (current === "refactor") return { ok: true, phase: "refactor" };
       return { ok: false, reason: `GREEN is not valid from ${current}` };
     case "refactor":
       if (current === "green") return { ok: true, phase: "refactor" };
@@ -104,6 +105,7 @@ async function runTests($, testPath) {
   const command = await commandOf($);
   if (command === null)
     return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.';
+  if (testPath.startsWith("-")) return `Not a test path: ${testPath}`;
   try {
     const result = await $.process.run([...command, normalizePath(testPath)], {
       timeoutMs: 6e5
@@ -140,9 +142,11 @@ function register(on) {
       const reason = rest.join(" ").trim();
       if (reason === "") return { text: "Usage: /tdd exception <reason>" };
       await $.store.set("exception", true);
+      const logPath = stateRelativePath("tdd-exceptions.log");
+      const earlier = await $.fs.read(logPath).catch(() => "");
       await $.fs.write(
-        stateRelativePath("tdd-exceptions.log"),
-        `${new Date(await $.clock.now()).toISOString()} ${truncate(reason, 300)}
+        logPath,
+        `${earlier}${new Date(await $.clock.now()).toISOString()} ${truncate(reason, 300)}
 `
       );
       return { text: "Exception recorded: production edits are allowed until the next RED." };
@@ -183,8 +187,9 @@ function register(on) {
         await publish($, phase, "FAIL", `GREEN not reached: ${testPath} still fails`);
         return { text: `GREEN not reached: ${testPath} still fails.` };
       }
-      await publish($, transition.phase, "PASS", `GREEN verified: ${testPath}`);
-      return { text: `GREEN verified: ${testPath} passes.` };
+      const label = transition.phase === "refactor" ? "REFACTOR verified" : "GREEN verified";
+      await publish($, transition.phase, "PASS", `${label}: ${testPath}`);
+      return { text: `${label}: ${testPath} passes.` };
     }
     if (subcommand === "refactor") {
       const transition = nextPhase(phase, "refactor");
@@ -220,6 +225,12 @@ function register(on) {
     return denial === null ? next(e) : { deny: denial };
   }).catch(
     (_$, e, next) => next.called ? next(e) : { deny: "tdd-conductor failed closed on Write." }
+  );
+  on("tool.call", { tool: "NotebookEdit" }, async ($, e, next) => {
+    const denial = await guardProduction($, e.notebook_path);
+    return denial === null ? next(e) : { deny: denial };
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "tdd-conductor failed closed on NotebookEdit." }
   );
 }
 export {
