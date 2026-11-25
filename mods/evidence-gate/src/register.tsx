@@ -23,6 +23,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { EvidenceStatus } from '../types'
+import { band, card, chip, empty, header, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'evidence-gate'
 const MAX_RECORDS = 50
@@ -220,33 +221,40 @@ export function register(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const current = await read($, status)
     if (current.checks.length === 0) return next(e)
-    const { Box, Text } = $.ui.resolve(e)
-    const label = current.checks.map((item) => `${item.check} ${item.verdict}`).join(' · ')
-    return (
-      <Box>
-        <Text dimColor={current.overall === 'PASS'}>evidence: {label}</Text>
-      </Box>
+    const kit = $.ui.resolve(e)
+    return band(
+      kit,
+      'evidence',
+      current.checks.map((item) => {
+        const look = verdictLook(item.verdict)
+        return { text: `${look.glyph} ${item.check}`, tone: look.tone }
+      }),
     )
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const current = await read($, status)
     if (current.checks.length === 0) {
-      return (
-        <Box>
-          <Text dimColor>No checks configured or run yet. Run /evidence run.</Text>
-        </Box>
-      )
+      return empty(kit, 'No checks configured or run yet.', '/evidence run')
     }
     return (
       <Box flexDirection="column">
-        <Text>Overall: {current.overall}</Text>
-        {current.checks.map((item) => (
-          <Text key={item.check}>
-            {item.check.padEnd(10)} {item.verdict.padEnd(8)} {item.reason}
-          </Text>
-        ))}
+        {header(kit, {
+          title: 'Evidence',
+          meta: `${current.checks.length} check(s)`,
+          badge: chip(kit, current.overall, verdictLook(current.overall)),
+        })}
+        {current.checks.map((item) =>
+          card(kit, {
+            key: item.check,
+            title: `${item.check}  ${item.verdict}`,
+            look: verdictLook(item.verdict),
+            lines: [item.reason],
+          }),
+        )}
+        <Text dimColor>Commit, push and PR are gated on these checks.</Text>
       </Box>
     )
   })

@@ -11,6 +11,7 @@ import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { ContractStatus } from '../../change-contract/types'
 import type { ReviewGate } from '../../review-tracker/types'
 import type { ArchitectureStatus } from '../../architecture-guard/types'
+import { card, chip, header, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'pr-readiness'
 
@@ -80,16 +81,26 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const result = assessReadiness(await inputOf($))
+    const passing = result.items.filter((item) => item.verdict === 'PASS').length
     return (
       <Box flexDirection="column">
-        <Text>PR readiness: {result.verdict}</Text>
-        {result.items.map((item) => (
-          <Text key={item.label}>
-            {item.label}: {item.verdict} · {item.detail}
-          </Text>
-        ))}
+        {header(kit, {
+          title: 'PR readiness',
+          meta: `${passing}/${result.items.length} checks pass`,
+          badge: chip(kit, result.verdict, verdictLook(result.verdict)),
+        })}
+        {result.items.map((item) =>
+          card(kit, {
+            key: item.label,
+            title: `${item.label}  ${item.verdict}`,
+            look: verdictLook(item.verdict),
+            lines: [item.detail],
+          }),
+        )}
+        <Text dimColor>/pr-ready [description] drafts the verification section</Text>
       </Box>
     )
   })

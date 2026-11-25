@@ -22,11 +22,16 @@ test('a destructive Bash command is denied and never runs', async ($, on) => {
 
   const res = (await $.tool
     .call({ tool: 'Bash', command: 'rm -rf /tmp/whatever' })
-    .catch((r: unknown) => r)) as { deny?: string }
-  expect(typeof res?.deny === 'string' && res.deny.includes('guardian blocked this command')).toBe(
-    true,
-  )
+    .catch((r: unknown) => r)) as { deny?: string; isError?: boolean }
+  // With nobody to answer the permission dialog, guardian's ask is a deny.
+  expect(res.isError === true || typeof res.deny === 'string').toBe(true)
   expect(ran).toBe(false)
+})
+
+test('a destructive command is put to one permission dialog with the impact as its reason', async ($) => {
+  const verdict = await $.tool.check({ tool: 'Bash', input: { command: 'rm -rf build' } })
+  expect(verdict.decision).toBe('ask')
+  expect(verdict.reason ?? '').toContain('rm-rf')
 })
 
 test('an ordinary Bash command runs unchanged', async ($, on) => {

@@ -4,6 +4,7 @@ import type { On } from 'claude-code'
 import { analyzeCommand, registerCommand } from '@agentic-mods/core'
 
 import type { Voice } from '../types'
+import { band } from '../../../packages/core/src/ui'
 
 const LINES: Readonly<
   Record<
@@ -85,11 +86,6 @@ export function register(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const text = await read($, latest)
     if (text === '') return next(e)
-    const { Box, Text } = $.ui.resolve(e)
-    return (
-      <Box>
-        <Text dimColor>{text}</Text>
-      </Box>
-    )
+    return band($.ui.resolve(e), 'commentary', [{ text, tone: 'subtle' }])
   })
 }

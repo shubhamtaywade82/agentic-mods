@@ -3,8 +3,18 @@ import type { On } from 'claude-code'
 
 import { appendCapped, redact, truncate, registerCommand } from '@agentic-mods/core'
 import type { TimelineEntry, TimelineState } from '../types'
+import { chip, empty, header, type Tone, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'debug-timeline'
+const COMMAND_LOOK = { tone: 'inactive', glyph: '$' } as const
+const ENTRY_LOOK: Readonly<Record<string, { tone: Tone; glyph: string }>> = {
+  command: { tone: 'inactive', glyph: '$' },
+  hypothesis: { tone: 'claude', glyph: '?' },
+  result: { tone: 'suggestion', glyph: '=' },
+  open: { tone: 'warning', glyph: '?' },
+  confirmed: { tone: 'success', glyph: '✓' },
+  rejected: { tone: 'error', glyph: '✗' },
+}
 const MAX_ENTRIES = 200
 const REPEAT_WINDOW = 20
 const REPEAT_THRESHOLD = 3
@@ -110,26 +120,41 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const current = await read($, timeline)
     if (current.entries.length === 0) {
-      return (
-        <Box>
-          <Text dimColor>Nothing recorded yet. Commands are recorded as they run.</Text>
-        </Box>
+      return empty(
+        kit,
+        'Nothing recorded yet. Commands are recorded as they run.',
+        '/hypothesis <text>',
       )
     }
+    const open = current.entries.filter((entry) => entry.outcome === 'open').length
     return (
       <Box flexDirection="column">
-        {current.entries.slice(-40).map((entry) => (
-          <Text key={entry.id} dimColor={entry.kind === 'command'}>
-            {entry.id} {entry.kind}
-            {entry.outcome === null ? '' : ` [${entry.outcome}]`}: {entry.text}
-          </Text>
-        ))}
-        {current.repeated.length > 0 ? (
-          <Text>Repeated commands: {current.repeated.length}</Text>
-        ) : null}
+        {header(kit, {
+          title: 'Debug timeline',
+          meta: `${current.entries.length} entries · ${open} open hypothesis(es)`,
+          badge:
+            current.repeated.length > 0
+              ? chip(kit, `${current.repeated.length} repeated`, verdictLook('WARN'))
+              : undefined,
+        })}
+        {current.entries.slice(-40).map((entry) => {
+          const look = ENTRY_LOOK[entry.outcome ?? entry.kind] ?? COMMAND_LOOK
+          return (
+            <Box key={entry.id} flexDirection="row" gap={1}>
+              <Text color={look.tone}>{look.glyph}</Text>
+              <Box width={6}>
+                <Text dimColor>{entry.id}</Text>
+              </Box>
+              <Text dimColor={entry.kind === 'command'} wrap="truncate-end">
+                {entry.text}
+              </Text>
+            </Box>
+          )
+        })}
       </Box>
     )
   })

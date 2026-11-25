@@ -15,6 +15,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { ContractStatus } from '../types'
+import { band } from '../../../packages/core/src/ui'
 
 const MAX_VIOLATIONS = 50
 const IDLE: ContractStatus = { active: false, objective: '', violations: 0, mode: 'warn' }
@@ -153,14 +154,14 @@ export function register(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const current = await read($, status)
     if (!current.active || current.violations === 0) return next(e)
-    const { Box, Text } = $.ui.resolve(e)
-    return (
-      <Box>
-        <Text>
-          contract {current.mode}: {current.violations} write{current.violations === 1 ? '' : 's'}{' '}
-          outside scope
-        </Text>
-      </Box>
-    )
+    return band($.ui.resolve(e), 'contract', [
+      {
+        text: `✗ ${current.violations} write${current.violations === 1 ? '' : 's'} outside scope`,
+        tone: 'error',
+        bold: true,
+      },
+      { text: `${current.mode} mode`, tone: 'subtle' },
+      { text: '/contract show', tone: 'suggestion' },
+    ])
   })
 }

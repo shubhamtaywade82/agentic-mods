@@ -138,6 +138,16 @@ function trimContext(ops, context) {
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
 
+// packages/core/src/ui.tsx
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/turn-replay/src/register.tsx
 var PANE = "turn-replay";
 var MAX_CHANGES = 20;
@@ -204,27 +214,44 @@ function register(on) {
     };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Button, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Button, Text } = kit;
     const state = await read($, replay);
     if (state.changes.length === 0) {
-      return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "No file changes recorded in this session yet."));
+      return empty(
+        kit,
+        "No file changes recorded in this session yet.",
+        "ask Claude to edit a file"
+      );
     }
     const index = Math.min(await read($, cursor), state.changes.length - 1);
     const change = state.changes[index];
     if (change === void 0) return /* @__PURE__ */ h(Box, null);
     const last = state.changes.length - 1;
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, `Change ${index + 1} of ${state.changes.length} · turn ${change.turn} · ${change.file} · +${change.added} −${change.removed}`), change.lines.map((row, position) => /* @__PURE__ */ h(Text, { key: `row-${position}`, dimColor: row.kind === "equal" }, row.kind === "insert" ? "+ " : row.kind === "delete" ? "- " : "  ", row.line)), /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: change.file,
+      meta: `change ${index + 1}/${state.changes.length} · turn ${change.turn}`,
+      badge: /* @__PURE__ */ h(Text, null, /* @__PURE__ */ h(Text, { color: "diffAdded" }, "+", change.added), " ", /* @__PURE__ */ h(Text, { color: "diffRemoved" }, "−", change.removed))
+    }), /* @__PURE__ */ h(Box, { flexDirection: "column", borderStyle: "round", borderColor: "subtle", paddingX: 1 }, change.lines.map((row) => /* @__PURE__ */ h(
+      Text,
+      {
+        color: row.kind === "insert" ? "diffAdded" : row.kind === "delete" ? "diffRemoved" : void 0,
+        dimColor: row.kind === "equal"
+      },
+      row.kind === "insert" ? "+ " : row.kind === "delete" ? "- " : "  ",
+      row.line
+    ))), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1, marginTop: 1 }, /* @__PURE__ */ h(
       Button,
       {
         key: "previous",
-        label: "Previous",
+        label: "← Previous",
         onPress: () => update($, cursor, (current) => Math.max(0, current - 1))
       }
     ), /* @__PURE__ */ h(
       Button,
       {
         key: "next",
-        label: "Next",
+        label: "Next →",
         onPress: () => update($, cursor, (current) => Math.min(last, current + 1))
       }
     )));

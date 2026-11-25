@@ -10,6 +10,7 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { PreviewDocument } from '../types'
+import { empty, header } from '../../../packages/core/src/ui'
 
 const PANE = 'markdown-preview'
 const MAX_BYTES = 200_000
@@ -52,18 +53,13 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Markdown, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Markdown } = kit
     const current = await read($, document)
-    if (current.path === '') {
-      return (
-        <Box>
-          <Text dimColor>Run /preview with a Markdown file path.</Text>
-        </Box>
-      )
-    }
+    if (current.path === '') return empty(kit, 'No document open.', '/preview <file.md>')
     return (
       <Box flexDirection="column">
-        <Text dimColor>{current.path}</Text>
+        {header(kit, { title: current.path.split('/').pop() ?? current.path, meta: current.path })}
         <Markdown key="document" text={current.text} />
       </Box>
     )

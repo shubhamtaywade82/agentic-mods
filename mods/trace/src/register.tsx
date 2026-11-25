@@ -1,5 +1,6 @@
 import type { On } from 'claude-code'
-import { InMemoryTrace, renderTree } from './lib/trace'
+import { InMemoryTrace, durationLabel, renderTree, treeLines } from './lib/trace'
+import { chip, empty, header, statusLook } from '../../../packages/core/src/ui'
 import {
   openAgent,
   openTool,
@@ -9,6 +10,7 @@ import {
 } from './lib/summary'
 import { registerCommand } from '@agentic-mods/core'
 
+const PANE = 'trace'
 const trace = new InMemoryTrace()
 const openTools = new Set<string>()
 // Subagent id (from agent.spawn's result) -> its trace node.
@@ -48,7 +50,7 @@ export function register(on: On): void {
     return res
   })
 
-  on('tool.call', async (_$, e, next) => {
+  on('tool.call', async ($, e, next) => {
     const parentId = agentNodes.get(strField(e, 'agentId') ?? '') ?? mainId
     const id = openTool(trace, parentId, strField(e, 'tool'), strField(e, 'command'))
     openTools.add(id)
@@ -64,6 +66,7 @@ export function register(on: On): void {
       throw err
     } finally {
       openTools.delete(id)
+      $.ui.invalidate('ui.render')
     }
   })
 
@@ -86,11 +89,53 @@ export function register(on: On): void {
     return next({ ...e, props: { ...e.props, suffix: traceSpinnerSuffix(summarize(trace)) } })
   })
 
-  on('command.run', { command: 'trace-tree' }, async () => {
+  on('command.run', { command: 'trace-tree' }, async ($) => {
     if (!trace.get('main')) {
       mainId = trace.open({ kind: 'main', label: 'main', parentId: null })
     }
+    await $.ui.open({ id: PANE, title: 'Trace' }).catch(() => undefined)
     return { text: renderTree(trace.snapshot()) }
+  })
+
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
+    const lines = treeLines(trace.snapshot())
+    if (lines.length === 0)
+      return empty(kit, 'Nothing has run yet.', 'work in the session, then /trace-tree')
+    const s = summarize(trace)
+    return (
+      <Box flexDirection="column">
+        {header(kit, {
+          title: 'Trace',
+          meta: `${s.agents} agent(s) · ${s.tools} tool(s)`,
+          badge:
+            s.failed > 0
+              ? chip(kit, `${s.failed} failed`, statusLook('failed'))
+              : chip(
+                  kit,
+                  `${s.running} running`,
+                  statusLook(s.running > 0 ? 'running' : 'completed'),
+                ),
+        })}
+        {lines.map(({ prefix, node }) => {
+          const look = statusLook(node.status)
+          return (
+            <Box key={node.id} flexDirection="row" justifyContent="space-between">
+              <Text wrap="truncate-end">
+                <Text dimColor>{prefix}</Text>
+                <Text color={look.tone}>{look.glyph} </Text>
+                <Text weight={node.kind === 'tool' ? 'regular' : 'bold'}>{node.label}</Text>
+                {node.files.length > 0 ? (
+                  <Text dimColor>{`  ${node.files.length} file(s)`}</Text>
+                ) : null}
+              </Text>
+              <Text dimColor>{durationLabel(node)}</Text>
+            </Box>
+          )
+        })}
+      </Box>
+    )
   })
 
   on('command.run', { command: 'trace-summary' }, async () => {

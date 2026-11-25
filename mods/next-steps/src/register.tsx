@@ -54,12 +54,13 @@ export function register(on: On): void {
     if (current.texts.length === 0) return next(e)
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
-      <Box>
-        <Text dimColor>Next: </Text>
+      <Box flexDirection="row" gap={1}>
+        <Text color="claude">◆ </Text>
+        <Text dimColor>next</Text>
         {current.texts.map((text, index) => (
           <Button
             key={`step-${index}`}
-            label={text.length > 48 ? `${text.slice(0, 47)}…` : text}
+            label={`→ ${text.length > 46 ? `${text.slice(0, 45)}…` : text}`}
             onPress={() => $.prompt.suggest({ text })}
           />
         ))}

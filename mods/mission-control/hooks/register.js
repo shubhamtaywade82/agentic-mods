@@ -89,6 +89,61 @@ var CONFIG_PATH = `${STATE_DIR}/config.json`;
 // packages/core/src/hash.ts
 var encoder = new TextEncoder();
 
+// packages/core/src/ui.tsx
+var STATUSES = {
+  running: { tone: "claude", glyph: "●" },
+  completed: { tone: "success", glyph: "✓" },
+  failed: { tone: "error", glyph: "✗" },
+  cancelled: { tone: "inactive", glyph: "⊘" },
+  stopped: { tone: "inactive", glyph: "⊘" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function statusLook(status) {
+  return STATUSES[status] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function mark(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { color: look.tone }, look.glyph, " ", label);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/mission-control/src/register.tsx
 var PANE = "mission-control";
 var REVIEW_PATTERN = /review/i;
@@ -163,13 +218,47 @@ function register(on) {
     return next(e);
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const rows = await read($, agents);
     if (rows.length === 0) {
-      return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "No subagents have run in this session."));
+      return empty(kit, "No subagents have run in this session.", "ask Claude to use a subagent");
     }
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, rows.map((row) => /* @__PURE__ */ h(Text, { key: row.id, dimColor: row.status !== "running" }, "  ".repeat(row.depth), row.isReview ? "[review] " : "", row.line)), /* @__PURE__ */ h(Text, { dimColor: true }, totalToolCalls(), " subagent tool calls this session"));
+    const running = rows.filter((row) => row.status === "running").length;
+    const files = filesByAgentCount(rows);
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Mission control",
+      meta: `${rows.length} agent(s) · ${totalToolCalls()} tools`,
+      badge: chip(kit, `${running} running`, statusLook(running > 0 ? "running" : "completed"))
+    }), rows.map((row) => /* @__PURE__ */ h(Box, { key: row.id, marginLeft: row.depth * 2 }, card(kit, {
+      key: `card-${row.id}`,
+      title: `${row.isReview ? "[review] " : ""}${row.subagentType}: ${row.description}`,
+      look: statusLook(row.status),
+      lines: [
+        `${row.toolCalls} tool call(s) · ${row.files.length} file(s) · ${row.status}`,
+        row.line
+      ]
+    }))), files.length === 0 ? null : /* @__PURE__ */ h(Box, { flexDirection: "column", marginTop: 1 }, /* @__PURE__ */ h(Text, { weight: "bold" }, "Code touched"), files.map(
+      ([file, count]) => mark(kit, `${file}  (${count} agent(s))`, statusLook("completed"))
+    )));
   });
+  on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
+    const rows = await read($, agents);
+    const running = rows.filter((row) => row.status === "running");
+    const current = running[running.length - 1];
+    if (current === void 0) return next(e);
+    return band($.ui.resolve(e), "mission", [
+      { text: `${running.length}/${rows.length} agents`, tone: "claude", bold: true },
+      { text: `${totalToolCalls()} tools` },
+      { text: `${current.subagentType}: ${current.description}`, tone: "subtle" }
+    ]);
+  });
+}
+function filesByAgentCount(rows) {
+  const counts = /* @__PURE__ */ new Map();
+  for (const row of rows)
+    for (const file of new Set(row.files)) counts.set(file, (counts.get(file) ?? 0) + 1);
+  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 12);
 }
 export {
   register

@@ -1,5 +1,20 @@
 // mods/boss-fight/src/register.tsx
 import { atom, read } from "claude-code";
+
+// packages/core/src/ui.tsx
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+
+// mods/boss-fight/src/register.tsx
 var EVIDENCE_IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
 var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, {
   shape: "status-1"
@@ -9,11 +24,18 @@ function register(on) {
     const state = await read($, evidence);
     const test = state.checks.find((item) => item.check === "test");
     if (test === void 0 || test.verdict === "UNKNOWN") return next(e);
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
     if (test.verdict === "PASS") {
-      return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "boss: defeated · tests are current and passing"));
+      return band(kit, "boss", [
+        { text: "☠ defeated", tone: "success", bold: true },
+        { text: "tests are current and passing", tone: "subtle" }
+      ]);
     }
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, null, "boss: standing · test check ", test.verdict.toLowerCase(), " · ", test.reason));
+    return band(kit, "boss", [
+      { text: "👾 standing", tone: "error", bold: true },
+      { text: `test check ${test.verdict.toLowerCase()}`, tone: "warning" },
+      { text: test.reason, tone: "subtle" }
+    ]);
   });
 }
 export {

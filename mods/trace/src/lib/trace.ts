@@ -162,42 +162,57 @@ export class InMemoryTrace implements ExecutionTrace {
   }
 }
 
-/** Render a trace snapshot as an indented tree string (for /trace commands). */
-export function renderTree(snap: TraceSnapshot): string {
-  if (snap.nodes.length === 0) return 'trace: (empty)'
+export type TreeLine = { prefix: string; node: TraceNode }
+
+/** The snapshot as tree rows in draw order, each with its ├─ / └─ connector prefix. */
+export function treeLines(snap: TraceSnapshot): TreeLine[] {
   const byParent = new Map<string | null, TraceNode[]>()
   for (const n of snap.nodes) {
     const list = byParent.get(n.parentId) ?? []
     list.push(n)
     byParent.set(n.parentId, list)
   }
-  const lines: string[] = ['trace:']
-  const render = (parentId: string | null, depth: number): void => {
+  const lines: TreeLine[] = []
+  const walk = (parentId: string | null, indent: string, isRoot: boolean): void => {
     const children = byParent.get(parentId) ?? []
-    for (const c of children) {
-      const indent = '  '.repeat(depth)
-      const icon = iconFor(c.status)
-      const files = c.files.length > 0 ? ` · ${c.files.length} file(s)` : ''
-      const note = c.note ? ` — ${c.note}` : ''
-      lines.push(
-        `${indent}${icon} ${c.label} [${c.status}${c.durationMs ? ` ${c.durationMs}ms` : ''}]${files}${note}`,
-      )
-      render(c.id, depth + 1)
-    }
+    children.forEach((node, index) => {
+      const isLast = index === children.length - 1
+      lines.push({ prefix: isRoot ? '' : `${indent}${isLast ? '└─ ' : '├─ '}`, node })
+      walk(node.id, isRoot ? '' : `${indent}${isLast ? '   ' : '│  '}`, false)
+    })
   }
-  render(null, 0)
-  return lines.join('\n')
+  walk(null, '', true)
+  return lines
+}
+
+/** A node's duration in seconds, or empty while it runs. */
+export function durationLabel(node: TraceNode): string {
+  if (node.status === 'running' || node.durationMs === 0) return ''
+  return `${(node.durationMs / 1000).toFixed(1)}s`
+}
+
+/** Render a trace snapshot as a connector-drawn tree (for /trace-tree in plain text). */
+export function renderTree(snap: TraceSnapshot): string {
+  if (snap.nodes.length === 0) return '(empty)'
+  return treeLines(snap)
+    .map(({ prefix, node }) => {
+      const files = node.files.length > 0 ? ` · ${node.files.length} file(s)` : ''
+      const note = node.note ? ` — ${node.note}` : ''
+      const duration = durationLabel(node)
+      return `${prefix}${iconFor(node.status)} ${node.label}  ${node.status}${duration ? ` ${duration}` : ''}${files}${note}`
+    })
+    .join('\n')
 }
 
 function iconFor(status: NodeStatus): string {
   switch (status) {
     case 'running':
-      return '▸'
+      return '●'
     case 'completed':
       return '✓'
     case 'failed':
       return '✗'
     case 'cancelled':
-      return '·'
+      return '⊘'
   }
 }

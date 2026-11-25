@@ -11,8 +11,14 @@ import {
   registerCommand,
 } from '@agentic-mods/core'
 import type { ReviewGate } from '../types'
+import { card, chip, empty, header, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'review-tracker'
+const SEVERITY_LOOK = {
+  high: { tone: 'error', glyph: '■' },
+  medium: { tone: 'warning', glyph: '▲' },
+  low: { tone: 'inactive', glyph: '●' },
+} as const
 const FILE = 'findings.json'
 const ACTIONS: readonly FindingAction[] = ['start', 'fix', 'verify', 'reject', 'defer', 'reopen']
 const SEVERITIES = ['high', 'medium', 'low'] as const
@@ -153,14 +159,39 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const current = await read($, gate)
+    const loaded = await loadFindings($)
+    const findings = loaded.ok ? loaded.findings : []
     return (
       <Box flexDirection="column">
-        <Text>
-          Review gate: {current.verdict} · {current.reason}
-        </Text>
-        <Text dimColor>Use /finding add, /finding set and /finding list.</Text>
+        {header(kit, {
+          title: 'Review findings',
+          meta: `${current.open} open · ${current.openHigh} high`,
+          badge: chip(kit, current.verdict, verdictLook(current.verdict)),
+        })}
+        {loaded.ok
+          ? null
+          : card(kit, {
+              key: 'unreadable',
+              title: 'Findings file unreadable',
+              look: verdictLook('FAIL'),
+              lines: [loaded.reason],
+            })}
+        {findings.length === 0 && loaded.ok
+          ? empty(kit, 'No findings recorded.', '/finding add high|medium|low <title>')
+          : findings.map((finding) =>
+              card(kit, {
+                key: finding.id,
+                title: `${finding.id}  ${finding.title}`,
+                look: SEVERITY_LOOK[finding.severity],
+                lines: [
+                  `${finding.severity} · ${finding.status}${finding.reason ? ` · ${finding.reason}` : ''}`,
+                ],
+              }),
+            )}
+        <Text dimColor>/finding set {'<id>'} start|fix|verify|reject|defer|reopen</Text>
       </Box>
     )
   })

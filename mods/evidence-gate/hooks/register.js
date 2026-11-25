@@ -691,6 +691,61 @@ async function fingerprintFiles(entries) {
   return sha256Hex(lines.join("\n"));
 }
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/evidence-gate/src/register.tsx
 var PANE = "evidence-gate";
 var MAX_RECORDS = 50;
@@ -847,17 +902,35 @@ function register(on) {
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const current = await read($, status);
     if (current.checks.length === 0) return next(e);
-    const { Box, Text } = $.ui.resolve(e);
-    const label = current.checks.map((item) => `${item.check} ${item.verdict}`).join(" · ");
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: current.overall === "PASS" }, "evidence: ", label));
+    const kit = $.ui.resolve(e);
+    return band(
+      kit,
+      "evidence",
+      current.checks.map((item) => {
+        const look = verdictLook(item.verdict);
+        return { text: `${look.glyph} ${item.check}`, tone: look.tone };
+      })
+    );
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const current = await read($, status);
     if (current.checks.length === 0) {
-      return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "No checks configured or run yet. Run /evidence run."));
+      return empty(kit, "No checks configured or run yet.", "/evidence run");
     }
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, "Overall: ", current.overall), current.checks.map((item) => /* @__PURE__ */ h(Text, { key: item.check }, item.check.padEnd(10), " ", item.verdict.padEnd(8), " ", item.reason)));
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: "Evidence",
+      meta: `${current.checks.length} check(s)`,
+      badge: chip(kit, current.overall, verdictLook(current.overall))
+    }), current.checks.map(
+      (item) => card(kit, {
+        key: item.check,
+        title: `${item.check}  ${item.verdict}`,
+        look: verdictLook(item.verdict),
+        lines: [item.reason]
+      })
+    ), /* @__PURE__ */ h(Text, { dimColor: true }, "Commit, push and PR are gated on these checks."));
   });
 }
 export {

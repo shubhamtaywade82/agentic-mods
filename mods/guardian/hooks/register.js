@@ -56,9 +56,6 @@ function checkCommand(cmd) {
   }
   return null;
 }
-function denyMessage(m) {
-  return `guardian blocked this command (${m.kind}): ${m.why}. If you really intend this, run it yourself in a terminal, or ask the user to disable guardian for this call.`;
-}
 
 // mods/guardian/src/lib/secrets.ts
 var PATTERNS = [
@@ -204,10 +201,6 @@ function holdForOversizedDiff(command, bytes, limit) {
     previewComputed: false
   };
 }
-function decideNoninteractive(op) {
-  void op;
-  return "deny";
-}
 function isHistoryMutating(command) {
   return /\bgit\s+(commit|push|tag|merge\s+--(no-)?ff|rebase)\b/.test(command);
 }
@@ -273,64 +266,36 @@ var stats = {
 function mergeKinds(kinds) {
   for (const [k, n] of Object.entries(kinds)) stats.kinds[k] = (stats.kinds[k] ?? 0) + n;
 }
-async function requestApproval($, command, reason, preview) {
-  try {
-    const answer = await $.ui.ask(`Run this command? ${command}
-Reason: ${reason}
-${preview}`, [
-      "Cancel",
-      "Proceed"
-    ]);
-    return answer === "Proceed" ? "approve" : "deny";
-  } catch {
-    return "deny";
-  }
-}
+var heldCalls = /* @__PURE__ */ new Set();
 async function gateHistoryCommand($, command) {
   let diffText;
   try {
     const res = await $.process.run(["git", "diff", "--cached"]);
     diffText = res.stdout ?? "";
   } catch {
-    stats.commandsBlocked += 1;
     return {
-      deny: "guardian: could not inspect the staged diff for secrets; refusing this commit/push. Stage the diff and retry."
+      decision: "deny",
+      reason: "guardian: could not inspect the staged diff for secrets; refusing this commit/push. Stage the diff and retry."
     };
   }
   if (diffText.length > DEFAULT_DIFF_LIMIT) {
-    stats.commandsHeld += 1;
-    const held2 = holdForOversizedDiff(command, diffText.length, DEFAULT_DIFF_LIMIT);
-    const decision2 = await requestApproval($, held2.command, "diff-oversized", held2.preview);
-    if (decision2 === "approve") return null;
-    stats.commandsBlocked += 1;
-    return { deny: held2.preview };
+    return {
+      decision: "ask",
+      reason: holdForOversizedDiff(command, diffText.length, DEFAULT_DIFF_LIMIT).preview
+    };
   }
   const findings = scan(diffText);
   if (findings.length === 0) return null;
-  if (hasHighSignal(findings)) {
-    stats.commandsBlocked += 1;
-    const stat2 = diffStat(diffText);
-    const held2 = holdForSecretDiff(
-      command,
-      findings.filter((f) => hasHighSignal([f])).map((f) => f.kind),
-      stat2
-    );
-    return { deny: held2.preview };
-  }
-  stats.commandsHeld += 1;
-  const stat = diffStat(diffText);
-  const held = holdForSecretDiff(
-    command,
-    findings.map((f) => f.kind),
-    stat
-  );
-  const decision = await requestApproval($, held.command, "diff-contains-secret", held.preview);
-  if (decision === "approve") {
-    stats.commandsApproved += 1;
-    return null;
-  }
-  stats.commandsBlocked += 1;
-  return { deny: decideNoninteractive(held) === "approve" ? "" : held.preview };
+  const highSignal = findings.filter((f) => hasHighSignal([f]));
+  const kinds = (highSignal.length > 0 ? highSignal : findings).map((f) => f.kind);
+  const preview = holdForSecretDiff(command, kinds, diffStat(diffText)).preview;
+  return { decision: highSignal.length > 0 ? "deny" : "ask", reason: preview };
+}
+async function verdictFor($, command) {
+  const blast = checkCommand(command);
+  if (blast) return { decision: "ask", reason: holdForBlast(command, blast).preview };
+  if (isHistoryMutating(command)) return gateHistoryCommand($, command);
+  return null;
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
@@ -352,35 +317,30 @@ function register(on) {
     mergeKinds(summarize([...scrubbed.findings, ...scrubbedText.findings]));
     return { ...ran, result: scrubbed.result, text };
   });
-  on("tool.call", { tool: "Bash" }, async ($, e, next) => {
-    const command = typeof e.command === "string" ? e.command : "";
-    const blast = checkCommand(command);
-    if (blast) {
+  on("tool.check", { tool: "Bash" }, async ($, e, next) => {
+    const input = e.input;
+    const command = typeof input.command === "string" ? input.command : "";
+    const verdict = await verdictFor($, command);
+    if (verdict === null) return next(e);
+    if (verdict.decision === "deny") stats.commandsBlocked += 1;
+    else {
       stats.commandsHeld += 1;
-      const held = holdForBlast(command, blast);
-      const decision = await requestApproval($, held.command, "destructive-command", held.preview);
-      if (decision === "approve") {
-        stats.commandsApproved += 1;
-        return next(e);
-      }
-      stats.commandsBlocked += 1;
-      return { deny: denyMessage(blast) };
+      if (e.tool_use_id !== void 0) heldCalls.add(e.tool_use_id);
     }
+    return verdict;
+  }).catch(async () => ({ decision: "deny", reason: "guardian failed; refusing this call" }));
+  on("tool.call", { tool: "Bash" }, async (_$, e, next) => {
+    if (heldCalls.delete(e.tool_use_id)) stats.commandsApproved += 1;
+    const command = typeof e.command === "string" ? e.command : "";
     const cmdFindings = scan(command);
-    if (cmdFindings.length > 0) {
-      mergeKinds(summarize(cmdFindings));
-      if (denyReason(cmdFindings)) {
-        stats.commandsBlocked += 1;
-        return { deny: denyReason(cmdFindings) ?? "guardian: refusing this call" };
-      }
-      stats.secretsRedacted += cmdFindings.length;
-      return next({ ...e, command: redact(command, cmdFindings) });
+    if (cmdFindings.length === 0) return next(e);
+    mergeKinds(summarize(cmdFindings));
+    if (denyReason(cmdFindings)) {
+      stats.commandsBlocked += 1;
+      return { deny: denyReason(cmdFindings) ?? "guardian: refusing this call" };
     }
-    if (isHistoryMutating(command)) {
-      const gate = await gateHistoryCommand($, command);
-      if (gate) return gate;
-    }
-    return next(e);
+    stats.secretsRedacted += cmdFindings.length;
+    return next({ ...e, command: redact(command, cmdFindings) });
   }).catch(async (_$) => {
     return { deny: "guardian failed; refusing this call" };
   });

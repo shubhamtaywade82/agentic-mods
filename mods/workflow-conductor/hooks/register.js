@@ -553,6 +553,71 @@ var gates_default = {
   }
 };
 
+// packages/core/src/ui.tsx
+var VERDICTS = {
+  PASS: { tone: "success", glyph: "✓" },
+  READY: { tone: "success", glyph: "✓" },
+  FAIL: { tone: "error", glyph: "✗" },
+  "NOT READY": { tone: "error", glyph: "✗" },
+  BLOCKED: { tone: "error", glyph: "✗" },
+  WARN: { tone: "warning", glyph: "!" },
+  DEFERRED: { tone: "warning", glyph: "»" },
+  STALE: { tone: "warning", glyph: "↻" },
+  UNKNOWN: { tone: "inactive", glyph: "○" }
+};
+var STATUSES = {
+  running: { tone: "claude", glyph: "●" },
+  completed: { tone: "success", glyph: "✓" },
+  failed: { tone: "error", glyph: "✗" },
+  cancelled: { tone: "inactive", glyph: "⊘" },
+  stopped: { tone: "inactive", glyph: "⊘" }
+};
+var NEUTRAL = { tone: "inactive", glyph: "○" };
+function verdictLook(verdict) {
+  return VERDICTS[verdict.toUpperCase()] ?? NEUTRAL;
+}
+function statusLook(status) {
+  return STATUSES[status] ?? NEUTRAL;
+}
+function chip(kit, label, look) {
+  const { Text } = kit;
+  return /* @__PURE__ */ h(Text, { inverse: true, weight: "bold", color: look.tone }, ` ${look.glyph} ${label} `);
+}
+function header(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1 }, /* @__PURE__ */ h(Text, { weight: "bold", color: "claude" }, "◆ ", input.title), /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, input.meta === void 0 ? null : /* @__PURE__ */ h(Text, { dimColor: true }, input.meta), input.badge ?? null));
+}
+function card(kit, input) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(
+    Box,
+    {
+      key: input.key,
+      flexDirection: "column",
+      borderStyle: "round",
+      borderColor: input.look.tone,
+      paddingX: 1
+    },
+    /* @__PURE__ */ h(Text, { weight: "bold", color: input.look.tone }, input.look.glyph, " ", input.title),
+    (input.lines ?? []).map((line) => /* @__PURE__ */ h(Text, { dimColor: true, wrap: "truncate-end" }, line))
+  );
+}
+function band(kit, name, segments) {
+  const { Box, Text } = kit;
+  const parts = [];
+  segments.forEach((segment, index) => {
+    if (index > 0) parts.push(/* @__PURE__ */ h(Text, { dimColor: true }, " · "));
+    parts.push(
+      /* @__PURE__ */ h(Text, { color: segment.tone, weight: segment.bold === true ? "bold" : "regular" }, segment.text)
+    );
+  });
+  return /* @__PURE__ */ h(Box, { flexDirection: "row" }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, name, " "), parts);
+}
+function empty(kit, text, hint) {
+  const { Box, Text } = kit;
+  return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, { dimColor: true, italic: true }, text), hint === void 0 ? null : /* @__PURE__ */ h(Text, { color: "suggestion" }, "→ ", hint));
+}
+
 // mods/workflow-conductor/src/register.tsx
 var PANE = "workflow-conductor";
 var RAW_WORKFLOWS = [
@@ -919,14 +984,38 @@ Approved by: ${exception.approvedBy}`
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const current = await read($, conductor);
     if (!current.active) return next(e);
-    const { Box, Text } = $.ui.resolve(e);
-    const blocked = current.blockers.length > 0 ? ` · blocked: ${current.blockers[0]}` : " · ready to advance";
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, null, "workflow ", current.workflow, " · ", current.task, " · stage ", current.stage, blocked));
+    const isBlocked = current.blockers.length > 0;
+    return band($.ui.resolve(e), "workflow", [
+      { text: `${current.workflow} · ${current.task}`, tone: "claude", bold: true },
+      { text: `stage ${current.stage}` },
+      isBlocked ? { text: `✗ blocked: ${current.blockers[0]}`, tone: "error" } : { text: "✓ ready to advance", tone: "success" }
+    ]);
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const kit = $.ui.resolve(e);
+    const { Box, Text } = kit;
     const current = await read($, conductor);
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, current.workflow || "no workflow", " · ", current.task || "-", " · stage ", current.stage || "-", " ", "· ", current.status), current.blockers.map((item) => /* @__PURE__ */ h(Text, { key: item }, "blocked: ", item)));
+    if (current.workflow === "")
+      return empty(kit, "No workflow is running.", "/workflow start <workflow> <task>");
+    const stages = WORKFLOWS.get(current.workflow)?.stages ?? [];
+    const at = stages.findIndex((stage) => stage.id === current.stage);
+    const isDone = current.status === "completed";
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, header(kit, {
+      title: `Workflow ${current.workflow}`,
+      meta: current.task,
+      badge: chip(
+        kit,
+        current.status,
+        current.blockers.length > 0 ? verdictLook("BLOCKED") : statusLook(
+          isDone ? "completed" : current.status === "cancelled" ? "cancelled" : "running"
+        )
+      )
+    }), stages.map((stage, index) => {
+      const look = isDone || index < at ? statusLook("completed") : index === at ? statusLook("running") : { tone: "inactive", glyph: "○" };
+      return /* @__PURE__ */ h(Box, { key: stage.id, flexDirection: "row", gap: 1 }, /* @__PURE__ */ h(Text, { color: look.tone }, look.glyph), /* @__PURE__ */ h(Text, { weight: index === at ? "bold" : "regular", dimColor: index > at && !isDone }, stage.name), stage.gate === null ? null : /* @__PURE__ */ h(Text, { dimColor: true }, "· ", stage.gate));
+    }), current.blockers.length === 0 ? null : /* @__PURE__ */ h(Box, { flexDirection: "column", marginTop: 1 }, current.blockers.map(
+      (item) => card(kit, { key: item, title: "Blocked", look: verdictLook("FAIL"), lines: [item] })
+    )));
   });
 }
 export {

@@ -66,11 +66,11 @@ function register(on) {
     const current = await read($, steps);
     if (current.texts.length === 0) return next(e);
     const { Box, Button, Text } = $.ui.resolve(e);
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: true }, "Next: "), current.texts.map((text, index) => /* @__PURE__ */ h(
+    return /* @__PURE__ */ h(Box, { flexDirection: "row", gap: 1 }, /* @__PURE__ */ h(Text, { color: "claude" }, "◆ "), /* @__PURE__ */ h(Text, { dimColor: true }, "next"), current.texts.map((text, index) => /* @__PURE__ */ h(
       Button,
       {
         key: `step-${index}`,
-        label: text.length > 48 ? `${text.slice(0, 47)}…` : text,
+        label: `→ ${text.length > 46 ? `${text.slice(0, 45)}…` : text}`,
         onPress: () => $.prompt.suggest({ text })
       }
     )));

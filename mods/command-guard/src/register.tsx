@@ -26,7 +26,7 @@ const incident = atom(
   { shape: 'incident-1' },
 )
 
-type Judgement = { kind: 'allow' } | { kind: 'deny'; text: string }
+type Judgement = { kind: 'allow' } | { kind: 'deny'; text: string } | { kind: 'ask'; text: string }
 
 const ALLOW: Judgement = { kind: 'allow' }
 
@@ -62,7 +62,12 @@ async function recordBlock($: EngineInterface, tool: string, reason: string): Pr
   )
 }
 
-async function judgeCommand($: EngineInterface, command: string): Promise<Judgement> {
+/** `check` runs in tool.check and asks through the dialog; `call` runs in tool.call and asks for a typed code. */
+async function judgeCommand(
+  $: EngineInterface,
+  command: string,
+  phase: 'check' | 'call',
+): Promise<Judgement> {
   const analysis = analyzeCommand(command)
   const [top] = sortDangers(analysis.dangers)
   if (top === undefined) return ALLOW
@@ -87,16 +92,12 @@ async function judgeCommand($: EngineInterface, command: string): Promise<Judgem
         kind: 'deny',
         text: `command-guard: held for the person, not run. Command: ${command}. Reason: ${reasons}.`,
       }
-    case 'button': {
-      const answer = await $.ui.ask(`Run this command? ${command}\nReason: ${reasons}`, [
-        'Proceed',
-        'Cancel',
-      ])
-      return answer === 'Proceed'
-        ? ALLOW
-        : { kind: 'deny', text: 'command-guard: cancelled by the person.' }
-    }
+    case 'button':
+      // Put to Claude Code's own permission dialog from tool.check, so other guards' asks about
+      // the same command share one dialog instead of each opening its own.
+      return { kind: 'ask', text: `command-guard: ${reasons}. Run ${command}?` }
     case 'typed-code': {
+      if (phase === 'check') return ALLOW
       const code = await shortCode(command, 6)
       const answer = await $.ui.ask(`${reasons}\nTo run it, type ${code}. Command: ${command}`)
       return answer.trim().toUpperCase() === code
@@ -150,7 +151,8 @@ export function register(on: On): void {
       await recordBlock($, 'Bash', text)
       return { deny: text }
     }
-    const judgement = await judgeCommand($, e.command)
+    // A 'button' ask was already answered in tool.check: reaching here means it was approved.
+    const judgement = await judgeCommand($, e.command, 'call')
     if (judgement.kind === 'deny') {
       await recordBlock($, 'Bash', judgement.text)
       return { deny: judgement.text }
@@ -159,6 +161,17 @@ export function register(on: On): void {
   }).catch((_$, e, next) =>
     next.called ? next(e) : { deny: 'command-guard failed closed: the command was not judged.' },
   )
+
+  on('tool.check', { tool: 'Bash' }, async ($, e, next) => {
+    const input = e.input as { command?: unknown }
+    if (typeof input.command !== 'string') return next(e)
+    const judgement = await judgeCommand($, input.command, 'check')
+    if (judgement.kind !== 'ask') return next(e)
+    return { decision: 'ask', reason: judgement.text }
+  }).catch(async () => ({
+    decision: 'deny',
+    reason: 'command-guard failed closed: the command was not judged.',
+  }))
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const denial = await protectedDenial($, 'Edit', e.file_path)

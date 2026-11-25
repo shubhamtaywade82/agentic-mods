@@ -17,6 +17,7 @@ import type { MigrationStatus } from '../../migration-sentinel/types'
 import type { RadarStatus } from '../../dependency-radar/types'
 import type { BudgetStatus } from '../../performance-budget/types'
 import type { CockpitRow } from '../types'
+import { chip, header, meter, verdictLook } from '../../../packages/core/src/ui'
 
 const PANE = 'engineering-cockpit'
 
@@ -151,7 +152,10 @@ export function register(on: On): void {
       const rows = await rowsOf($)
       return {
         text: rows
-          .map((row) => `${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`)
+          .map(
+            (row) =>
+              `${verdictLook(row.verdict).glyph} ${row.label.padEnd(13)} ${row.verdict.padEnd(9)} ${row.detail}`,
+          )
           .join('\n'),
       }
     }
@@ -185,17 +189,38 @@ export function register(on: On): void {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const kit = $.ui.resolve(e)
+    const { Box, Text } = kit
     const rows = await rowsOf($)
     const readiness = assessReadiness(await readinessInput($))
+    const passing = rows.filter((row) => row.verdict === 'PASS').length
+    const failing = rows.filter((row) => row.verdict === 'FAIL').length
     return (
       <Box flexDirection="column">
-        <Text>Release: {readiness.verdict}</Text>
-        {rows.map((row) => (
-          <Text key={row.label}>
-            {row.label.padEnd(13)} {row.verdict.padEnd(9)} {row.detail}
-          </Text>
-        ))}
+        {header(kit, {
+          title: 'Engineering cockpit',
+          meta: `${passing} pass · ${failing} fail · ${rows.length - passing - failing} unknown`,
+          badge: chip(kit, readiness.verdict, verdictLook(readiness.verdict)),
+        })}
+        {meter(
+          kit,
+          'Gates passing',
+          (passing / Math.max(1, rows.length)) * 100,
+          verdictLook(failing > 0 ? 'FAIL' : passing === rows.length ? 'PASS' : 'WARN'),
+        )}
+        <Box flexDirection="column" marginTop={1}>
+          {rows.map((row) => (
+            <Box key={row.label} flexDirection="row" gap={1}>
+              <Box width={14}>
+                <Text weight="bold">{row.label}</Text>
+              </Box>
+              <Box width={12}>{chip(kit, row.verdict, verdictLook(row.verdict))}</Box>
+              <Text dimColor wrap="truncate-end">
+                {row.detail}
+              </Text>
+            </Box>
+          ))}
+        </Box>
       </Box>
     )
   })
