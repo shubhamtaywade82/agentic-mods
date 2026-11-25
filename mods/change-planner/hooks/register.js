@@ -73,7 +73,7 @@ function register(on) {
       const [objective = "", files = "", tests = "", risks = ""] = rest.join(" ").split("|").map((part) => part.trim());
       if (objective === "" || files === "" || tests === "" || risks === "") {
         return {
-          text: "Usage: /plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>"
+          text: "Usage: /change-plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>"
         };
       }
       const plan2 = {

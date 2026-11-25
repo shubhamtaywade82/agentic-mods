@@ -139,7 +139,7 @@ export function denyReason(findings: SecretFinding[]): string | null {
 }
 
 /**
- * Count secrets by kind; used by the /guardian-stats command. Values are
+ * Count secrets by kind; used by the /guardian-report command. Values are
  * never included, only counts.
  */
 export function summarize(findings: SecretFinding[]): Record<string, number> {

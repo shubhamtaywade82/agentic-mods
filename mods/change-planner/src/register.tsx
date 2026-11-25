@@ -57,7 +57,7 @@ export function register(on: On): void {
         .map((part) => part.trim())
       if (objective === '' || files === '' || tests === '' || risks === '') {
         return {
-          text: 'Usage: /plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>',
+          text: 'Usage: /change-plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>',
         }
       }
       const plan: Plan = {

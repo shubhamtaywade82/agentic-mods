@@ -7,6 +7,10 @@ function register(on) {
     await $.command.register({ name: "next", description: "Show suggested next prompts" });
     return next(e);
   });
+  on("command.run", { command: "next" }, async ($) => {
+    const { texts } = await read($, steps);
+    return { text: texts.length === 0 ? "No suggestions yet." : texts.join("\n") };
+  });
   on("turn.start", async ($, e, next) => {
     await $.store.set("edits", 0);
     await update($, steps, () => IDLE);
@@ -23,7 +27,7 @@ function register(on) {
     const edits = Number(await $.store.get("edits") ?? 0);
     const texts = edits > 0 ? [
       "Run /evidence run to refresh the required checks.",
-      "Run /test-impact to see which tests this change reaches.",
+      "Run /impact to see which tests this change reaches.",
       "Summarise what changed and what is still unverified."
     ] : ["Summarise the open risks in this session."];
     await update($, steps, () => ({ texts }));

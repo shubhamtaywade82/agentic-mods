@@ -12,6 +12,11 @@ export function register(on: On): void {
     return next(e)
   })
 
+  on('command.run', { command: 'next' }, async ($) => {
+    const { texts } = await read($, steps)
+    return { text: texts.length === 0 ? 'No suggestions yet.' : texts.join('\n') }
+  })
+
   on('turn.start', async ($, e, next) => {
     await $.store.set('edits', 0)
     await update($, steps, () => IDLE)
@@ -32,7 +37,7 @@ export function register(on: On): void {
       edits > 0
         ? [
             'Run /evidence run to refresh the required checks.',
-            'Run /test-impact to see which tests this change reaches.',
+            'Run /impact to see which tests this change reaches.',
             'Summarise what changed and what is still unverified.',
           ]
         : ['Summarise the open risks in this session.']
