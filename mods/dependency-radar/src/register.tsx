@@ -12,7 +12,9 @@ import {
 import type { RadarStatus } from '../types'
 
 const IDLE: RadarStatus = { verdict: 'UNKNOWN', changes: [], scan: 'no scan recorded' }
-const status = atom({ plugin: 'dependency-radar', key: 'status' } as const, IDLE, { shape: 'status-1' })
+const status = atom({ plugin: 'dependency-radar', key: 'status' } as const, IDLE, {
+  shape: 'status-1',
+})
 
 async function readOrNull($: EngineInterface, path: string): Promise<string | null> {
   try {
@@ -31,11 +33,16 @@ function parseOrNull(path: string, text: string | null): ReturnType<typeof parse
   }
 }
 
-async function analyse($: EngineInterface, path: string, before: string | null, after: string | null): Promise<void> {
+async function analyse(
+  $: EngineInterface,
+  path: string,
+  before: string | null,
+  after: string | null,
+): Promise<void> {
   const previous = parseOrNull(path, before)
   const current = parseOrNull(path, after)
   if (previous === null || current === null) {
-    await update($, status, state => ({
+    await update($, status, (state) => ({
       ...state,
       verdict: 'UNKNOWN' as const,
       changes: [`${path}: could not be parsed; review it by hand`],
@@ -44,14 +51,17 @@ async function analyse($: EngineInterface, path: string, before: string | null, 
   }
   const diff = diffDependencies(previous, current)
   const changes = [
-    ...diff.added.map(dep => `+ ${dep.name} ${dep.version}${dep.isDev ? ' (dev)' : ''}`),
-    ...diff.removed.map(dep => `- ${dep.name} ${dep.version}`),
-    ...diff.changed.map(item => `${item.isMajor ? 'MAJOR ' : ''}~ ${item.name} ${item.from} -> ${item.to}`),
-  ].map(line => truncate(`${path}: ${line}`, 200))
+    ...diff.added.map((dep) => `+ ${dep.name} ${dep.version}${dep.isDev ? ' (dev)' : ''}`),
+    ...diff.removed.map((dep) => `- ${dep.name} ${dep.version}`),
+    ...diff.changed.map(
+      (item) => `${item.isMajor ? 'MAJOR ' : ''}~ ${item.name} ${item.from} -> ${item.to}`,
+    ),
+  ].map((line) => truncate(`${path}: ${line}`, 200))
   const verdict: RadarStatus['verdict'] = changes.length === 0 ? 'PASS' : 'UNKNOWN'
-  await update($, status, state => ({ ...state, verdict, changes: changes.slice(0, 50) }))
+  await update($, status, (state) => ({ ...state, verdict, changes: changes.slice(0, 50) }))
   for (const item of diff.changed) {
-    if (item.isMajor) $.ui.toast(`dependency-radar: major change to ${item.name}; review before release`)
+    if (item.isMajor)
+      $.ui.toast(`dependency-radar: major change to ${item.name}; review before release`)
   }
 }
 
@@ -72,10 +82,10 @@ async function readScan($: EngineInterface): Promise<string> {
       typeof (item as ScanEntry).name === 'string' &&
       typeof (item as ScanEntry).severity === 'string',
   )
-  const serious = entries.filter(item => item.severity === 'high' || item.severity === 'critical')
+  const serious = entries.filter((item) => item.severity === 'high' || item.severity === 'critical')
   const verdict: RadarStatus['verdict'] = serious.length > 0 ? 'FAIL' : 'PASS'
   const summary = `${entries.length} finding(s), ${serious.length} high or critical`
-  await update($, status, state => ({ ...state, verdict, scan: summary }))
+  await update($, status, (state) => ({ ...state, verdict, scan: summary }))
   return summary
 }
 
@@ -88,7 +98,7 @@ export function register(on: On): void {
     return next(e)
   })
 
-  on('command.run', { command: 'radar' }, async $ => ({ text: `scan: ${await readScan($)}` }))
+  on('command.run', { command: 'radar' }, async ($) => ({ text: `scan: ${await readScan($)}` }))
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const path = normalizePath(e.file_path)

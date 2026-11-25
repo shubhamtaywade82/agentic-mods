@@ -40,7 +40,7 @@ export function evaluateChecks(
   nowMs: number,
   maxAgeMs: number,
 ): CheckStatus[] {
-  return required.map(check => {
+  return required.map((check) => {
     const record = latest.get(check) ?? null
     if (record === null) {
       return { check, verdict: 'UNKNOWN', reason: 'not run', record }
@@ -68,7 +68,7 @@ export function evaluateChecks(
 }
 
 export function overallVerdict(statuses: readonly CheckStatus[]): Verdict {
-  return worstVerdict(statuses.map(status => status.verdict))
+  return worstVerdict(statuses.map((status) => status.verdict))
 }
 
 export type GatedAction = 'commit' | 'push' | 'pr-create'
@@ -79,12 +79,12 @@ export function gateDecision(
   statuses: readonly CheckStatus[],
   mode: Mode,
 ): Decision {
-  const blocking = statuses.filter(status => status.verdict !== 'PASS')
+  const blocking = statuses.filter((status) => status.verdict !== 'PASS')
   const label = action === 'pr-create' ? 'pull request' : action
   if (blocking.length === 0) {
     return { decision: 'allow', policyId: 'evidence-gate', message: `${label}: evidence current` }
   }
-  const detail = blocking.map(status => `${status.check} ${status.verdict} (${status.reason})`)
+  const detail = blocking.map((status) => `${status.check} ${status.verdict} (${status.reason})`)
   return violation(
     mode,
     'evidence-gate',

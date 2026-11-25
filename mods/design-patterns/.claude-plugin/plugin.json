@@ -1,0 +1,9 @@
+{
+  "name": "design-patterns",
+  "version": "0.1.0",
+  "description": "Design-pattern lookup mod: indexes all 22 GoF patterns with use-when and idiom-first lines, and adds a /patterns command to look one up, list a category, or suggest candidates for a described problem",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

@@ -132,9 +132,12 @@ function parseGoBench(text: string): Metric[] {
  * Compares measurements with budgets. A budget with no measurement is UNKNOWN. A unit mismatch
  * is UNKNOWN too. A value above its maximum is FAIL. Otherwise PASS.
  */
-export function evaluateBudgets(metrics: readonly Metric[], budgets: readonly Budget[]): BudgetRow[] {
-  return budgets.map(budget => {
-    const metric = metrics.find(candidate => candidate.name === budget.name)
+export function evaluateBudgets(
+  metrics: readonly Metric[],
+  budgets: readonly Budget[],
+): BudgetRow[] {
+  return budgets.map((budget) => {
+    const metric = metrics.find((candidate) => candidate.name === budget.name)
     if (metric === undefined) {
       return {
         name: budget.name,

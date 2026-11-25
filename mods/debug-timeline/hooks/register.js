@@ -49,12 +49,23 @@ var MAX_ENTRIES = 200;
 var REPEAT_WINDOW = 20;
 var REPEAT_THRESHOLD = 3;
 var IDLE = { entries: [], repeated: [] };
-var timeline = atom({ plugin: "debug-timeline", key: "timeline" }, IDLE, { shape: "timeline-1" });
+var timeline = atom({ plugin: "debug-timeline", key: "timeline" }, IDLE, {
+  shape: "timeline-1"
+});
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "hypothesis", description: "Record a debugging hypothesis: /hypothesis <text>" });
-    await $.command.register({ name: "result", description: "Record a hypothesis outcome: /result <id> confirmed|rejected <evidence>" });
-    await $.command.register({ name: "timeline", description: "Show the debugging timeline in a pane" });
+    await $.command.register({
+      name: "hypothesis",
+      description: "Record a debugging hypothesis: /hypothesis <text>"
+    });
+    await $.command.register({
+      name: "result",
+      description: "Record a hypothesis outcome: /result <id> confirmed|rejected <evidence>"
+    });
+    await $.command.register({
+      name: "timeline",
+      description: "Show the debugging timeline in a pane"
+    });
     return next(e);
   });
   on("tool.call", { tool: "Bash" }, async ($, e, next) => {
@@ -77,7 +88,9 @@ function register(on) {
     });
     const current = await read($, timeline);
     if (current.repeated.includes(command)) {
-      $.ui.toast("debug-timeline: this command has run several times; state a hypothesis before running it again");
+      $.ui.toast(
+        "debug-timeline: this command has run several times; state a hypothesis before running it again"
+      );
     }
     return next(e);
   });

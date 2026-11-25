@@ -9,7 +9,11 @@
     { "name": "Burn Meter", "covered_by": "session-meter", "source": "unverified" },
     { "name": "Limit Watch", "covered_by": "session-meter", "source": "unverified" },
     { "name": "Cache Clock", "covered_by": "cache-clock", "source": "unverified" },
-    { "name": "Cache Keeper", "covered_by": "none (keep-warm requests cost tokens; not built)", "source": "unverified" },
+    {
+      "name": "Cache Keeper",
+      "covered_by": "none (keep-warm requests cost tokens; not built)",
+      "source": "unverified"
+    },
     { "name": "Where Am I", "covered_by": "task-orientation", "source": "unverified" },
     { "name": "Mission Control", "covered_by": "mission-control", "source": "unverified" },
     { "name": "Review Watch", "covered_by": "mission-control", "source": "unverified" },
@@ -20,11 +24,31 @@
     { "name": "Mod Firewall", "covered_by": "mod-firewall", "source": "unverified" },
     { "name": "Modes Réponse", "covered_by": "response-modes", "source": "unverified" },
     { "name": "Next Steps", "covered_by": "next-steps", "source": "unverified" },
-    { "name": "Campagne", "covered_by": "task-orientation and change-contract", "source": "unverified" },
-    { "name": "Room", "covered_by": "none (sends repository content and credentials to external agents; not built)", "source": "unverified" },
-    { "name": "Agent Race", "covered_by": "none (multiplies token spend; not built)", "source": "unverified" },
-    { "name": "Autotask", "covered_by": "none (unattended autonomous loops; not built)", "source": "unverified" },
-    { "name": "Debat", "covered_by": "none (LLM-driven side panel; not built)", "source": "unverified" },
+    {
+      "name": "Campagne",
+      "covered_by": "task-orientation and change-contract",
+      "source": "unverified"
+    },
+    {
+      "name": "Room",
+      "covered_by": "none (sends repository content and credentials to external agents; not built)",
+      "source": "unverified"
+    },
+    {
+      "name": "Agent Race",
+      "covered_by": "none (multiplies token spend; not built)",
+      "source": "unverified"
+    },
+    {
+      "name": "Autotask",
+      "covered_by": "none (unattended autonomous loops; not built)",
+      "source": "unverified"
+    },
+    {
+      "name": "Debat",
+      "covered_by": "none (LLM-driven side panel; not built)",
+      "source": "unverified"
+    },
     { "name": "Boss Fight", "covered_by": "boss-fight", "source": "unverified" },
     { "name": "Code Pet", "covered_by": "code-pet", "source": "unverified" },
     { "name": "Session Wrapped", "covered_by": "session-wrapped", "source": "unverified" },

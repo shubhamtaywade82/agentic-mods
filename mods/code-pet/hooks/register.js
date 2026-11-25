@@ -1,7 +1,9 @@
 // mods/code-pet/src/register.tsx
 import { atom, read, update } from "claude-code";
 var EVIDENCE_IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
-var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, { shape: "status-1" });
+var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, {
+  shape: "status-1"
+});
 var mood = atom({ plugin: "code-pet", key: "mood" }, "idle", { shape: "mood-1" });
 var FACES = {
   idle: "(-_-)",

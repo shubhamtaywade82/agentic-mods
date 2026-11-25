@@ -32,7 +32,9 @@ var FIELDS = [
 ];
 var IDLE = { verdict: "UNKNOWN", phase: "none", reason: "no defect open" };
 var gate = atom({ plugin: "defect-protocol", key: "gate" }, IDLE, { shape: "gate-1" });
-var defect = atom({ plugin: "defect-protocol", key: "defect" }, {}, { shape: "defect-1" });
+var defect = atom({ plugin: "defect-protocol", key: "defect" }, {}, {
+  shape: "defect-1"
+});
 function gateOf(fields) {
   const reproduced = (fields["repro"] ?? "") !== "" || (fields["impossible"] ?? "") !== "";
   const fixed = (fields["fix"] ?? "") !== "" && (fields["regression-test"] ?? "") !== "";

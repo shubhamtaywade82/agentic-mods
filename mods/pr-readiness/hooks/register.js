@@ -34,7 +34,11 @@ function assessReadiness(input) {
     verdict: input.evidence.overall,
     detail: input.evidence.checks.length === 0 ? "no checks configured or run" : failing.length === 0 ? "all required checks current" : failing.map((item) => `${item.check} ${item.verdict} (${item.reason})`).join("; ")
   };
-  const review2 = { label: "Review", verdict: input.review.verdict, detail: input.review.reason };
+  const review2 = {
+    label: "Review",
+    verdict: input.review.verdict,
+    detail: input.review.reason
+  };
   const architecture2 = {
     label: "Architecture",
     verdict: input.architecture.verdict,
@@ -66,11 +70,27 @@ function describeEvidence(input) {
 var PANE = "pr-readiness";
 var EVIDENCE_IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
 var CONTRACT_IDLE = { active: false, objective: "", violations: 0, mode: "warn" };
-var REVIEW_IDLE = { verdict: "UNKNOWN", openHigh: 0, open: 0, reason: "no review findings recorded" };
-var ARCH_IDLE = { verdict: "UNKNOWN", reason: "not scanned yet", fresh: 0, baseline: 0 };
-var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, { shape: "status-1" });
-var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, { shape: "status-1" });
-var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, { shape: "gate-1" });
+var REVIEW_IDLE = {
+  verdict: "UNKNOWN",
+  openHigh: 0,
+  open: 0,
+  reason: "no review findings recorded"
+};
+var ARCH_IDLE = {
+  verdict: "UNKNOWN",
+  reason: "not scanned yet",
+  fresh: 0,
+  baseline: 0
+};
+var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, {
+  shape: "status-1"
+});
+var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, {
+  shape: "status-1"
+});
+var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, {
+  shape: "gate-1"
+});
 var architecture = atom({ plugin: "architecture-guard", key: "status" }, ARCH_IDLE, {
   shape: "status-1"
 });
@@ -100,7 +120,9 @@ function register(on) {
     await $.ui.open({ id: PANE, title: "PR readiness" });
     const lines = [
       `PR readiness: ${result.verdict}`,
-      ...result.items.map((item) => `${item.label.padEnd(13)} ${item.verdict.padEnd(8)} ${item.detail}`)
+      ...result.items.map(
+        (item) => `${item.label.padEnd(13)} ${item.verdict.padEnd(8)} ${item.detail}`
+      )
     ];
     return { text: lines.join("\n") };
   });

@@ -301,7 +301,10 @@ function register(on) {
     const tokens = e.context.tokens ?? 0;
     const contextPercent = windowSize > 0 ? tokens / windowSize * 100 : null;
     const usd = e.cost?.usd ?? null;
-    const rateLimits = e.rateLimits.map((limit) => ({ kind: limit.kind, percentUsed: limit.percentUsed }));
+    const rateLimits = e.rateLimits.map((limit) => ({
+      kind: limit.kind,
+      percentUsed: limit.percentUsed
+    }));
     const warnings = [];
     if (contextPercent !== null && levelOf(contextPercent, config.contextWarnPercent, config.contextCriticalPercent) !== "ok") {
       warnings.push(`context ${formatPercent(contextPercent)}`);
@@ -329,7 +332,8 @@ function register(on) {
     const parts = [];
     if (state.contextPercent !== null) parts.push(`context ${formatPercent(state.contextPercent)}`);
     if (state.usd !== null) parts.push(`cost ${formatUsd(state.usd)}`);
-    for (const limit of state.rateLimits) parts.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`);
+    for (const limit of state.rateLimits)
+      parts.push(`${limit.kind} ${formatPercent(limit.percentUsed)}`);
     return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, { dimColor: state.warning === null }, parts.join(" · "), state.warning === null ? "" : ` · warning: ${state.warning}`));
   });
 }

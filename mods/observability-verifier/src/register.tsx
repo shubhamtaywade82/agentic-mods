@@ -7,7 +7,9 @@ import type { GateState } from '../types'
 type Check = { name: string; url: string; expectStatus: number }
 
 const IDLE: GateState = { verdict: 'UNKNOWN', phase: 'none', reason: 'no health check run' }
-const gate = atom({ plugin: 'observability-verifier', key: 'gate' } as const, IDLE, { shape: 'gate-1' })
+const gate = atom({ plugin: 'observability-verifier', key: 'gate' } as const, IDLE, {
+  shape: 'gate-1',
+})
 
 async function checksOf($: EngineInterface): Promise<Check[]> {
   try {
@@ -39,7 +41,9 @@ export function register(on: On): void {
     if (e.args.trim() !== 'check') return { text: 'Usage: /observe check' }
     const checks = await checksOf($)
     if (checks.length === 0) {
-      return { text: 'No checks configured. Add a list of {name, url, expectStatus} to .agentic-mods/observability.json.' }
+      return {
+        text: 'No checks configured. Add a list of {name, url, expectStatus} to .agentic-mods/observability.json.',
+      }
     }
     const lines: string[] = []
     let failures = 0
@@ -48,10 +52,14 @@ export function register(on: On): void {
         const response = await $.http.fetch(check.url)
         const passed = response.status === check.expectStatus
         if (!passed) failures++
-        lines.push(`${check.name}: ${passed ? 'PASS' : 'FAIL'} (${response.status}, expected ${check.expectStatus})`)
+        lines.push(
+          `${check.name}: ${passed ? 'PASS' : 'FAIL'} (${response.status}, expected ${check.expectStatus})`,
+        )
       } catch (error) {
         failures++
-        lines.push(`${check.name}: FAIL (${truncate(error instanceof Error ? error.message : 'request failed', 120)})`)
+        lines.push(
+          `${check.name}: FAIL (${truncate(error instanceof Error ? error.message : 'request failed', 120)})`,
+        )
       }
     }
     const verdict: GateState['verdict'] = failures === 0 ? 'PASS' : 'FAIL'

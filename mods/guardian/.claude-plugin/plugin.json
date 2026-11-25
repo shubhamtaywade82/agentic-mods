@@ -1,0 +1,9 @@
+{
+  "name": "guardian",
+  "version": "0.1.0",
+  "description": "Tool governance mod: redacts secrets from Bash/Write/Edit tool calls, and blocks destructive shell commands (rm -rf, force pushes, prod migrations) with an explanation, so nothing sensitive or irreversible runs silently",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

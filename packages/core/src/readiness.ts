@@ -12,7 +12,10 @@ import { type Verdict, worstVerdict } from './policy'
  */
 export type ReadinessInput = {
   contract: { active: boolean; violations: number; mode: string }
-  evidence: { overall: Verdict; checks: ReadonlyArray<{ check: string; verdict: Verdict; reason: string }> }
+  evidence: {
+    overall: Verdict
+    checks: ReadonlyArray<{ check: string; verdict: Verdict; reason: string }>
+  }
   review: { verdict: Verdict; reason: string }
   architecture: { verdict: Verdict; reason: string }
 }
@@ -39,7 +42,7 @@ export function assessReadiness(input: ReadinessInput): Readiness {
           detail: `${input.contract.violations} write(s) outside the contract`,
         }
 
-  const failing = input.evidence.checks.filter(item => item.verdict !== 'PASS')
+  const failing = input.evidence.checks.filter((item) => item.verdict !== 'PASS')
   const evidence: ReadinessItem = {
     label: 'Evidence',
     verdict: input.evidence.overall,
@@ -48,10 +51,14 @@ export function assessReadiness(input: ReadinessInput): Readiness {
         ? 'no checks configured or run'
         : failing.length === 0
           ? 'all required checks current'
-          : failing.map(item => `${item.check} ${item.verdict} (${item.reason})`).join('; '),
+          : failing.map((item) => `${item.check} ${item.verdict} (${item.reason})`).join('; '),
   }
 
-  const review: ReadinessItem = { label: 'Review', verdict: input.review.verdict, detail: input.review.reason }
+  const review: ReadinessItem = {
+    label: 'Review',
+    verdict: input.review.verdict,
+    detail: input.review.reason,
+  }
   const architecture: ReadinessItem = {
     label: 'Architecture',
     verdict: input.architecture.verdict,
@@ -59,7 +66,7 @@ export function assessReadiness(input: ReadinessInput): Readiness {
   }
 
   const items = [scope, evidence, review, architecture]
-  const overall = worstVerdict(items.map(item => item.verdict))
+  const overall = worstVerdict(items.map((item) => item.verdict))
   const verdict: Readiness['verdict'] =
     overall === 'PASS' ? 'READY' : overall === 'FAIL' ? 'NOT READY' : 'UNKNOWN'
   return { verdict, items }
@@ -75,7 +82,8 @@ export function describeEvidence(input: ReadinessInput): string {
     lines.push('- No checks were configured or run for this change.')
   }
   for (const item of input.evidence.checks) {
-    const mark = item.verdict === 'PASS' ? 'passed' : item.verdict === 'FAIL' ? 'FAILED' : 'not verified'
+    const mark =
+      item.verdict === 'PASS' ? 'passed' : item.verdict === 'FAIL' ? 'FAILED' : 'not verified'
     lines.push(`- ${item.check}: ${mark} (${item.reason})`)
   }
   lines.push('', '## Scope', '')

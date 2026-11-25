@@ -1,18 +1,7 @@
 {
   "source": "https://github.com/shubhamtaywade82/agentic-sdlc-kit",
   "commit": "2094bacf5da8ea199fbf65d4665d63bfa1b508c1",
-  "plugins": [
-    "sdlc-guard",
-    "secret-guard",
-    "model-router",
-    "run-observer"
-  ],
+  "plugins": ["sdlc-guard", "secret-guard", "model-router", "run-observer"],
   "licence": "MIT",
-  "excluded": [
-    "tests",
-    "vitest.config.ts",
-    "package.json",
-    "tsconfig.json",
-    ".claude-plugin/types"
-  ]
+  "excluded": ["tests", "vitest.config.ts", "package.json", "tsconfig.json", ".claude-plugin/types"]
 }

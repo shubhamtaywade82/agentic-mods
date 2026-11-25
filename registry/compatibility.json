@@ -8,6 +8,6 @@
   ],
   "notChecked": [
     "runtime behaviour in the app",
-    "unit tests (deferred)"
+    "live-session behaviour beyond the harness"
   ]
 }

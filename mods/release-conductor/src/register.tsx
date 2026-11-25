@@ -28,18 +28,32 @@ const MIGRATION_IDLE: MigrationStatus = { verdict: 'UNKNOWN', findings: [] }
 const RADAR_IDLE: RadarStatus = { verdict: 'UNKNOWN', changes: [], scan: 'none' }
 const BUDGET_IDLE: BudgetStatus = { verdict: 'UNKNOWN', rows: [] }
 
-const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, { shape: 'status-1' })
-const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, { shape: 'status-1' })
-const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, { shape: 'gate-1' })
-const architecture = atom({ plugin: 'architecture-guard', key: 'status' } as const, ARCH_IDLE, { shape: 'status-1' })
-const migration = atom({ plugin: 'migration-sentinel', key: 'status' } as const, MIGRATION_IDLE, { shape: 'status-1' })
-const dependencies = atom({ plugin: 'dependency-radar', key: 'status' } as const, RADAR_IDLE, { shape: 'status-1' })
-const performance = atom({ plugin: 'performance-budget', key: 'status' } as const, BUDGET_IDLE, { shape: 'status-1' })
+const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, {
+  shape: 'status-1',
+})
+const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, {
+  shape: 'status-1',
+})
+const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, {
+  shape: 'gate-1',
+})
+const architecture = atom({ plugin: 'architecture-guard', key: 'status' } as const, ARCH_IDLE, {
+  shape: 'status-1',
+})
+const migration = atom({ plugin: 'migration-sentinel', key: 'status' } as const, MIGRATION_IDLE, {
+  shape: 'status-1',
+})
+const dependencies = atom({ plugin: 'dependency-radar', key: 'status' } as const, RADAR_IDLE, {
+  shape: 'status-1',
+})
+const performance = atom({ plugin: 'performance-budget', key: 'status' } as const, BUDGET_IDLE, {
+  shape: 'status-1',
+})
 
 type Assets = { assets: string[]; rollbackFile: string }
 
 function runnerOf($: EngineInterface): GitRunner {
-  return async argv => {
+  return async (argv) => {
     const result = await $.process.run(argv)
     return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }
   }
@@ -78,12 +92,12 @@ export function register(on: On): void {
     const readiness = assessReadiness(input)
 
     const changes = (await workingTreeChanges(runnerOf($))) ?? []
-    const changed = changes.map(change => change.path)
+    const changed = changes.map((change) => change.path)
     const { assets, rollbackFile } = await assetsOf($)
     const items: Array<{ label: string; ok: boolean; detail: string }> = [
       {
         label: 'changelog updated',
-        ok: changed.some(path => /(^|\/)CHANGELOG\.md$/i.test(path)),
+        ok: changed.some((path) => /(^|\/)CHANGELOG\.md$/i.test(path)),
         detail: 'CHANGELOG.md is part of this change',
       },
       {
@@ -92,22 +106,46 @@ export function register(on: On): void {
         detail: `${rollbackFile} exists`,
       },
       ...(await Promise.all(
-        assets.map(async asset => ({ label: `asset ${asset}`, ok: await exists($, asset), detail: 'listed in release.json' })),
+        assets.map(async (asset) => ({
+          label: `asset ${asset}`,
+          ok: await exists($, asset),
+          detail: 'listed in release.json',
+        })),
       )),
-      { label: 'migrations reviewed', ok: mg.verdict === 'PASS', detail: `migration-sentinel: ${mg.verdict}` },
-      { label: 'dependencies reviewed', ok: rd.verdict === 'PASS', detail: `dependency-radar: ${rd.verdict}` },
-      { label: 'performance budgets', ok: bd.verdict === 'PASS', detail: `performance-budget: ${bd.verdict}` },
+      {
+        label: 'migrations reviewed',
+        ok: mg.verdict === 'PASS',
+        detail: `migration-sentinel: ${mg.verdict}`,
+      },
+      {
+        label: 'dependencies reviewed',
+        ok: rd.verdict === 'PASS',
+        detail: `dependency-radar: ${rd.verdict}`,
+      },
+      {
+        label: 'performance budgets',
+        ok: bd.verdict === 'PASS',
+        detail: `performance-budget: ${bd.verdict}`,
+      },
     ]
-    const checklistOk = items.every(item => item.ok)
+    const checklistOk = items.every((item) => item.ok)
     const verdict: GateState['verdict'] =
-      readiness.verdict === 'NOT READY' ? 'FAIL' : readiness.verdict === 'READY' && checklistOk ? 'PASS' : 'UNKNOWN'
+      readiness.verdict === 'NOT READY'
+        ? 'FAIL'
+        : readiness.verdict === 'READY' && checklistOk
+          ? 'PASS'
+          : 'UNKNOWN'
 
     const lines = [
       `release: ${verdict} · readiness ${readiness.verdict}`,
-      ...items.map(item => `[${item.ok ? 'x' : ' '}] ${item.label}: ${item.detail}`),
+      ...items.map((item) => `[${item.ok ? 'x' : ' '}] ${item.label}: ${item.detail}`),
     ]
     await $.fs.write(stateRelativePath('release/checklist.md'), `${lines.join('\n')}\n`)
-    await update($, gate, () => ({ verdict, phase: 'checked', reason: `readiness ${readiness.verdict}` }))
+    await update($, gate, () => ({
+      verdict,
+      phase: 'checked',
+      reason: `readiness ${readiness.verdict}`,
+    }))
     return { text: lines.join('\n') }
   })
 }

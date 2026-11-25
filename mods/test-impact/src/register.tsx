@@ -22,7 +22,7 @@ const IDLE: ImpactStatus = { selection: [], untested: [], full: false, reason: '
 const impact = atom({ plugin: 'test-impact', key: 'impact' } as const, IDLE, { shape: 'impact-1' })
 
 function runnerOf($: EngineInterface): GitRunner {
-  return async argv => {
+  return async (argv) => {
     const result = await $.process.run(argv)
     return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }
   }
@@ -32,9 +32,16 @@ async function computeImpact($: EngineInterface): Promise<ImpactStatus> {
   const run = runnerOf($)
   const tracked = await run(['git', 'ls-files', '-z'])
   if (tracked.exitCode !== 0) {
-    return { selection: [], untested: [], full: true, reason: 'not a git repository; run the full suite' }
+    return {
+      selection: [],
+      untested: [],
+      full: true,
+      reason: 'not a git repository; run the full suite',
+    }
   }
-  const files = parseNameList(tracked.stdout).filter(path => JS_SOURCE.test(path)).slice(0, MAX_FILES)
+  const files = parseNameList(tracked.stdout)
+    .filter((path) => JS_SOURCE.test(path))
+    .slice(0, MAX_FILES)
   const sources = new Map<string, string>()
   for (const path of files) {
     try {
@@ -48,8 +55,8 @@ async function computeImpact($: EngineInterface): Promise<ImpactStatus> {
   const isTest = ADAPTERS.javascript.isTestFile
 
   const changed = (await workingTreeChanges(run)) ?? []
-  const changedPaths = changed.map(entry => entry.path)
-  if (changedPaths.some(path => SHARED_CONFIG.test(path))) {
+  const changedPaths = changed.map((entry) => entry.path)
+  if (changedPaths.some((path) => SHARED_CONFIG.test(path))) {
     return {
       selection: [],
       untested: [],
@@ -57,12 +64,12 @@ async function computeImpact($: EngineInterface): Promise<ImpactStatus> {
       reason: 'shared configuration changed: run the full suite',
     }
   }
-  const changedSource = changedPaths.filter(path => JS_SOURCE.test(path) && sources.has(path))
+  const changedSource = changedPaths.filter((path) => JS_SOURCE.test(path) && sources.has(path))
   const reached = dependentsOf(graph, changedSource)
-  const selection = [...reached].filter(path => isTest(path)).sort()
+  const selection = [...reached].filter((path) => isTest(path)).sort()
   const untested = changedSource
-    .filter(path => !isTest(path))
-    .filter(path => ![...dependentsOf(graph, [path])].some(file => isTest(file)))
+    .filter((path) => !isTest(path))
+    .filter((path) => ![...dependentsOf(graph, [path])].some((file) => isTest(file)))
     .sort()
   return {
     selection,
@@ -77,7 +84,10 @@ async function computeImpact($: EngineInterface): Promise<ImpactStatus> {
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'impact', description: 'Select the tests that the current changes reach' })
+    await $.command.register({
+      name: 'impact',
+      description: 'Select the tests that the current changes reach',
+    })
     return next(e)
   })
 
@@ -101,11 +111,11 @@ export function register(on: On): void {
       <Box flexDirection="column">
         <Text>{current.full ? 'Full suite required' : 'Targeted selection'}</Text>
         <Text dimColor>{current.reason}</Text>
-        {current.selection.map(path => (
-          <Text key={`test-${path}`}>test  {path}</Text>
+        {current.selection.map((path) => (
+          <Text key={`test-${path}`}>test {path}</Text>
         ))}
-        {current.untested.map(path => (
-          <Text key={`gap-${path}`}>gap   {path}</Text>
+        {current.untested.map((path) => (
+          <Text key={`gap-${path}`}>gap {path}</Text>
         ))}
       </Box>
     )

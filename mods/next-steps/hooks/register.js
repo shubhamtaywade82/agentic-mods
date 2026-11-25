@@ -23,7 +23,7 @@ function register(on) {
     const edits = Number(await $.store.get("edits") ?? 0);
     const texts = edits > 0 ? [
       "Run /evidence run to refresh the required checks.",
-      "Run /test-impact to see which tests this change reaches.",
+      "Run /impact to see which tests this change reaches.",
       "Summarise what changed and what is still unverified."
     ] : ["Summarise the open risks in this session."];
     await update($, steps, () => ({ texts }));
@@ -31,7 +31,8 @@ function register(on) {
   });
   on("command.run", { command: "next-steps" }, async ($) => {
     const current = await read($, steps);
-    if (current.texts.length === 0) return { text: "No suggestions yet: they appear after a turn that changes files." };
+    if (current.texts.length === 0)
+      return { text: "No suggestions yet: they appear after a turn that changes files." };
     return { text: current.texts.map((text, index) => `${index + 1}. ${text}`).join("\n") };
   });
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {

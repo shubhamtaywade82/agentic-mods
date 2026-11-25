@@ -185,7 +185,9 @@ function register(on) {
     const index = Number.isFinite(requested) && requested >= 1 ? Math.min(requested - 1, last) : last;
     await update($, cursor, () => index);
     await $.ui.open({ id: PANE, title: "Turn replay" });
-    return { text: state.changes.length === 0 ? "No edits recorded yet." : `Showing change ${index + 1}.` };
+    return {
+      text: state.changes.length === 0 ? "No edits recorded yet." : `Showing change ${index + 1}.`
+    };
   });
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Button, Text } = $.ui.resolve(e);

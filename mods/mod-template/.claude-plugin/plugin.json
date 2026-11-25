@@ -1,0 +1,9 @@
+{
+  "name": "mod-template",
+  "version": "0.2.0",
+  "description": "Starter mod for the agentic-mods library: counts tool-call attempts, shows the count beside the spinner, adds /mod-template-tally and /mod-template-usage",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

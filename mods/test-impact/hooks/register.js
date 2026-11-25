@@ -80,7 +80,7 @@ function parseStatusZ(output) {
   return entries;
 }
 function parseNameList(output) {
-  return output.split(/\u0000|\n/).map((path) => path.trim()).filter((path) => path.length > 0);
+  return output.split(/[\0\n]/).map((path) => path.trim()).filter((path) => path.length > 0);
 }
 async function workingTreeChanges(run) {
   const result = await run(["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"]);
@@ -222,7 +222,12 @@ async function computeImpact($) {
   const run = runnerOf($);
   const tracked = await run(["git", "ls-files", "-z"]);
   if (tracked.exitCode !== 0) {
-    return { selection: [], untested: [], full: true, reason: "not a git repository; run the full suite" };
+    return {
+      selection: [],
+      untested: [],
+      full: true,
+      reason: "not a git repository; run the full suite"
+    };
   }
   const files = parseNameList(tracked.stdout).filter((path) => JS_SOURCE.test(path)).slice(0, MAX_FILES);
   const sources = /* @__PURE__ */ new Map();
@@ -258,7 +263,10 @@ async function computeImpact($) {
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
-    await $.command.register({ name: "impact", description: "Select the tests that the current changes reach" });
+    await $.command.register({
+      name: "impact",
+      description: "Select the tests that the current changes reach"
+    });
     return next(e);
   });
   on("command.run", { command: "impact" }, async ($) => {
@@ -276,7 +284,7 @@ function register(on) {
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e);
     const current = await read($, impact);
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, current.full ? "Full suite required" : "Targeted selection"), /* @__PURE__ */ h(Text, { dimColor: true }, current.reason), current.selection.map((path) => /* @__PURE__ */ h(Text, { key: `test-${path}` }, "test  ", path)), current.untested.map((path) => /* @__PURE__ */ h(Text, { key: `gap-${path}` }, "gap   ", path)));
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, current.full ? "Full suite required" : "Targeted selection"), /* @__PURE__ */ h(Text, { dimColor: true }, current.reason), current.selection.map((path) => /* @__PURE__ */ h(Text, { key: `test-${path}` }, "test ", path)), current.untested.map((path) => /* @__PURE__ */ h(Text, { key: `gap-${path}` }, "gap ", path)));
   });
 }
 export {

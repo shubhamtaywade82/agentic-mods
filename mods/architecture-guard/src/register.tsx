@@ -24,8 +24,15 @@ const MAX_BYTES = 300_000
 const TS_FILE = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/
 const JAVA_FILE = /\.java$/
 
-const IDLE: ArchitectureStatus = { verdict: 'UNKNOWN', reason: 'not scanned yet', fresh: 0, baseline: 0 }
-const status = atom({ plugin: 'architecture-guard', key: 'status' } as const, IDLE, { shape: 'status-1' })
+const IDLE: ArchitectureStatus = {
+  verdict: 'UNKNOWN',
+  reason: 'not scanned yet',
+  fresh: 0,
+  baseline: 0,
+}
+const status = atom({ plugin: 'architecture-guard', key: 'status' } as const, IDLE, {
+  shape: 'status-1',
+})
 
 function languageOf(path: string): ImportLanguage | null {
   if (TS_FILE.test(path)) return 'typescript'
@@ -69,7 +76,7 @@ function targetsOf(path: string, content: string, known: ReadonlySet<string>): s
 }
 
 async function judge($: EngineInterface, path: string, content: string): Promise<Decision> {
-  const config = (await loadConfig(p => $.fs.read(p))).value.architecture
+  const config = (await loadConfig((p) => $.fs.read(p))).value.architecture
   if (config.layers.length === 0 || languageOf(path) === null) return allowed('architecture-guard')
   const known = await knownFiles($)
   const found = findLayerViolations(config.layers, path, targetsOf(path, content, known))
@@ -77,21 +84,22 @@ async function judge($: EngineInterface, path: string, content: string): Promise
   const decision = architectureDecision(config.mode, fresh)
   const verdict: ArchitectureStatus['verdict'] =
     fresh.length === 0 ? 'PASS' : config.mode === 'enforce' ? 'FAIL' : 'UNKNOWN'
-  await update($, status, current => ({
+  await update($, status, (current) => ({
     ...current,
     verdict,
-    reason: fresh.length === 0 ? 'no new layer violations' : `${fresh.length} new layer violation(s)`,
+    reason:
+      fresh.length === 0 ? 'no new layer violations' : `${fresh.length} new layer violation(s)`,
     fresh: fresh.length,
   }))
   return decision
 }
 
 async function scan($: EngineInterface): Promise<string> {
-  const config = (await loadConfig(p => $.fs.read(p))).value.architecture
+  const config = (await loadConfig((p) => $.fs.read(p))).value.architecture
   if (config.layers.length === 0) return 'No layers configured in .agentic-mods/config.json.'
   await $.store.delete('known')
   const known = await knownFiles($)
-  const sources = [...known].filter(path => languageOf(path) !== null).slice(0, MAX_SCAN_FILES)
+  const sources = [...known].filter((path) => languageOf(path) !== null).slice(0, MAX_SCAN_FILES)
   const all: string[] = []
   for (const path of sources) {
     try {
@@ -107,7 +115,7 @@ async function scan($: EngineInterface): Promise<string> {
     stateRelativePath(config.baselineFile),
     `${JSON.stringify({ violations: [...new Set(all)].sort() }, null, 2)}\n`,
   )
-  await update($, status, current => ({
+  await update($, status, (current) => ({
     ...current,
     verdict: 'PASS' as const,
     reason: 'baseline recorded; only new violations are reported',
@@ -120,7 +128,8 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'architecture',
-      description: 'Architecture layer checks: /architecture scan (records the baseline) or /architecture status',
+      description:
+        'Architecture layer checks: /architecture scan (records the baseline) or /architecture status',
     })
     return next(e)
   })
@@ -129,7 +138,9 @@ export function register(on: On): void {
     const subcommand = e.args.trim()
     if (subcommand === 'scan') return { text: await scan($) }
     const current = await read($, status)
-    return { text: `architecture: ${current.verdict} · ${current.reason} · baseline ${current.baseline}` }
+    return {
+      text: `architecture: ${current.verdict} · ${current.reason} · baseline ${current.baseline}`,
+    }
   })
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
@@ -138,7 +149,9 @@ export function register(on: On): void {
     if (decision.decision === 'block') return { deny: describeDecision(decision) }
     if (decision.decision === 'warn') $.ui.toast(describeDecision(decision))
     return next(e)
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'architecture-guard failed closed on Edit.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'architecture-guard failed closed on Edit.' },
+  )
 
   on('tool.call', { tool: 'Write' }, async ($, e, next) => {
     if (languageOf(e.file_path) === null) return next(e)
@@ -146,7 +159,9 @@ export function register(on: On): void {
     if (decision.decision === 'block') return { deny: describeDecision(decision) }
     if (decision.decision === 'warn') $.ui.toast(describeDecision(decision))
     return next(e)
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'architecture-guard failed closed on Write.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'architecture-guard failed closed on Write.' },
+  )
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e)
@@ -154,7 +169,9 @@ export function register(on: On): void {
     return (
       <Box flexDirection="column">
         <Text>Architecture: {current.verdict}</Text>
-        <Text dimColor>{current.reason} · baseline {current.baseline}</Text>
+        <Text dimColor>
+          {current.reason} · baseline {current.baseline}
+        </Text>
       </Box>
     )
   })

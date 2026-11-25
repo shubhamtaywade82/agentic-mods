@@ -1,0 +1,9 @@
+{
+  "name": "verify",
+  "version": "0.1.0",
+  "description": "Verification-driven escalation engine: classify a task's complexity/risk, route it (model + effort), execute, verify with deterministic checks, and escalate (retry or climb the route ladder) on failure until it passes or the policy is exhausted. The engine is runtime-agnostic and lives in packages/core; this mod adapts it to Claude Code commands.",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

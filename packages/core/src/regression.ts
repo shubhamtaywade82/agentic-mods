@@ -2,7 +2,16 @@
  * Regression risk. Every point is listed with its reason, so the scope is explained rather than
  * judged. Weights and thresholds come from configuration in the caller.
  */
-export type RiskFactor = 'publicApi' | 'schema' | 'sharedLibrary' | 'auth' | 'lockfile' | 'buildConfig' | 'manyFiles' | 'testsOnly' | 'docsOnly'
+export type RiskFactor =
+  | 'publicApi'
+  | 'schema'
+  | 'sharedLibrary'
+  | 'auth'
+  | 'lockfile'
+  | 'buildConfig'
+  | 'manyFiles'
+  | 'testsOnly'
+  | 'docsOnly'
 
 export const DEFAULT_RISK_WEIGHTS: Readonly<Record<RiskFactor, number>> = {
   publicApi: 30,
@@ -25,17 +34,22 @@ export type RiskResult = {
   requires: string[]
 }
 
-const PATTERNS: Readonly<Record<'publicApi' | 'sharedLibrary' | 'auth' | 'lockfile' | 'buildConfig', RegExp>> = {
+const PATTERNS: Readonly<
+  Record<'publicApi' | 'sharedLibrary' | 'auth' | 'lockfile' | 'buildConfig', RegExp>
+> = {
   publicApi: /(openapi|swagger|\.graphql$|\.proto$|(^|\/)(api|routes?|controllers?)\/)/i,
   sharedLibrary: /(^|\/)(packages|shared|lib)\//,
   auth: /(auth|login|session|jwt|oauth|permission|rbac)/i,
-  lockfile: /(pnpm-lock\.yaml|package-lock\.json|yarn\.lock|Cargo\.lock|go\.sum|poetry\.lock|Gemfile\.lock)$/,
-  buildConfig: /(tsconfig[^/]*\.json|webpack[^/]*|vite\.config[^/]*|turbo\.json|build\.gradle[^/]*|pom\.xml|Makefile|Dockerfile)$/,
+  lockfile:
+    /(pnpm-lock\.yaml|package-lock\.json|yarn\.lock|Cargo\.lock|go\.sum|poetry\.lock|Gemfile\.lock)$/,
+  buildConfig:
+    /(tsconfig[^/]*\.json|webpack[^/]*|vite\.config[^/]*|turbo\.json|build\.gradle[^/]*|pom\.xml|Makefile|Dockerfile)$/,
 }
 
 const TEST_FILE = /(\.test\.|\.spec\.|(^|\/)tests?\/|_test\.(go|py)$|(^|\/)test_[^/]*\.py$)/
 const DOC_FILE = /\.(md|txt|rst|adoc)$/i
-const SCHEMA_FILE = /(^|\/)(migrations?|db\/migrate|prisma\/migrations|flyway|liquibase)(\/|$)|\.sql$/i
+const SCHEMA_FILE =
+  /(^|\/)(migrations?|db\/migrate|prisma\/migrations|flyway|liquibase)(\/|$)|\.sql$/i
 
 export function riskLevelOf(score: number): RiskLevel {
   if (score >= 60) return 'full'
@@ -55,16 +69,24 @@ export function assessRegression(
     reasons.push(`${weights[factor] >= 0 ? '+' : ''}${weights[factor]}  ${reason}`)
   }
 
-  const paths = changed.map(path => path.replace(/\\/g, '/'))
-  if (paths.some(path => PATTERNS.publicApi.test(path))) add('publicApi', 'public API or contract file changed')
-  if (paths.some(path => SCHEMA_FILE.test(path))) add('schema', 'database schema or migration changed')
-  if (paths.some(path => PATTERNS.sharedLibrary.test(path))) add('sharedLibrary', 'shared library code changed')
-  if (paths.some(path => PATTERNS.auth.test(path))) add('auth', 'authentication or authorization code changed')
-  if (paths.some(path => PATTERNS.lockfile.test(path))) add('lockfile', 'dependency lockfile changed')
-  if (paths.some(path => PATTERNS.buildConfig.test(path))) add('buildConfig', 'build configuration changed')
+  const paths = changed.map((path) => path.replace(/\\/g, '/'))
+  if (paths.some((path) => PATTERNS.publicApi.test(path)))
+    add('publicApi', 'public API or contract file changed')
+  if (paths.some((path) => SCHEMA_FILE.test(path)))
+    add('schema', 'database schema or migration changed')
+  if (paths.some((path) => PATTERNS.sharedLibrary.test(path)))
+    add('sharedLibrary', 'shared library code changed')
+  if (paths.some((path) => PATTERNS.auth.test(path)))
+    add('auth', 'authentication or authorization code changed')
+  if (paths.some((path) => PATTERNS.lockfile.test(path)))
+    add('lockfile', 'dependency lockfile changed')
+  if (paths.some((path) => PATTERNS.buildConfig.test(path)))
+    add('buildConfig', 'build configuration changed')
   if (paths.length > 20) add('manyFiles', `${paths.length} files changed`)
-  if (paths.length > 0 && paths.every(path => TEST_FILE.test(path))) add('testsOnly', 'only test files changed')
-  if (paths.length > 0 && paths.every(path => DOC_FILE.test(path))) add('docsOnly', 'only documentation changed')
+  if (paths.length > 0 && paths.every((path) => TEST_FILE.test(path)))
+    add('testsOnly', 'only test files changed')
+  if (paths.length > 0 && paths.every((path) => DOC_FILE.test(path)))
+    add('docsOnly', 'only documentation changed')
 
   const clamped = Math.max(0, Math.min(100, score))
   const level = riskLevelOf(clamped)

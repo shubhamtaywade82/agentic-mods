@@ -28,42 +28,42 @@ export const ADAPTERS: Readonly<Record<AdapterId, Adapter>> = {
     label: 'JavaScript / TypeScript',
     language: 'typescript',
     manifests: ['package.json'],
-    isTestFile: path => JS_TEST.test(path),
+    isTestFile: (path) => JS_TEST.test(path),
   },
   java: {
     id: 'java',
     label: 'Java / Spring',
     language: 'java',
     manifests: ['pom.xml', 'build.gradle', 'build.gradle.kts'],
-    isTestFile: path => JAVA_TEST.test(path),
+    isTestFile: (path) => JAVA_TEST.test(path),
   },
   python: {
     id: 'python',
     label: 'Python',
     language: 'python',
     manifests: ['pyproject.toml', 'requirements.txt', 'setup.py'],
-    isTestFile: path => PY_TEST.test(path),
+    isTestFile: (path) => PY_TEST.test(path),
   },
   go: {
     id: 'go',
     label: 'Go',
     language: 'go',
     manifests: ['go.mod'],
-    isTestFile: path => GO_TEST.test(path),
+    isTestFile: (path) => GO_TEST.test(path),
   },
   rust: {
     id: 'rust',
     label: 'Rust',
     language: 'rust',
     manifests: ['Cargo.toml'],
-    isTestFile: path => RUST_TEST.test(path),
+    isTestFile: (path) => RUST_TEST.test(path),
   },
   dotnet: {
     id: 'dotnet',
     label: '.NET',
     language: 'csharp',
     manifests: ['*.csproj', '*.sln'],
-    isTestFile: path => DOTNET_TEST.test(path),
+    isTestFile: (path) => DOTNET_TEST.test(path),
   },
 }
 
@@ -74,10 +74,12 @@ function matchesManifest(fileName: string, manifest: string): boolean {
 
 /** The adapters whose manifests appear among the given file paths. */
 export function detectAdapters(paths: readonly string[]): AdapterId[] {
-  const names = paths.map(path => path.replace(/^.*\//, ''))
+  const names = paths.map((path) => path.replace(/^.*\//, ''))
   const found: AdapterId[] = []
   for (const adapter of Object.values(ADAPTERS)) {
-    if (names.some(name => adapter.manifests.some(manifest => matchesManifest(name, manifest)))) {
+    if (
+      names.some((name) => adapter.manifests.some((manifest) => matchesManifest(name, manifest)))
+    ) {
       found.push(adapter.id)
     }
   }

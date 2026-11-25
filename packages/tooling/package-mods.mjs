@@ -31,7 +31,8 @@ for (const mod of listMods()) {
     ],
     { encoding: 'utf8' },
   )
-  allOk = run(`package mods/${mod.name} -> dist/${mod.name}.tgz`, { ok: result.status === 0 }) && allOk
+  allOk =
+    run(`package mods/${mod.name} -> dist/${mod.name}.tgz`, { ok: result.status === 0 }) && allOk
 }
 
 process.exit(allOk ? 0 : 1)

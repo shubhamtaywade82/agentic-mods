@@ -11,9 +11,17 @@ import {
 } from '@agentic-mods/core'
 import type { BudgetStatus } from '../types'
 
-const FORMATS: readonly BenchmarkFormat[] = ['generic', 'vite-stats', 'jmh', 'pytest-benchmark', 'go-bench']
+const FORMATS: readonly BenchmarkFormat[] = [
+  'generic',
+  'vite-stats',
+  'jmh',
+  'pytest-benchmark',
+  'go-bench',
+]
 const IDLE: BudgetStatus = { verdict: 'UNKNOWN', rows: ['no measurement checked yet'] }
-const status = atom({ plugin: 'performance-budget', key: 'status' } as const, IDLE, { shape: 'status-1' })
+const status = atom({ plugin: 'performance-budget', key: 'status' } as const, IDLE, {
+  shape: 'status-1',
+})
 
 async function budgetsOf($: EngineInterface): Promise<Budget[]> {
   try {
@@ -36,14 +44,15 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'perf',
-      description: 'Check a measurement against budgets: /perf check <generic|vite-stats|jmh|pytest-benchmark|go-bench> <path>',
+      description:
+        'Check a measurement against budgets: /perf check <generic|vite-stats|jmh|pytest-benchmark|go-bench> <path>',
     })
     return next(e)
   })
 
   on('command.run', { command: 'perf' }, async ($, e) => {
     const [subcommand = '', format = '', ...rest] = e.args.trim().split(/\s+/)
-    const chosen = FORMATS.find(value => value === format)
+    const chosen = FORMATS.find((value) => value === format)
     if (subcommand !== 'check' || chosen === undefined || rest.length === 0) {
       return { text: `Usage: /perf check <${FORMATS.join('|')}> <path>` }
     }
@@ -56,11 +65,13 @@ export function register(on: On): void {
     try {
       metrics = parseMetrics(chosen, await $.fs.read(path))
     } catch (error) {
-      return { text: `Cannot read or parse ${path} as ${chosen}: ${error instanceof Error ? error.message : 'unknown error'}` }
+      return {
+        text: `Cannot read or parse ${path} as ${chosen}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      }
     }
     const rows = evaluateBudgets(metrics, budgets)
-    const verdict = worstVerdict(rows.map(row => row.verdict))
-    const lines = rows.map(row => {
+    const verdict = worstVerdict(rows.map((row) => row.verdict))
+    const lines = rows.map((row) => {
       const value = row.value === null ? 'missing' : `${row.value} ${row.unit}`
       return `${row.name}: ${row.verdict} (${value}, budget ${row.max} ${row.unit}, ${row.reason})`
     })

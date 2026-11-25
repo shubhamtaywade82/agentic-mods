@@ -24,17 +24,17 @@ export function claimPath(
 ): ClaimResult {
   const fresh = pruneClaims(claims, ttlMs, now)
   const holder = fresh.find(
-    existing => existing.path === claim.path && existing.sessionId !== claim.sessionId,
+    (existing) => existing.path === claim.path && existing.sessionId !== claim.sessionId,
   )
   if (holder !== undefined) return { claims: fresh, conflict: holder }
   const others = fresh.filter(
-    existing => !(existing.path === claim.path && existing.sessionId === claim.sessionId),
+    (existing) => !(existing.path === claim.path && existing.sessionId === claim.sessionId),
   )
   return { claims: [...others, { ...claim, at: now }], conflict: null }
 }
 
 export function pruneClaims(claims: readonly Claim[], ttlMs: number, now: number): Claim[] {
-  return claims.filter(claim => now - claim.at <= ttlMs)
+  return claims.filter((claim) => now - claim.at <= ttlMs)
 }
 
 export type AgentStatus = 'running' | 'completed' | 'failed' | 'stopped'
@@ -111,7 +111,8 @@ export function finishAgent(
 /** A plain-language line about one agent. Templated from events: no model call. */
 export function narrateAgent(node: AgentNode, now: number): string {
   const seconds = Math.round(((node.endedAt ?? now) - node.startedAt) / 1000)
-  const files = node.files.length === 0 ? 'no files touched' : `touched ${node.files.length} file(s)`
+  const files =
+    node.files.length === 0 ? 'no files touched' : `touched ${node.files.length} file(s)`
   const verb =
     node.status === 'running'
       ? 'is working on'
@@ -124,7 +125,9 @@ export function narrateAgent(node: AgentNode, now: number): string {
 }
 
 /** Children of each agent, roots first, in start order. */
-export function agentTree(nodes: ReadonlyMap<string, AgentNode>): Array<{ node: AgentNode; depth: number }> {
+export function agentTree(
+  nodes: ReadonlyMap<string, AgentNode>,
+): Array<{ node: AgentNode; depth: number }> {
   const children = new Map<string | null, AgentNode[]>()
   for (const node of nodes.values()) {
     const key = nodes.has(node.parentId ?? '') ? node.parentId : null

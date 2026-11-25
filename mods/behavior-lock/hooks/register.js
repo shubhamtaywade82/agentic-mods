@@ -50,7 +50,10 @@ function extractSurface(source) {
     const line = raw.trim();
     const declaration = EXPORT_DECL.exec(line);
     if (declaration !== null) {
-      entries.push({ name: declaration[3] ?? "", signature: line.replace(/\s*\{?\s*$/, "").slice(0, 300) });
+      entries.push({
+        name: declaration[3] ?? "",
+        signature: line.replace(/\s*\{?\s*$/, "").slice(0, 300)
+      });
       continue;
     }
     if (EXPORT_DEFAULT.test(line)) {
@@ -102,7 +105,9 @@ function register(on) {
   on("command.run", { command: "lock" }, async ($, e) => {
     const [subcommand = "", name = "", ...files] = e.args.trim().split(/\s+/).filter((word) => word.length > 0);
     if (!/^[a-z0-9-]{1,40}$/.test(name)) {
-      return { text: "Usage: /lock capture|compare <name> [files...]. The name is lowercase letters, digits or dashes." };
+      return {
+        text: "Usage: /lock capture|compare <name> [files...]. The name is lowercase letters, digits or dashes."
+      };
     }
     const path = stateRelativePath(`behavior/${name}.json`);
     if (subcommand === "capture") {
@@ -112,7 +117,11 @@ function register(on) {
       await $.fs.write(path, `${JSON.stringify(baseline, null, 2)}
 `);
       const count = Object.values(baseline.files).reduce((sum, list) => sum + list.length, 0);
-      await update($, gate, () => ({ verdict: "PASS", phase: "baseline", reason: `${count} export(s) captured as ${name}` }));
+      await update($, gate, () => ({
+        verdict: "PASS",
+        phase: "baseline",
+        reason: `${count} export(s) captured as ${name}`
+      }));
       return { text: `Baseline ${name}: ${count} export(s) across ${normalized.length} file(s).` };
     }
     if (subcommand === "compare") {
@@ -128,7 +137,10 @@ function register(on) {
       await update($, gate, () => ({
         verdict: breaking === 0 ? "PASS" : "FAIL",
         phase: "compared",
-        reason: truncate(`${diff.removed.length} removed, ${diff.changed.length} changed, ${diff.added.length} added`, 200)
+        reason: truncate(
+          `${diff.removed.length} removed, ${diff.changed.length} changed, ${diff.added.length} added`,
+          200
+        )
       }));
       const lines = [
         breaking === 0 ? "Surface matches the baseline (additions only)." : "Breaking surface change.",

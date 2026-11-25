@@ -27,7 +27,10 @@ async function counter($, key) {
 function register(on) {
   on("session.start", async ($, e, next) => {
     await $.store.set("startedAt", await $.clock.now());
-    await $.command.register({ name: "wrapped", description: "Summarise this session: turns, tool calls, edits" });
+    await $.command.register({
+      name: "wrapped",
+      description: "Summarise this session: turns, tool calls, edits"
+    });
     return next(e);
   });
   on("turn.start", async ($, e, next) => {

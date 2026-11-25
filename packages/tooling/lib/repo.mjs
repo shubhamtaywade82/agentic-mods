@@ -23,10 +23,10 @@ export const DEV_MODS_ROOT = join(
 export function listMods() {
   if (!existsSync(MODS_DIR)) return []
   return readdirSync(MODS_DIR)
-    .filter(name => statSync(join(MODS_DIR, name)).isDirectory())
-    .filter(name => existsSync(join(MODS_DIR, name, '.claude-plugin', 'plugin.json')))
+    .filter((name) => statSync(join(MODS_DIR, name)).isDirectory())
+    .filter((name) => existsSync(join(MODS_DIR, name, '.claude-plugin', 'plugin.json')))
     .sort()
-    .map(name => ({ name, dir: join(MODS_DIR, name) }))
+    .map((name) => ({ name, dir: join(MODS_DIR, name) }))
 }
 
 export function readJson(path) {

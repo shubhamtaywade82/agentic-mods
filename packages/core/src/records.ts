@@ -17,7 +17,9 @@ export type Finding = {
   updatedAt: number
 }
 
-const FINDING_TRANSITIONS: Readonly<Record<FindingStatus, Partial<Record<FindingAction, FindingStatus>>>> = {
+const FINDING_TRANSITIONS: Readonly<
+  Record<FindingStatus, Partial<Record<FindingAction, FindingStatus>>>
+> = {
   open: { start: 'in-progress', fix: 'fixed', reject: 'rejected', defer: 'deferred' },
   'in-progress': { fix: 'fixed', reject: 'rejected', defer: 'deferred' },
   fixed: { verify: 'verified', reopen: 'open' },
@@ -48,7 +50,10 @@ export function transitionFinding(
     (action === 'reject' || action === 'defer') &&
     !(details.reason && details.reason.trim().length > 0)
   ) {
-    return { ok: false, reason: `${action === 'reject' ? 'rejecting' : 'deferring'} needs a reason` }
+    return {
+      ok: false,
+      reason: `${action === 'reject' ? 'rejecting' : 'deferring'} needs a reason`,
+    }
   }
   return { ok: true, status: next }
 }
@@ -69,9 +74,9 @@ export function gateFindings(findings: readonly Finding[]): FindingGate {
     return { verdict: 'UNKNOWN', openHigh: 0, open: 0, reason: 'no review findings recorded' }
   }
   const unresolved = findings.filter(
-    finding => finding.status === 'open' || finding.status === 'in-progress',
+    (finding) => finding.status === 'open' || finding.status === 'in-progress',
   )
-  const openHigh = unresolved.filter(finding => finding.severity === 'high').length
+  const openHigh = unresolved.filter((finding) => finding.severity === 'high').length
   if (openHigh > 0) {
     return {
       verdict: 'FAIL',
@@ -84,7 +89,10 @@ export function gateFindings(findings: readonly Finding[]): FindingGate {
     verdict: 'PASS',
     openHigh: 0,
     open: unresolved.length,
-    reason: unresolved.length === 0 ? 'all findings resolved' : `${unresolved.length} lower-severity open`,
+    reason:
+      unresolved.length === 0
+        ? 'all findings resolved'
+        : `${unresolved.length} lower-severity open`,
   }
 }
 
@@ -107,10 +115,7 @@ export type Lesson = {
   createdAt: number
 }
 
-export function transitionLesson(
-  current: LessonStatus,
-  action: LessonAction,
-): LessonStatus | null {
+export function transitionLesson(current: LessonStatus, action: LessonAction): LessonStatus | null {
   if (current === 'proposed') {
     if (action === 'approve') return 'approved'
     if (action === 'reject') return 'rejected'
@@ -126,16 +131,13 @@ export function transitionLesson(
  * Links whose file fingerprint no longer matches. A lesson with a changed link is stale and
  * must be reviewed before it is relied on again.
  */
-export function staleLinks(
-  lesson: Lesson,
-  current: ReadonlyMap<string, string | null>,
-): string[] {
+export function staleLinks(lesson: Lesson, current: ReadonlyMap<string, string | null>): string[] {
   return lesson.links
-    .filter(link => {
+    .filter((link) => {
       if (!current.has(link.path)) return true
       return current.get(link.path) !== link.fingerprint
     })
-    .map(link => link.path)
+    .map((link) => link.path)
 }
 
 /* ---------- ring of recent items ---------- */

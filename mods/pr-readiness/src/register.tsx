@@ -11,13 +11,29 @@ const PANE = 'pr-readiness'
 
 const EVIDENCE_IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
 const CONTRACT_IDLE: ContractStatus = { active: false, objective: '', violations: 0, mode: 'warn' }
-const REVIEW_IDLE: ReviewGate = { verdict: 'UNKNOWN', openHigh: 0, open: 0, reason: 'no review findings recorded' }
-const ARCH_IDLE: ArchitectureStatus = { verdict: 'UNKNOWN', reason: 'not scanned yet', fresh: 0, baseline: 0 }
+const REVIEW_IDLE: ReviewGate = {
+  verdict: 'UNKNOWN',
+  openHigh: 0,
+  open: 0,
+  reason: 'no review findings recorded',
+}
+const ARCH_IDLE: ArchitectureStatus = {
+  verdict: 'UNKNOWN',
+  reason: 'not scanned yet',
+  fresh: 0,
+  baseline: 0,
+}
 
 // Read-only views of the states other mods publish.
-const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, { shape: 'status-1' })
-const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, { shape: 'status-1' })
-const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, { shape: 'gate-1' })
+const evidence = atom({ plugin: 'evidence-gate', key: 'status' } as const, EVIDENCE_IDLE, {
+  shape: 'status-1',
+})
+const contract = atom({ plugin: 'change-contract', key: 'status' } as const, CONTRACT_IDLE, {
+  shape: 'status-1',
+})
+const review = atom({ plugin: 'review-tracker', key: 'gate' } as const, REVIEW_IDLE, {
+  shape: 'gate-1',
+})
 const architecture = atom({ plugin: 'architecture-guard', key: 'status' } as const, ARCH_IDLE, {
   shape: 'status-1',
 })
@@ -36,7 +52,8 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'pr-ready',
-      description: 'Readiness verdict for the change; /pr-ready description drafts the PR verification section',
+      description:
+        'Readiness verdict for the change; /pr-ready description drafts the PR verification section',
     })
     return next(e)
   })
@@ -50,7 +67,9 @@ export function register(on: On): void {
     await $.ui.open({ id: PANE, title: 'PR readiness' })
     const lines = [
       `PR readiness: ${result.verdict}`,
-      ...result.items.map(item => `${item.label.padEnd(13)} ${item.verdict.padEnd(8)} ${item.detail}`),
+      ...result.items.map(
+        (item) => `${item.label.padEnd(13)} ${item.verdict.padEnd(8)} ${item.detail}`,
+      ),
     ]
     return { text: lines.join('\n') }
   })
@@ -61,7 +80,7 @@ export function register(on: On): void {
     return (
       <Box flexDirection="column">
         <Text>Release readiness: {result.verdict}</Text>
-        {result.items.map(item => (
+        {result.items.map((item) => (
           <Text key={item.label}>
             {item.label}: {item.verdict} · {item.detail}
           </Text>

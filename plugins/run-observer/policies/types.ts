@@ -19,42 +19,42 @@ export type ObserverEventKind =
   | 'verification'
   | 'escalation'
   | 'failure'
-  | 'blocked-action';
+  | 'blocked-action'
 
 export interface ObserverEvent {
-  schemaVersion: 1;
-  id: string;
+  schemaVersion: 1
+  id: string
   // The run this event belongs to.
-  runId: string;
+  runId: string
   // The session this event belongs to (may differ from the run).
-  sessionId?: string;
+  sessionId?: string
   // ISO 8601 timestamp.
-  at: string;
-  kind: ObserverEventKind;
+  at: string
+  kind: ObserverEventKind
   // The model and effort in effect when the event occurred (if applicable).
-  model?: string;
-  effort?: string;
+  model?: string
+  effort?: string
   // Token usage (only where the host exposes it).
-  tokensIn?: number;
-  tokensOut?: number;
+  tokensIn?: number
+  tokensOut?: number
   // Estimated cost in arbitrary units (only where reliable data exists).
-  estimatedCostUnits?: number;
+  estimatedCostUnits?: number
   // A redacted summary of the event payload (never raw secrets).
-  summary: string;
+  summary: string
   // Whether telemetry for this event is partial (some fields missing).
-  partial: boolean;
+  partial: boolean
 }
 
 export interface RetentionPolicy {
-  schemaVersion: 1;
+  schemaVersion: 1
   // How long to keep events (in days). 0 = delete immediately; -1 = keep forever.
-  retainDays: number;
+  retainDays: number
   // Maximum number of events per run before truncating (cap memory).
-  maxEventsPerRun: number;
+  maxEventsPerRun: number
   // Whether to redact summaries (strip anything that looks like a path).
-  redactSummaries: boolean;
+  redactSummaries: boolean
   // Whether to drop token/cost data (privacy).
-  dropUsageData: boolean;
+  dropUsageData: boolean
   // Path patterns to never record in summaries.
-  redactPathPatterns: string[];
+  redactPathPatterns: string[]
 }

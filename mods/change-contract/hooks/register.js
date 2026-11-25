@@ -390,13 +390,15 @@ var encoder = new TextEncoder();
 // mods/change-contract/src/register.tsx
 var MAX_VIOLATIONS = 50;
 var IDLE = { active: false, objective: "", violations: 0, mode: "warn" };
-var status = atom({ plugin: "change-contract", key: "status" }, IDLE, { shape: "status-1" });
+var status = atom({ plugin: "change-contract", key: "status" }, IDLE, {
+  shape: "status-1"
+});
 function isActive(spec) {
   return spec.objective.trim() !== "" || spec.allowed.length > 0 || spec.forbidden.length > 0;
 }
 async function loadContract($) {
   const configured = (await loadConfig((path) => $.fs.read(path))).value.contract;
-  let fromFile = null;
+  let fromFile;
   try {
     fromFile = parseContractJson(await $.fs.read(stateRelativePath("contract.json")));
   } catch {
@@ -422,7 +424,11 @@ async function judge($, path) {
 async function recordViolation($, decision) {
   const list = await $.store.get("violations");
   const existing = Array.isArray(list) ? list : [];
-  const next = appendCapped(existing, `${(/* @__PURE__ */ new Date()).toISOString()} ${describeDecision(decision)}`, MAX_VIOLATIONS);
+  const next = appendCapped(
+    existing,
+    `${(/* @__PURE__ */ new Date()).toISOString()} ${describeDecision(decision)}`,
+    MAX_VIOLATIONS
+  );
   await $.store.set("violations", next);
   await update($, status, (current) => ({ ...current, violations: next.length }));
 }
@@ -491,16 +497,20 @@ function register(on) {
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     const denial = await guardWrite($, e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "change-contract failed closed on Edit." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "change-contract failed closed on Edit." }
+  );
   on("tool.call", { tool: "Write" }, async ($, e, next) => {
     const denial = await guardWrite($, e.file_path);
     return denial === null ? next(e) : { deny: denial };
-  }).catch((_$, e, next) => next.called ? next(e) : { deny: "change-contract failed closed on Write." });
+  }).catch(
+    (_$, e, next) => next.called ? next(e) : { deny: "change-contract failed closed on Write." }
+  );
   on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
     const current = await read($, status);
     if (!current.active || current.violations === 0) return next(e);
     const { Box, Text } = $.ui.resolve(e);
-    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, null, "contract ", current.mode, ": ", current.violations, " write", current.violations === 1 ? "" : "s", " outside scope"));
+    return /* @__PURE__ */ h(Box, null, /* @__PURE__ */ h(Text, null, "contract ", current.mode, ": ", current.violations, " write", current.violations === 1 ? "" : "s", " ", "outside scope"));
   });
 }
 export {

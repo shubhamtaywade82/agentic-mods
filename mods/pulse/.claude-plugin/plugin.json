@@ -1,0 +1,9 @@
+{
+  "name": "pulse",
+  "version": "0.1.0",
+  "description": "Session observability mod: tracks tool-call attempts per tool, estimates context-window pressure, and shows a compact live readout beside the spinner plus /pulse-report and /pulse-usage commands",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

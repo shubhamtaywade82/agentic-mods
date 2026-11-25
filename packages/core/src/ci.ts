@@ -21,16 +21,23 @@ export type CiTriage = {
   stopLoop: boolean
 }
 
-const RULES: ReadonlyArray<{ category: CiCategory; pattern: RegExp; action: string; stopLoop: boolean }> = [
+const RULES: ReadonlyArray<{
+  category: CiCategory
+  pattern: RegExp
+  action: string
+  stopLoop: boolean
+}> = [
   {
     category: 'credentials',
-    pattern: /(401 Unauthorized|403 Forbidden|Bad credentials|authentication failed|expired token|invalid_grant|No linked GitHub account)/i,
+    pattern:
+      /(401 Unauthorized|403 Forbidden|Bad credentials|authentication failed|expired token|invalid_grant|No linked GitHub account)/i,
     action: 'Stop fixing code. Refresh the credential or access grant, then rerun the job.',
     stopLoop: true,
   },
   {
     category: 'infrastructure',
-    pattern: /(ECONNRESET|ETIMEDOUT|ENOTFOUND|503 Service|502 Bad Gateway|rate limit|quota exceeded|No space left on device|runner .* lost|The operation was canceled)/i,
+    pattern:
+      /(ECONNRESET|ETIMEDOUT|ENOTFOUND|503 Service|502 Bad Gateway|rate limit|quota exceeded|No space left on device|runner .* lost|The operation was canceled)/i,
     action: 'Stop fixing code. Rerun the job or check the runner and quota.',
     stopLoop: true,
   },
@@ -42,7 +49,8 @@ const RULES: ReadonlyArray<{ category: CiCategory; pattern: RegExp; action: stri
   },
   {
     category: 'compilation',
-    pattern: /(error TS\d+|SyntaxError|cannot find symbol|COMPILATION ERROR|error\[E\d+\]|build failed)/i,
+    pattern:
+      /(error TS\d+|SyntaxError|cannot find symbol|COMPILATION ERROR|error\[E\d+\]|build failed)/i,
     action: 'Reproduce locally with the build command and fix the first compiler error.',
     stopLoop: false,
   },
@@ -67,7 +75,8 @@ const RULES: ReadonlyArray<{ category: CiCategory; pattern: RegExp; action: stri
   {
     category: 'integration-test',
     pattern: /(integration test|e2e|testcontainers|connection refused.*(5432|6379|9092))/i,
-    action: 'Check the service dependencies the test needs, then reproduce with the same services up.',
+    action:
+      'Check the service dependencies the test needs, then reproduce with the same services up.',
     stopLoop: false,
   },
   {
@@ -83,7 +92,12 @@ export function triageLog(text: string): CiTriage {
   for (const rule of RULES) {
     const match = rule.pattern.exec(text)
     if (match !== null) {
-      return { category: rule.category, evidence: match[0].slice(0, 120), action: rule.action, stopLoop: rule.stopLoop }
+      return {
+        category: rule.category,
+        evidence: match[0].slice(0, 120),
+        action: rule.action,
+        stopLoop: rule.stopLoop,
+      }
     }
   }
   return {

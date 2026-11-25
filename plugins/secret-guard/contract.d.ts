@@ -23,14 +23,14 @@ declare module 'claude-code' {
       // or installer can override before the first event.
       policy:
         | {
-            schemaVersion: 1;
-            placeholderFormat: string;
-            redactPartial: boolean;
-            redactRepeated: boolean;
-            maxInputChars: number;
-            ignorePaths: string[];
+            schemaVersion: 1
+            placeholderFormat: string
+            redactPartial: boolean
+            redactRepeated: boolean
+            maxInputChars: number
+            ignorePaths: string[]
           }
-        | undefined;
-    };
+        | undefined
+    }
   }
 }

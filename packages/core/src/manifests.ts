@@ -38,7 +38,8 @@ export function parseManifest(path: string, text: string): Dependency[] {
 
 function parsePackageJson(text: string): Dependency[] {
   const parsed: unknown = JSON.parse(text)
-  if (typeof parsed !== 'object' || parsed === null) throw new Error('package.json is not an object')
+  if (typeof parsed !== 'object' || parsed === null)
+    throw new Error('package.json is not an object')
   const record = parsed as Record<string, unknown>
   const out: Dependency[] = []
   for (const [key, isDev] of [
@@ -61,7 +62,12 @@ function parseRequirements(text: string): Dependency[] {
     if (line === '' || line.startsWith('-')) continue
     const match = /^([A-Za-z0-9_.-]+)\s*(.*)$/.exec(line)
     if (match === null) continue
-    out.push({ name: match[1] ?? '', version: (match[2] ?? '').trim(), isDev: false, ecosystem: 'pypi' })
+    out.push({
+      name: match[1] ?? '',
+      version: (match[2] ?? '').trim(),
+      isDev: false,
+      ecosystem: 'pypi',
+    })
   }
   return out
 }
@@ -74,7 +80,12 @@ function parsePyproject(text: string): Dependency[] {
     const spec = match[1] ?? ''
     const parsed = /^([A-Za-z0-9_.-]+)\s*(.*)$/.exec(spec.trim())
     if (parsed === null) continue
-    out.push({ name: parsed[1] ?? '', version: (parsed[2] ?? '').trim(), isDev: false, ecosystem: 'pypi' })
+    out.push({
+      name: parsed[1] ?? '',
+      version: (parsed[2] ?? '').trim(),
+      isDev: false,
+      ecosystem: 'pypi',
+    })
   }
   return out
 }
@@ -156,7 +167,9 @@ function parseGradle(text: string): Dependency[] {
 
 function parseCsproj(text: string): Dependency[] {
   const out: Dependency[] = []
-  for (const match of text.matchAll(/<PackageReference\s+Include="([^"]+)"(?:\s+Version="([^"]+)")?/g)) {
+  for (const match of text.matchAll(
+    /<PackageReference\s+Include="([^"]+)"(?:\s+Version="([^"]+)")?/g,
+  )) {
     out.push({
       name: match[1] ?? '',
       version: match[2] ?? 'managed',
@@ -186,10 +199,14 @@ function majorOf(version: string): number | null {
 }
 
 /** Direct dependencies that appeared, disappeared or changed version between two manifests. */
-export function diffDependencies(before: readonly Dependency[], after: readonly Dependency[]): DependencyDiff {
-  const key = (dep: Dependency): string => `${dep.ecosystem}:${dep.isDev ? 'dev' : 'run'}:${dep.name}`
-  const beforeMap = new Map(before.map(dep => [key(dep), dep] as const))
-  const afterMap = new Map(after.map(dep => [key(dep), dep] as const))
+export function diffDependencies(
+  before: readonly Dependency[],
+  after: readonly Dependency[],
+): DependencyDiff {
+  const key = (dep: Dependency): string =>
+    `${dep.ecosystem}:${dep.isDev ? 'dev' : 'run'}:${dep.name}`
+  const beforeMap = new Map(before.map((dep) => [key(dep), dep] as const))
+  const afterMap = new Map(after.map((dep) => [key(dep), dep] as const))
   const added: Dependency[] = []
   const removed: Dependency[] = []
   const changed: DependencyChange[] = []

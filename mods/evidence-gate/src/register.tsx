@@ -28,7 +28,9 @@ const MAX_RECORDS = 50
 const MAX_TIMEOUT_MS = 600_000
 
 const IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
-const status = atom({ plugin: 'evidence-gate', key: 'status' } as const, IDLE, { shape: 'status-1' })
+const status = atom({ plugin: 'evidence-gate', key: 'status' } as const, IDLE, {
+  shape: 'status-1',
+})
 
 type Snapshot = {
   config: AgenticConfig
@@ -39,7 +41,7 @@ type Snapshot = {
 }
 
 function runnerOf($: EngineInterface): GitRunner {
-  return async argv => {
+  return async (argv) => {
     const result = await $.process.run(argv)
     return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }
   }
@@ -78,7 +80,7 @@ function latestByCheck(records: readonly CheckRecord[]): Map<CheckName, CheckRec
 }
 
 async function snapshotOf($: EngineInterface): Promise<Snapshot> {
-  const config = (await loadConfig(path => $.fs.read(path))).value
+  const config = (await loadConfig((path) => $.fs.read(path))).value
   const fingerprint = await repoFingerprint($)
   const statuses = evaluateChecks(
     config.evidence.required,
@@ -87,7 +89,9 @@ async function snapshotOf($: EngineInterface): Promise<Snapshot> {
     await $.clock.now(),
     config.evidence.maxAgeMinutes * 60_000,
   )
-  const configured = Object.values(config.evidence.commands).some(list => Array.isArray(list) && list.length > 0)
+  const configured = Object.values(config.evidence.commands).some(
+    (list) => Array.isArray(list) && list.length > 0,
+  )
   return { config, configured, statuses, overall: overallVerdict(statuses), fingerprint }
 }
 
@@ -95,7 +99,7 @@ async function publish($: EngineInterface, snap: Snapshot): Promise<void> {
   await update($, status, () => ({
     overall: snap.overall,
     fingerprint: snap.fingerprint,
-    checks: snap.statuses.map(item => ({
+    checks: snap.statuses.map((item) => ({
       check: item.check,
       verdict: item.verdict,
       reason: item.reason,
@@ -139,7 +143,7 @@ async function runCheck(
 }
 
 function summaryOf(snap: Snapshot): string {
-  const lines = snap.statuses.map(item => `${item.check}: ${item.verdict} (${item.reason})`)
+  const lines = snap.statuses.map((item) => `${item.check}: ${item.verdict} (${item.reason})`)
   const notice = snap.configured
     ? []
     : ['No evidence commands are configured in .agentic-mods/config.json, so git gates only warn.']
@@ -156,7 +160,10 @@ export function register(on: On): void {
   })
 
   on('command.run', { command: 'evidence' }, async ($, e) => {
-    const [subcommand = 'status', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = 'status', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
 
     if (subcommand === 'clear') {
       await $.store.set('records', [])
@@ -204,14 +211,16 @@ export function register(on: On): void {
     }
     return next(e)
   }).catch((_$, e, next) =>
-    next.called ? next(e) : { deny: 'evidence-gate failed closed: the gated action was not checked.' },
+    next.called
+      ? next(e)
+      : { deny: 'evidence-gate failed closed: the gated action was not checked.' },
   )
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const current = await read($, status)
     if (current.checks.length === 0) return next(e)
     const { Box, Text } = $.ui.resolve(e)
-    const label = current.checks.map(item => `${item.check} ${item.verdict}`).join(' · ')
+    const label = current.checks.map((item) => `${item.check} ${item.verdict}`).join(' · ')
     return (
       <Box>
         <Text dimColor={current.overall === 'PASS'}>evidence: {label}</Text>
@@ -232,7 +241,7 @@ export function register(on: On): void {
     return (
       <Box flexDirection="column">
         <Text>Overall: {current.overall}</Text>
-        {current.checks.map(item => (
+        {current.checks.map((item) => (
           <Text key={item.check}>
             {item.check.padEnd(10)} {item.verdict.padEnd(8)} {item.reason}
           </Text>

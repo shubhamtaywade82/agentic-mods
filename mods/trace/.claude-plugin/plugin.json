@@ -1,0 +1,9 @@
+{
+  "name": "trace",
+  "version": "0.1.0",
+  "description": "Execution observability mod: builds a bounded hierarchical runtime tree (main agent -> subagents -> tool calls) from session/turn/agent.spawn/tool events, and exposes /trace and /trace-summary commands",
+  "author": {
+    "name": "Agentic Mods"
+  },
+  "license": "MIT"
+}

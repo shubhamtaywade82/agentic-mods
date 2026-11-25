@@ -25,20 +25,20 @@
 // event names; `$` passed only to getPolicy, a top-level function of this
 // file; imports are relative files of this plugin plus 'claude-code'.
 
-import type { AgentSpawnInput, EngineInterface, On, TurnStepInput } from 'claude-code';
-import { atom, read } from 'claude-code';
-import type { RoutingContext, RoutingPolicy } from '../policies/types';
-import { buildRoutingContext } from '../policies/classifier';
-import { classifyText } from '../policies/signals';
-import { route } from '../policies/router';
-import { DEFAULT_POLICY } from '../policies/default-policy';
+import type { AgentSpawnInput, EngineInterface, On, TurnStepInput } from 'claude-code'
+import { atom, read } from 'claude-code'
+import type { RoutingContext, RoutingPolicy } from '../policies/types'
+import { buildRoutingContext } from '../policies/classifier'
+import { classifyText } from '../policies/signals'
+import { route } from '../policies/router'
+import { DEFAULT_POLICY } from '../policies/default-policy'
 
 // The policy state key, declared in contract.d.ts. read() resolves to
 // the stored policy or the module default (initial) when unset.
-const POLICY = atom({ plugin: 'model-router', key: 'policy' } as const, DEFAULT_POLICY);
+const POLICY = atom({ plugin: 'model-router', key: 'policy' } as const, DEFAULT_POLICY)
 
 async function getPolicy($: EngineInterface): Promise<RoutingPolicy> {
-  return read($, POLICY);
+  return read($, POLICY)
 }
 
 function buildContext(scope: 'main-turn' | 'subagent'): RoutingContext {
@@ -53,7 +53,7 @@ function buildContext(scope: 'main-turn' | 'subagent'): RoutingContext {
     risk: 'low',
     requiredCapabilities: [],
     previousOutcome: 'none',
-  };
+  }
 }
 
 /**
@@ -63,55 +63,57 @@ function buildContext(scope: 'main-turn' | 'subagent'): RoutingContext {
 function spawnContext(e: AgentSpawnInput): { ctx: RoutingContext; because: string } {
   const text = [e.description, e.name, e.subagentType]
     .filter((part): part is string => typeof part === 'string')
-    .join(' ');
-  const found = classifyText(text);
-  if (found === null) return { ctx: buildContext('subagent'), because: '' };
+    .join(' ')
+  const found = classifyText(text)
+  if (found === null) return { ctx: buildContext('subagent'), because: '' }
   return {
     ctx: buildRoutingContext('subagent', found.input),
     because: ` because: ${found.evidence.join(', ')}`,
-  };
+  }
 }
 
 export function register(on: On): void {
   // turn.step: main-turn model + effort routing (streaming event). The
   // effort rewrite keeps the official union (level names or a number).
   on('turn.step', async function* ($, e: TurnStepInput, next) {
-    const policy = await getPolicy($);
-    const decision = route(buildContext('main-turn'), policy);
+    const policy = await getPolicy($)
+    const decision = route(buildContext('main-turn'), policy)
     if (policy.suggestOnly) {
       $.ui.log(
         `model-router: suggest model=${decision.model} effort=${decision.effort} (${decision.reason})`,
-      );
+      )
       // Forward the stream unchanged and return the finished result.
-      const result = yield* next(e);
-      return result;
+      const result = yield* next(e)
+      return result
     }
-    $.ui.log(`model-router: apply model=${decision.model} effort=${decision.effort}`);
-    return yield* next({ ...e, model: decision.model, effort: decision.effort });
-  });
+    $.ui.log(`model-router: apply model=${decision.model} effort=${decision.effort}`)
+    return yield* next({ ...e, model: decision.model, effort: decision.effort })
+  })
 
   // agent.spawn: subagent model routing.
   on('agent.spawn', async ($, e: AgentSpawnInput, next) => {
     // Resumed runs ignore event changes — do not touch them.
-    if (e.resume) return next(e);
-    const policy = await getPolicy($);
+    if (e.resume) return next(e)
+    const policy = await getPolicy($)
     // Preserve an explicit model selection (post-M7 §6 invariant).
     if (e.model !== undefined) {
-      $.ui.log(`model-router: subagent ${e.name ?? '<unnamed>'} keeps explicit model ${e.model}`);
-      return next(e);
+      $.ui.log(`model-router: subagent ${e.name ?? '<unnamed>'} keeps explicit model ${e.model}`)
+      return next(e)
     }
-    const { ctx, because } = spawnContext(e);
-    const decision = route(ctx, policy);
+    const { ctx, because } = spawnContext(e)
+    const decision = route(ctx, policy)
     if (policy.suggestOnly) {
       $.ui.log(
         `model-router: suggest subagent ${e.name ?? '<unnamed>'} model=${decision.model}${because}`,
-      );
-      return next(e);
+      )
+      return next(e)
     }
-    $.ui.log(`model-router: apply subagent ${e.name ?? '<unnamed>'} model=${decision.model}${because}`);
-    return next({ ...e, model: decision.model });
+    $.ui.log(
+      `model-router: apply subagent ${e.name ?? '<unnamed>'} model=${decision.model}${because}`,
+    )
+    return next({ ...e, model: decision.model })
     // Fail open: routing is advisory, never a safety gate. If the handler or
     // the downstream chain throws, return nothing so the host proceeds with
     // the original, un-routed spawn instead of blocking it.
-  }).catch(() => undefined);
+  }).catch(() => undefined)
 }

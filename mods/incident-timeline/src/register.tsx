@@ -18,7 +18,7 @@ type Row = { at: string; plugin: string; kind: Kind; text: string; id: string }
 
 async function writeLine($: EngineInterface, id: string, kind: Kind, text: string): Promise<void> {
   const path = stateRelativePath(`incidents/${id}.jsonl`)
-  let existing = ''
+  let existing: string
   try {
     existing = await $.fs.read(path)
   } catch {
@@ -31,7 +31,8 @@ async function writeLine($: EngineInterface, id: string, kind: Kind, text: strin
 
 async function openIncident($: EngineInterface, parts: readonly string[]): Promise<string> {
   const [id = '', ...titleWords] = parts
-  if (!ID_PATTERN.test(id)) return 'Usage: /incident open <id> <title>. The id is letters, digits, - or _.'
+  if (!ID_PATTERN.test(id))
+    return 'Usage: /incident open <id> <title>. The id is letters, digits, - or _.'
   const state = await read($, incident)
   if (state.isOpen) return `Incident ${state.id} is already open. Close it first.`
   await update($, incident, () => ({ isOpen: true, profile: 'strict' as const, id }))
@@ -42,7 +43,8 @@ async function openIncident($: EngineInterface, parts: readonly string[]): Promi
 
 async function appendRow($: EngineInterface, kind: Kind, body: string): Promise<string> {
   const state = await read($, incident)
-  if (!state.isOpen || state.id === null) return 'No incident is open. Use /incident open <id> <title>.'
+  if (!state.isOpen || state.id === null)
+    return 'No incident is open. Use /incident open <id> <title>.'
   if (body.length === 0) return 'Nothing to record.'
   await writeLine($, state.id, kind, truncate(body, 2000))
   return `Recorded ${kind} for ${state.id}.`
@@ -61,7 +63,7 @@ async function writePostmortem($: EngineInterface): Promise<string> {
   const state = await read($, incident)
   const id = state.id ?? (await $.store.get('lastIncident'))
   if (typeof id !== 'string' || !ID_PATTERN.test(id)) return 'No incident to write up.'
-  let raw = ''
+  let raw: string
   try {
     raw = await $.fs.read(stateRelativePath(`incidents/${id}.jsonl`))
   } catch {
@@ -69,11 +71,11 @@ async function writePostmortem($: EngineInterface): Promise<string> {
   }
   const rows = raw
     .split('\n')
-    .filter(line => line.length > 0)
-    .map(line => JSON.parse(line) as Row)
-  const table = rows.map(row => `| ${row.at} | ${row.kind} | ${row.text.replace(/\|/g, '\\|')} |`)
-  const mitigation = rows.filter(row => row.kind === 'mitigation').map(row => `- ${row.text}`)
-  const recovery = rows.filter(row => row.kind === 'recovery').map(row => `- ${row.text}`)
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line) as Row)
+  const table = rows.map((row) => `| ${row.at} | ${row.kind} | ${row.text.replace(/\|/g, '\\|')} |`)
+  const mitigation = rows.filter((row) => row.kind === 'mitigation').map((row) => `- ${row.text}`)
+  const recovery = rows.filter((row) => row.kind === 'recovery').map((row) => `- ${row.text}`)
   const document = [
     `# Postmortem ${id}`,
     '',

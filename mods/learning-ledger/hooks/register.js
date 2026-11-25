@@ -106,7 +106,8 @@ function register(on) {
     if (subcommand === "propose") {
       const body = rest.join(" ");
       const [textPart = "", pathPart = ""] = body.split("|").map((part) => part.trim());
-      if (textPart === "") return { text: "Usage: /lesson propose <text> | <comma-separated repository paths>" };
+      if (textPart === "")
+        return { text: "Usage: /lesson propose <text> | <comma-separated repository paths>" };
       const links = pathPart.split(",").map((path) => path.trim()).filter((path) => path.length > 0);
       const fingerprints = await fingerprintsOf($, links);
       const lesson = {
@@ -127,23 +128,39 @@ function register(on) {
       const action = subcommand === "approve" ? "approve" : subcommand === "reject" ? "reject" : "retire";
       const next = transitionLesson(target.status, action);
       if (next === null) return { text: `${id} is ${target.status}; ${action} does not apply.` };
-      const links = action === "approve" ? await fingerprintsOf($, target.links.map((link) => link.path)) ?? /* @__PURE__ */ new Map() : null;
+      const links = action === "approve" ? await fingerprintsOf(
+        $,
+        target.links.map((link) => link.path)
+      ) ?? /* @__PURE__ */ new Map() : null;
       const updated = {
         ...target,
         status: next,
-        links: links === null ? target.links : target.links.map((link) => ({ path: link.path, fingerprint: links.get(link.path) ?? null }))
+        links: links === null ? target.links : target.links.map((link) => ({
+          path: link.path,
+          fingerprint: links.get(link.path) ?? null
+        }))
       };
-      await saveLessons($, lessons.map((lesson) => lesson.id === id ? updated : lesson));
+      await saveLessons(
+        $,
+        lessons.map((lesson) => lesson.id === id ? updated : lesson)
+      );
       return { text: `${id} is now ${next}.` };
     }
-    const approved = lessons.filter((lesson) => lesson.status === "approved" || lesson.status === "stale");
+    const approved = lessons.filter(
+      (lesson) => lesson.status === "approved" || lesson.status === "stale"
+    );
     const lines = [];
     for (const lesson of approved) {
-      const current = await fingerprintsOf($, lesson.links.map((link) => link.path));
+      const current = await fingerprintsOf(
+        $,
+        lesson.links.map((link) => link.path)
+      );
       const stale = staleLinks(lesson, current);
       if (stale.length > 0) lines.push(`${lesson.id} stale: ${stale.join(", ")} changed; review it`);
     }
-    return { text: lines.length === 0 ? `${approved.length} approved lesson(s), none stale.` : lines.join("\n") };
+    return {
+      text: lines.length === 0 ? `${approved.length} approved lesson(s), none stale.` : lines.join("\n")
+    };
   });
 }
 export {

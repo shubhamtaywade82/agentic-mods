@@ -3,13 +3,55 @@
   "description": "Default workflow for a feature: discover, specify, plan, develop, verify, review, release.",
   "start": "discover",
   "stages": [
-    { "id": "discover", "name": "Discover", "gate": null, "artifact": "problem.md", "next": ["specify"] },
-    { "id": "specify", "name": "Specify", "gate": "specification-gate", "artifact": "specify.md", "next": ["plan"] },
-    { "id": "plan", "name": "Plan", "gate": "plan-gate", "artifact": "plan.md", "next": ["develop"] },
-    { "id": "develop", "name": "Develop", "gate": "implementation-gate", "artifact": "decisions.md", "next": ["verify"] },
-    { "id": "verify", "name": "Verify", "gate": "verification-gate", "artifact": null, "next": ["review"] },
-    { "id": "review", "name": "Review", "gate": "review-gate", "artifact": "review.md", "next": ["release"] },
-    { "id": "release", "name": "Release", "gate": "release-gate", "artifact": "release.md", "next": ["done"] },
+    {
+      "id": "discover",
+      "name": "Discover",
+      "gate": null,
+      "artifact": "problem.md",
+      "next": ["specify"]
+    },
+    {
+      "id": "specify",
+      "name": "Specify",
+      "gate": "specification-gate",
+      "artifact": "specify.md",
+      "next": ["plan"]
+    },
+    {
+      "id": "plan",
+      "name": "Plan",
+      "gate": "plan-gate",
+      "artifact": "plan.md",
+      "next": ["develop"]
+    },
+    {
+      "id": "develop",
+      "name": "Develop",
+      "gate": "implementation-gate",
+      "artifact": "decisions.md",
+      "next": ["verify"]
+    },
+    {
+      "id": "verify",
+      "name": "Verify",
+      "gate": "verification-gate",
+      "artifact": null,
+      "next": ["review"]
+    },
+    {
+      "id": "review",
+      "name": "Review",
+      "gate": "review-gate",
+      "artifact": "review.md",
+      "next": ["release"]
+    },
+    {
+      "id": "release",
+      "name": "Release",
+      "gate": "release-gate",
+      "artifact": "release.md",
+      "next": ["done"]
+    },
     { "id": "done", "name": "Done", "gate": null, "artifact": null, "next": [] }
   ]
 }

@@ -16,7 +16,11 @@ const steps = [
 
 let allOk = true
 for (const [label, argv] of steps) {
-  const result = spawnSync(argv[0], argv.slice(1), { cwd: ROOT, encoding: 'utf8', timeout: 900_000 })
+  const result = spawnSync(argv[0], argv.slice(1), {
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 900_000,
+  })
   const ok = result.status === 0
   if (!ok) process.stdout.write(`${result.stdout}${result.stderr}`)
   allOk = run(label, { ok }) && allOk

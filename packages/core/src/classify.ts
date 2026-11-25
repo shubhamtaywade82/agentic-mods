@@ -28,8 +28,8 @@ export type CommandAnalysis = {
 export function splitSegments(command: string): string[] {
   return command
     .split(/&&|\|\||;|\||\n/)
-    .map(segment => segment.trim())
-    .filter(segment => segment.length > 0)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
 }
 
 /** A shell-like tokenizer for one simple command. It is not a shell: nothing is expanded. */
@@ -95,7 +95,7 @@ function checkOf(argv: readonly string[]): CheckName | null {
   const base = head.replace(/^.*\//, '')
   const second = argv[1] ?? ''
   const third = argv[2] ?? ''
-  const positional = argv.slice(1).filter(token => !token.startsWith('-'))
+  const positional = argv.slice(1).filter((token) => !token.startsWith('-'))
 
   switch (base) {
     case 'npm':
@@ -138,9 +138,7 @@ function checkOf(argv: readonly string[]): CheckName | null {
     case 'pyright':
       return 'typecheck'
     case 'ruff':
-      return second === 'check' || (second === 'format' && argv.includes('--check'))
-        ? 'lint'
-        : null
+      return second === 'check' || (second === 'format' && argv.includes('--check')) ? 'lint' : null
     case 'pip-audit':
     case 'safety':
     case 'osv-scanner':
@@ -220,8 +218,8 @@ function gitSubcommand(argv: readonly string[]): string | null {
 /** Short flags of a command, as one string: `-rf` gives `rf`, `--force` gives nothing. */
 function shortFlags(argv: readonly string[]): string {
   return argv
-    .filter(token => token.startsWith('-') && !token.startsWith('--'))
-    .map(token => token.slice(1))
+    .filter((token) => token.startsWith('-') && !token.startsWith('--'))
+    .map((token) => token.slice(1))
     .join('')
 }
 
@@ -257,13 +255,13 @@ const DANGER_RULES: readonly DangerRule[] = [
     id: 'cloud-project-delete',
     level: 'always-block',
     reason: 'deletes a cloud project and everything in it',
-    matches: argv => argv[0] === 'gcloud' && argv[1] === 'projects' && argv[2] === 'delete',
+    matches: (argv) => argv[0] === 'gcloud' && argv[1] === 'projects' && argv[2] === 'delete',
   },
   {
     id: 'recursive-force-delete',
     level: 'confirm',
     reason: 'deletes a tree of files without prompts',
-    matches: argv => {
+    matches: (argv) => {
       if (argv[0] !== 'rm') return false
       const flags = shortFlags(argv)
       const recursive = /[rR]/.test(flags) || argv.includes('--recursive')
@@ -275,21 +273,23 @@ const DANGER_RULES: readonly DangerRule[] = [
     id: 'git-force-push',
     level: 'confirm',
     reason: 'rewrites remote history',
-    matches: argv =>
+    matches: (argv) =>
       gitSubcommand(argv) === 'push' &&
-      argv.some(token => token === '--force' || token === '-f' || token.startsWith('--force-with-lease')),
+      argv.some(
+        (token) => token === '--force' || token === '-f' || token.startsWith('--force-with-lease'),
+      ),
   },
   {
     id: 'git-hard-reset',
     level: 'confirm',
     reason: 'discards uncommitted work',
-    matches: argv => gitSubcommand(argv) === 'reset' && argv.includes('--hard'),
+    matches: (argv) => gitSubcommand(argv) === 'reset' && argv.includes('--hard'),
   },
   {
     id: 'git-clean-force',
     level: 'confirm',
     reason: 'deletes untracked files',
-    matches: argv => gitSubcommand(argv) === 'clean' && shortFlags(argv).includes('f'),
+    matches: (argv) => gitSubcommand(argv) === 'clean' && shortFlags(argv).includes('f'),
   },
   {
     id: 'sql-table-destruction',
@@ -301,7 +301,7 @@ const DANGER_RULES: readonly DangerRule[] = [
     id: 'infrastructure-delete',
     level: 'confirm',
     reason: 'deletes cluster or infrastructure resources',
-    matches: argv =>
+    matches: (argv) =>
       (argv[0] === 'kubectl' && argv[1] === 'delete') ||
       (argv[0] === 'helm' && argv[1] === 'uninstall') ||
       (argv[0] === 'terraform' && argv[1] === 'destroy') ||
@@ -312,16 +312,15 @@ const DANGER_RULES: readonly DangerRule[] = [
     id: 'docker-prune',
     level: 'confirm',
     reason: 'removes docker images, containers or volumes',
-    matches: argv =>
-      argv[0] === 'docker' &&
-      (argv[1] === 'system' || argv[1] === 'volume') &&
-      argv[2] === 'prune',
+    matches: (argv) =>
+      argv[0] === 'docker' && (argv[1] === 'system' || argv[1] === 'volume') && argv[2] === 'prune',
   },
   {
     id: 'world-writable',
     level: 'confirm',
     reason: 'makes files world-writable',
-    matches: argv => argv[0] === 'chmod' && shortFlags(argv).includes('R') && argv.includes('777'),
+    matches: (argv) =>
+      argv[0] === 'chmod' && shortFlags(argv).includes('R') && argv.includes('777'),
   },
 ]
 
@@ -357,9 +356,36 @@ export function analyzeCommand(command: string): CommandAnalysis {
 }
 
 const READ_VERBS = new Set([
-  'cat', 'less', 'more', 'head', 'tail', 'grep', 'egrep', 'fgrep', 'rg', 'sed', 'awk', 'source',
-  'xxd', 'od', 'strings', 'base64', 'bat', 'nl', 'tac', 'cut', 'sort', 'diff', 'cp', 'mv', 'tar',
-  'zip', 'scp', 'rsync', 'curl', 'wget',
+  'cat',
+  'less',
+  'more',
+  'head',
+  'tail',
+  'grep',
+  'egrep',
+  'fgrep',
+  'rg',
+  'sed',
+  'awk',
+  'source',
+  'xxd',
+  'od',
+  'strings',
+  'base64',
+  'bat',
+  'nl',
+  'tac',
+  'cut',
+  'sort',
+  'diff',
+  'cp',
+  'mv',
+  'tar',
+  'zip',
+  'scp',
+  'rsync',
+  'curl',
+  'wget',
 ])
 
 /**
@@ -380,7 +406,8 @@ export function secretFileReads(
     for (const token of argv.slice(1)) {
       if (token.startsWith('-')) continue
       const candidate = token.replace(/^[<>]+/, '')
-      if (candidate !== '' && isProtectedPath(candidate, protectedGlobs, exceptions)) hits.push(candidate)
+      if (candidate !== '' && isProtectedPath(candidate, protectedGlobs, exceptions))
+        hits.push(candidate)
     }
   }
   return [...new Set(hits)]
@@ -388,7 +415,9 @@ export function secretFileReads(
 
 /** Dangers ordered by severity: always-block first. */
 export function sortDangers(dangers: readonly DangerHit[]): DangerHit[] {
-  return [...dangers].sort((a, b) => (a.level === b.level ? 0 : a.level === 'always-block' ? -1 : 1))
+  return [...dangers].sort((a, b) =>
+    a.level === b.level ? 0 : a.level === 'always-block' ? -1 : 1,
+  )
 }
 
 /** An argv as stored in configuration: a non-empty array of non-empty strings. */
@@ -396,6 +425,6 @@ export function isArgv(value: unknown): value is string[] {
   return (
     Array.isArray(value) &&
     value.length > 0 &&
-    value.every(item => typeof item === 'string' && item.length > 0)
+    value.every((item) => typeof item === 'string' && item.length > 0)
   )
 }

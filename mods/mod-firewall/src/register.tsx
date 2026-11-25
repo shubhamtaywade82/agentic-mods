@@ -26,7 +26,7 @@ function executableOf(argv: readonly string[]): string {
 
 async function audit($: EngineInterface, record: Record<string, unknown>): Promise<void> {
   const path = stateRelativePath('audit/firewall.jsonl')
-  let existing = ''
+  let existing: string
   try {
     existing = await $.fs.read(path)
   } catch {
@@ -44,7 +44,7 @@ async function decide(
   allowed: readonly string[],
 ): Promise<string | null> {
   if (origin === 'engine' || isTrustedMod(origin)) return null
-  const config = (await loadConfig(path => $.fs.read(path))).value.firewall
+  const config = (await loadConfig((path) => $.fs.read(path))).value.firewall
   const isAllowed = allowed.includes(target)
   await audit($, { plugin: PLUGIN, kind, origin, target, allowed: isAllowed, mode: config.mode })
   if (isAllowed || config.mode === 'observe') return null
@@ -60,15 +60,15 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'firewall',
-      description: "Show recent network and process decisions made for other mods",
+      description: 'Show recent network and process decisions made for other mods',
     })
     return next(e)
   })
 
-  on('command.run', { command: 'firewall' }, async $ => {
+  on('command.run', { command: 'firewall' }, async ($) => {
     const path = stateRelativePath('audit/firewall.jsonl')
     try {
-      const lines = (await $.fs.read(path)).split('\n').filter(line => line.length > 0)
+      const lines = (await $.fs.read(path)).split('\n').filter((line) => line.length > 0)
       return { text: lines.slice(-20).join('\n') || 'No decisions recorded yet.' }
     } catch {
       return { text: 'No decisions recorded yet.' }
@@ -81,7 +81,7 @@ export function register(on: On): void {
       'http',
       next.origin.plugin,
       hostOf(e.url),
-      (await loadConfig(path => $.fs.read(path))).value.firewall.allowHosts,
+      (await loadConfig((path) => $.fs.read(path))).value.firewall.allowHosts,
     )
     return denial === null ? next(e) : { deny: denial }
   }).catch((_$, e, next) =>
@@ -94,7 +94,7 @@ export function register(on: On): void {
       'process',
       next.origin.plugin,
       executableOf(e.argv),
-      (await loadConfig(path => $.fs.read(path))).value.firewall.allowProcesses,
+      (await loadConfig((path) => $.fs.read(path))).value.firewall.allowProcesses,
     )
     return denial === null ? next(e) : { deny: denial }
   }).catch((_$, e, next) =>

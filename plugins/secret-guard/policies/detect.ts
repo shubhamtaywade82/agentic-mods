@@ -34,7 +34,7 @@ export type SecretKind =
   | 'dhan-credential'
   | 'db-url-credentials'
   | 'password-assignment'
-  | 'unknown';
+  | 'unknown'
 
 export type SecretSource =
   | 'file-read'
@@ -43,22 +43,32 @@ export type SecretSource =
   | 'git-staged'
   | 'git-commit'
   | 'git-push'
-  | 'mcp-response';
+  | 'mcp-response'
 
 export interface DetectionRule {
-  id: string;
-  kind: SecretKind;
-  pattern: string;
-  severity: 'high' | 'critical' | 'medium';
-  enabled: boolean;
+  id: string
+  kind: SecretKind
+  pattern: string
+  severity: 'high' | 'critical' | 'medium'
+  enabled: boolean
 }
 
 // Vendored from @agentic-sdlc-kit/contracts (detection-rule.ts); keep in sync.
 /** ECMAScript has no (?i) flag: build case-insensitive classes explicitly. */
 const ci = (word: string): string =>
-  [...word].map((c) => `[${c.toLowerCase()}${c.toUpperCase()}]`).join('');
+  [...word].map((c) => `[${c.toLowerCase()}${c.toUpperCase()}]`).join('')
 
-const PLACEHOLDER_WORDS = ['your', 'xxx', 'example', 'changeme', 'placeholder', 'replace', 'none', 'null', 'todo'];
+const PLACEHOLDER_WORDS = [
+  'your',
+  'xxx',
+  'example',
+  'changeme',
+  'placeholder',
+  'replace',
+  'none',
+  'null',
+  'todo',
+]
 
 /**
  * DhanHQ credentials, matched by NAME because no official token format is
@@ -70,18 +80,18 @@ const PLACEHOLDER_WORDS = ['your', 'xxx', 'example', 'changeme', 'placeholder', 
  *    does not match) and is not a placeholder.
  */
 // The redactor's own output must never re-match as a credential (idempotence).
-const PLACEHOLDER = `(?!(?:${PLACEHOLDER_WORDS.map(ci).join('|')}|\\[REDACTED))`;
+const PLACEHOLDER = `(?!(?:${PLACEHOLDER_WORDS.map(ci).join('|')}|\\[REDACTED))`
 
 const DHAN_NAMED_PATTERN =
   `${ci('dhan')}[_-]?(?:${ci('access')}[_-]?${ci('token')}|${ci('api')}[_-]?${ci('secret')}|${ci('pin')}|${ci('totp')}[_-]?${ci('secret')})` +
-  `["']?\\s*[:=]\\s*["']?(?![$<{])${PLACEHOLDER}([^\\s"']{6,})`;
+  `["']?\\s*[:=]\\s*["']?(?![$<{])${PLACEHOLDER}([^\\s"']{6,})`
 
 const DHAN_GENERIC_PATTERN =
   `${ci('dhan')}[A-Za-z0-9_-]{0,30}?(?:${ci('token')}|${ci('secret')}|${ci('key')})["']?\\s*[:=]\\s*["']?` +
-  `${PLACEHOLDER}(?=[A-Za-z0-9_.+/=-]*[0-9])([A-Za-z0-9_.+/=-]{20,})`;
+  `${PLACEHOLDER}(?=[A-Za-z0-9_.+/=-]*[0-9])([A-Za-z0-9_.+/=-]{20,})`
 
 /** Bearer credential: header.payload.signature, base64url '{"' prefixes. */
-const JWT_PATTERN = 'eyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}';
+const JWT_PATTERN = 'eyJ[A-Za-z0-9_-]{10,}\\.eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}'
 
 /**
  * Built-in detection rules (the kit's M11 baseline set). ECMAScript regex
@@ -160,7 +170,8 @@ export const BUILTIN_DETECTION_RULES: ReadonlyArray<DetectionRule> = [
     // Covers sk-..., sk-proj-..., sk-svcacct-..., sk-admin-...; the lookahead
     // keeps Anthropic keys (sk-ant-) out of this rule. The digit lookahead
     // rejects English identifiers such as sk-learning-about-sorting.
-    pattern: '(?<![A-Za-z0-9])sk-(?!ant-)(?:proj-|svcacct-|admin-)?(?=[A-Za-z0-9_-]*[0-9])[A-Za-z0-9_-]{32,}',
+    pattern:
+      '(?<![A-Za-z0-9])sk-(?!ant-)(?:proj-|svcacct-|admin-)?(?=[A-Za-z0-9_-]*[0-9])[A-Za-z0-9_-]{32,}',
     severity: 'critical',
     enabled: true,
   },
@@ -217,50 +228,46 @@ export const BUILTIN_DETECTION_RULES: ReadonlyArray<DetectionRule> = [
     severity: 'critical',
     enabled: true,
   },
-];
+]
 
 export interface SecretFinding {
-  id: string;
-  kind: SecretKind;
+  id: string
+  kind: SecretKind
   location: {
-    filePath?: string;
-    line?: number;
-    column?: number;
-    offset: number;
-    length: number;
-    source: SecretSource;
-  };
-  severity: 'high' | 'critical' | 'medium';
+    filePath?: string
+    line?: number
+    column?: number
+    offset: number
+    length: number
+    source: SecretSource
+  }
+  severity: 'high' | 'critical' | 'medium'
   /** First characters + length — NEVER the full secret value. */
-  redactedPreview: string;
-  redacted: boolean;
+  redactedPreview: string
+  redacted: boolean
 }
 
 export type ScannerOutcome =
-  | 'clean'
-  | 'findings'
-  | 'failed'
-  | 'skipped-too-large'
-  | 'skipped-ignored';
+  'clean' | 'findings' | 'failed' | 'skipped-too-large' | 'skipped-ignored'
 
 export interface ScannerResult {
-  outcome: ScannerOutcome;
+  outcome: ScannerOutcome
   /** Present only when outcome === 'findings'. */
-  findings: Array<{ id: string; kind: string; redactedPreview: string }>;
+  findings: Array<{ id: string; kind: string; redactedPreview: string }>
   /** Present only when outcome === 'failed'. NEVER includes the input. */
-  error?: { code: string; message: string };
+  error?: { code: string; message: string }
   /** Code units scanned (or skipped). */
-  charsProcessed: number;
-  durationMs: number;
+  charsProcessed: number
+  durationMs: number
 }
 
 export interface RedactionPolicy {
-  schemaVersion: 1;
-  placeholderFormat: string;
-  redactPartial: boolean;
-  redactRepeated: boolean;
-  maxInputChars: number;
-  ignorePaths: string[];
+  schemaVersion: 1
+  placeholderFormat: string
+  redactPartial: boolean
+  redactRepeated: boolean
+  maxInputChars: number
+  ignorePaths: string[]
 }
 
 export const DEFAULT_REDACTION_POLICY: RedactionPolicy = {
@@ -270,7 +277,7 @@ export const DEFAULT_REDACTION_POLICY: RedactionPolicy = {
   redactRepeated: true,
   maxInputChars: 1_000_000,
   ignorePaths: [],
-};
+}
 
 /**
  * What the redactor can honestly claim about its output:
@@ -279,36 +286,36 @@ export const DEFAULT_REDACTION_POLICY: RedactionPolicy = {
  *  - not-scanned:    NOT scanned (e.g. over the size limit). Never "clean".
  *  - failed:         scanned, but redaction could not be verified complete.
  */
-export type RedactionStatus = 'verified-clean' | 'redacted' | 'not-scanned' | 'failed';
+export type RedactionStatus = 'verified-clean' | 'redacted' | 'not-scanned' | 'failed'
 
 export interface RedactionResult {
-  redactedText: string;
-  findings: SecretFinding[];
-  status: RedactionStatus;
+  redactedText: string
+  findings: SecretFinding[]
+  status: RedactionStatus
   // True only after the redactor VERIFIED every value is gone (and scanned).
-  fullyRedacted: boolean;
+  fullyRedacted: boolean
 }
 
 /** Stands in for text that was not scanned: the raw text must never pass through. */
 export function withheldMarker(length: number, limit: number): string {
-  return `[WITHHELD: ${length} chars exceed the secret-scan limit of ${limit}; output was not scanned]`;
+  return `[WITHHELD: ${length} chars exceed the secret-scan limit of ${limit}; output was not scanned]`
 }
 
 function redactedPreview(value: string): string {
   if (value.length < 12) {
-    return `[REDACTED:${value.length}]`;
+    return `[REDACTED:${value.length}]`
   }
-  return `${value.slice(0, 4)}…${value.slice(-4)}`;
+  return `${value.slice(0, 4)}…${value.slice(-4)}`
 }
 
 interface CompiledRule {
-  rule: DetectionRule;
-  pattern: RegExp;
+  rule: DetectionRule
+  pattern: RegExp
 }
 
 const COMPILED_BUILTINS: ReadonlyArray<CompiledRule> = BUILTIN_DETECTION_RULES.filter(
   (r) => r.enabled,
-).map((rule) => ({ rule, pattern: new RegExp(rule.pattern, 'g') }));
+).map((rule) => ({ rule, pattern: new RegExp(rule.pattern, 'g') }))
 
 /**
  * Detect secrets in text. Returns findings with redacted previews; never
@@ -319,19 +326,19 @@ export function detectSecrets(
   source: SecretSource,
   filePath?: string,
 ): SecretFinding[] {
-  const findings: SecretFinding[] = [];
+  const findings: SecretFinding[] = []
   for (const { rule, pattern } of COMPILED_BUILTINS) {
-    pattern.lastIndex = 0;
-    let m: RegExpExecArray | null;
+    pattern.lastIndex = 0
+    let m: RegExpExecArray | null
     while ((m = pattern.exec(text)) !== null) {
       // A rule with a capture group matches the group; else the whole match.
-      const value = m[1] ?? m[0];
-      if (!value) continue;
-      const offset = m.index + m[0].indexOf(value);
-      const upTo = text.slice(0, offset);
-      const lines = upTo.split('\n');
-      const line = lines.length;
-      const column = (lines[lines.length - 1]?.length ?? 0) + 1;
+      const value = m[1] ?? m[0]
+      if (!value) continue
+      const offset = m.index + m[0].indexOf(value)
+      const upTo = text.slice(0, offset)
+      const lines = upTo.split('\n')
+      const line = lines.length
+      const column = (lines[lines.length - 1]?.length ?? 0) + 1
       findings.push({
         id: `F-${findings.length + 1}`,
         kind: rule.kind,
@@ -346,12 +353,12 @@ export function detectSecrets(
         severity: rule.severity,
         redactedPreview: redactedPreview(value),
         redacted: false,
-      });
+      })
       // Avoid an infinite loop on zero-length matches.
-      if (m.index === pattern.lastIndex) pattern.lastIndex++;
+      if (m.index === pattern.lastIndex) pattern.lastIndex++
     }
   }
-  return findings;
+  return findings
 }
 
 /**
@@ -364,15 +371,15 @@ export function scanText(
   source: SecretSource,
   filePath?: string,
 ): ScannerResult {
-  const start = Date.now();
-  const chars = text.length;
+  const start = Date.now()
+  const chars = text.length
   if (chars > policy.maxInputChars) {
     return {
       outcome: 'skipped-too-large',
       findings: [],
       charsProcessed: chars,
       durationMs: Date.now() - start,
-    };
+    }
   }
   if (filePath !== undefined && policy.ignorePaths.includes(filePath)) {
     return {
@@ -380,16 +387,20 @@ export function scanText(
       findings: [],
       charsProcessed: chars,
       durationMs: Date.now() - start,
-    };
+    }
   }
   try {
-    const findings = detectSecrets(text, source, filePath);
+    const findings = detectSecrets(text, source, filePath)
     return {
       outcome: findings.length === 0 ? 'clean' : 'findings',
-      findings: findings.map((f) => ({ id: f.id, kind: f.kind, redactedPreview: f.redactedPreview })),
+      findings: findings.map((f) => ({
+        id: f.id,
+        kind: f.kind,
+        redactedPreview: f.redactedPreview,
+      })),
       charsProcessed: chars,
       durationMs: Date.now() - start,
-    };
+    }
   } catch (e) {
     return {
       outcome: 'failed',
@@ -397,7 +408,7 @@ export function scanText(
       error: { code: 'SCANNER_ERROR', message: e instanceof Error ? e.message : String(e) },
       charsProcessed: chars,
       durationMs: Date.now() - start,
-    };
+    }
   }
 }
 
@@ -405,7 +416,7 @@ function formatPlaceholder(policy: RedactionPolicy, f: SecretFinding): string {
   return policy.placeholderFormat
     .replace('<kind>', f.kind)
     .replace('<id>', f.id)
-    .replace('<len>', String(f.location.length));
+    .replace('<len>', String(f.location.length))
 }
 
 /**
@@ -414,12 +425,12 @@ function formatPlaceholder(policy: RedactionPolicy, f: SecretFinding): string {
  * confirmed gone from the output.
  */
 interface Span {
-  start: number;
-  end: number;
-  finding: SecretFinding;
+  start: number
+  end: number
+  finding: SecretFinding
 }
 
-const SEVERITY_RANK: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+const SEVERITY_RANK: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 }
 
 /**
  * Findings can overlap or share a range (a name-anchored rule and a
@@ -435,20 +446,20 @@ function mergeSpans(findings: ReadonlyArray<SecretFinding>): Span[] {
       end: f.location.offset + f.location.length,
       finding: f,
     }))
-    .sort((a, b) => a.start - b.start || b.end - a.end);
-  const merged: Span[] = [];
+    .sort((a, b) => a.start - b.start || b.end - a.end)
+  const merged: Span[] = []
   for (const s of spans) {
-    const last = merged[merged.length - 1];
+    const last = merged[merged.length - 1]
     if (last && s.start < last.end) {
-      last.end = Math.max(last.end, s.end);
+      last.end = Math.max(last.end, s.end)
       if ((SEVERITY_RANK[s.finding.severity] ?? 0) > (SEVERITY_RANK[last.finding.severity] ?? 0)) {
-        last.finding = s.finding;
+        last.finding = s.finding
       }
     } else {
-      merged.push({ ...s });
+      merged.push({ ...s })
     }
   }
-  return merged;
+  return merged
 }
 
 export function redactSecrets(
@@ -464,32 +475,34 @@ export function redactSecrets(
       findings: [],
       status: 'not-scanned',
       fullyRedacted: false,
-    };
+    }
   }
-  const findings = detectSecrets(text, source, filePath);
+  const findings = detectSecrets(text, source, filePath)
   if (findings.length === 0) {
-    return { redactedText: text, findings: [], status: 'verified-clean', fullyRedacted: true };
+    return { redactedText: text, findings: [], status: 'verified-clean', fullyRedacted: true }
   }
-  let redactedText = text;
-  const updatedFindings: SecretFinding[] = [];
+  let redactedText = text
+  const updatedFindings: SecretFinding[] = []
   // Replace from the end so earlier offsets stay valid.
   for (const sp of mergeSpans(findings).reverse()) {
     redactedText =
-      redactedText.slice(0, sp.start) + formatPlaceholder(policy, sp.finding) + redactedText.slice(sp.end);
+      redactedText.slice(0, sp.start) +
+      formatPlaceholder(policy, sp.finding) +
+      redactedText.slice(sp.end)
   }
   // Verify: re-run the detector on the redacted output and check each
   // original value is really gone.
-  const recheck = detectSecrets(redactedText, source, filePath);
+  const recheck = detectSecrets(redactedText, source, filePath)
   for (const f of findings) {
-    const originalValue = text.slice(f.location.offset, f.location.offset + f.location.length);
-    const stillAppears = redactedText.includes(originalValue);
-    updatedFindings.push({ ...f, redacted: !stillAppears });
+    const originalValue = text.slice(f.location.offset, f.location.offset + f.location.length)
+    const stillAppears = redactedText.includes(originalValue)
+    updatedFindings.push({ ...f, redacted: !stillAppears })
   }
-  const fullyRedacted = updatedFindings.every((f) => f.redacted) && recheck.length === 0;
+  const fullyRedacted = updatedFindings.every((f) => f.redacted) && recheck.length === 0
   return {
     redactedText,
     findings: updatedFindings,
     status: fullyRedacted ? 'redacted' : 'failed',
     fullyRedacted,
-  };
+  }
 }

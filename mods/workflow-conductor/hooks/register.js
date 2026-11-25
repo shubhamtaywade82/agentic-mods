@@ -69,7 +69,8 @@ function parseWorkflow(input) {
     if (next === null) return { ok: false, error: `stage ${raw["id"]} needs a next list` };
     const gate = raw["gate"] === null || raw["gate"] === void 0 ? null : raw["gate"];
     const artifact = raw["artifact"] === null || raw["artifact"] === void 0 ? null : raw["artifact"];
-    if (gate !== null && typeof gate !== "string") return { ok: false, error: `stage ${raw["id"]} gate must be a string` };
+    if (gate !== null && typeof gate !== "string")
+      return { ok: false, error: `stage ${raw["id"]} gate must be a string` };
     if (artifact !== null && typeof artifact !== "string") {
       return { ok: false, error: `stage ${raw["id"]} artifact must be a string` };
     }
@@ -79,7 +80,8 @@ function parseWorkflow(input) {
   if (!ids.has(start)) return { ok: false, error: `start stage ${start} is not defined` };
   for (const stage of stages) {
     for (const target of stage.next) {
-      if (!ids.has(target)) return { ok: false, error: `stage ${stage.id} points at undefined ${target}` };
+      if (!ids.has(target))
+        return { ok: false, error: `stage ${stage.id} points at undefined ${target}` };
     }
   }
   return { ok: true, value: { id, description, start, stages } };
@@ -92,7 +94,8 @@ function parseGates(input) {
       return { ok: false, error: `gate ${id} needs a description` };
     }
     const facts = stringsOf(raw["facts"]);
-    if (facts === null || facts.length === 0) return { ok: false, error: `gate ${id} needs a non-empty facts list` };
+    if (facts === null || facts.length === 0)
+      return { ok: false, error: `gate ${id} needs a non-empty facts list` };
     out[id] = { id, description: raw["description"], facts };
   }
   return { ok: true, value: out };
@@ -139,9 +142,14 @@ function advanceRun(definition, gates, run, target, facts, at) {
     return { ok: false, reason: `${current.id} cannot move to ${target}`, evaluation: null };
   }
   const targetStage = stageOf(definition, target);
-  if (targetStage === void 0) return { ok: false, reason: `${target} is not a stage`, evaluation: null };
+  if (targetStage === void 0)
+    return { ok: false, reason: `${target} is not a stage`, evaluation: null };
   const gateId = current.gate;
-  const evaluation = gateId === null ? null : evaluateGate(gates[gateId] ?? { id: gateId, description: "", facts: [] }, facts, run.exceptions);
+  const evaluation = gateId === null ? null : evaluateGate(
+    gates[gateId] ?? { id: gateId, description: "", facts: [] },
+    facts,
+    run.exceptions
+  );
   if (evaluation !== null && !evaluation.allowed) {
     return { ok: false, reason: `${current.id} gate is not satisfied`, evaluation };
   }
@@ -161,13 +169,55 @@ var feature_development_default = {
   description: "Default workflow for a feature: discover, specify, plan, develop, verify, review, release.",
   start: "discover",
   stages: [
-    { id: "discover", name: "Discover", gate: null, artifact: "problem.md", next: ["specify"] },
-    { id: "specify", name: "Specify", gate: "specification-gate", artifact: "specify.md", next: ["plan"] },
-    { id: "plan", name: "Plan", gate: "plan-gate", artifact: "plan.md", next: ["develop"] },
-    { id: "develop", name: "Develop", gate: "implementation-gate", artifact: "decisions.md", next: ["verify"] },
-    { id: "verify", name: "Verify", gate: "verification-gate", artifact: null, next: ["review"] },
-    { id: "review", name: "Review", gate: "review-gate", artifact: "review.md", next: ["release"] },
-    { id: "release", name: "Release", gate: "release-gate", artifact: "release.md", next: ["done"] },
+    {
+      id: "discover",
+      name: "Discover",
+      gate: null,
+      artifact: "problem.md",
+      next: ["specify"]
+    },
+    {
+      id: "specify",
+      name: "Specify",
+      gate: "specification-gate",
+      artifact: "specify.md",
+      next: ["plan"]
+    },
+    {
+      id: "plan",
+      name: "Plan",
+      gate: "plan-gate",
+      artifact: "plan.md",
+      next: ["develop"]
+    },
+    {
+      id: "develop",
+      name: "Develop",
+      gate: "implementation-gate",
+      artifact: "decisions.md",
+      next: ["verify"]
+    },
+    {
+      id: "verify",
+      name: "Verify",
+      gate: "verification-gate",
+      artifact: null,
+      next: ["review"]
+    },
+    {
+      id: "review",
+      name: "Review",
+      gate: "review-gate",
+      artifact: "review.md",
+      next: ["release"]
+    },
+    {
+      id: "release",
+      name: "Release",
+      gate: "release-gate",
+      artifact: "release.md",
+      next: ["done"]
+    },
     { id: "done", name: "Done", gate: null, artifact: null, next: [] }
   ]
 };
@@ -178,10 +228,28 @@ var tdd_default = {
   description: "Red, green, refactor cycles with behavioral RED evidence.",
   start: "specify",
   stages: [
-    { id: "specify", name: "Specify behavior", gate: "specification-gate", artifact: "specify.md", next: ["red"] },
+    {
+      id: "specify",
+      name: "Specify behavior",
+      gate: "specification-gate",
+      artifact: "specify.md",
+      next: ["red"]
+    },
     { id: "red", name: "RED", gate: "tdd-red-gate", artifact: null, next: ["green"] },
-    { id: "green", name: "GREEN", gate: "tdd-green-gate", artifact: null, next: ["refactor", "complete"] },
-    { id: "refactor", name: "REFACTOR", gate: "tdd-refactor-gate", artifact: null, next: ["red", "complete"] },
+    {
+      id: "green",
+      name: "GREEN",
+      gate: "tdd-green-gate",
+      artifact: null,
+      next: ["refactor", "complete"]
+    },
+    {
+      id: "refactor",
+      name: "REFACTOR",
+      gate: "tdd-refactor-gate",
+      artifact: null,
+      next: ["red", "complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -192,10 +260,34 @@ var bug_fix_default = {
   description: "Reproduce, fix with a regression test, verify, review.",
   start: "reproduce",
   stages: [
-    { id: "reproduce", name: "Reproduce", gate: "defect-reproduction-gate", artifact: "defect.md", next: ["fix"] },
-    { id: "fix", name: "Fix", gate: "defect-fix-gate", artifact: "root-cause.md", next: ["verify"] },
-    { id: "verify", name: "Verify", gate: "verification-gate", artifact: null, next: ["review"] },
-    { id: "review", name: "Review", gate: "review-gate", artifact: null, next: ["complete"] },
+    {
+      id: "reproduce",
+      name: "Reproduce",
+      gate: "defect-reproduction-gate",
+      artifact: "defect.md",
+      next: ["fix"]
+    },
+    {
+      id: "fix",
+      name: "Fix",
+      gate: "defect-fix-gate",
+      artifact: "root-cause.md",
+      next: ["verify"]
+    },
+    {
+      id: "verify",
+      name: "Verify",
+      gate: "verification-gate",
+      artifact: null,
+      next: ["review"]
+    },
+    {
+      id: "review",
+      name: "Review",
+      gate: "review-gate",
+      artifact: null,
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -207,7 +299,13 @@ var regression_default = {
   start: "assess",
   stages: [
     { id: "assess", name: "Assess risk", gate: null, artifact: null, next: ["run"] },
-    { id: "run", name: "Run scope", gate: "verification-gate", artifact: null, next: ["complete"] },
+    {
+      id: "run",
+      name: "Run scope",
+      gate: "verification-gate",
+      artifact: null,
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -218,10 +316,28 @@ var refactoring_default = {
   description: "Capture a behavioral baseline, refactor in increments, compare, verify.",
   start: "baseline",
   stages: [
-    { id: "baseline", name: "Baseline", gate: "behavior-capture-gate", artifact: null, next: ["refactor"] },
+    {
+      id: "baseline",
+      name: "Baseline",
+      gate: "behavior-capture-gate",
+      artifact: null,
+      next: ["refactor"]
+    },
     { id: "refactor", name: "Refactor", gate: null, artifact: null, next: ["compare"] },
-    { id: "compare", name: "Compare", gate: "behavior-lock-gate", artifact: null, next: ["verify"] },
-    { id: "verify", name: "Verify", gate: "verification-gate", artifact: null, next: ["complete"] },
+    {
+      id: "compare",
+      name: "Compare",
+      gate: "behavior-lock-gate",
+      artifact: null,
+      next: ["verify"]
+    },
+    {
+      id: "verify",
+      name: "Verify",
+      gate: "verification-gate",
+      artifact: null,
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -232,8 +348,20 @@ var pull_request_default = {
   description: "Verify the change, then review it against the readiness gates.",
   start: "verify",
   stages: [
-    { id: "verify", name: "Verify", gate: "verification-gate", artifact: null, next: ["review"] },
-    { id: "review", name: "Review", gate: "review-gate", artifact: "review.md", next: ["complete"] },
+    {
+      id: "verify",
+      name: "Verify",
+      gate: "verification-gate",
+      artifact: null,
+      next: ["review"]
+    },
+    {
+      id: "review",
+      name: "Review",
+      gate: "review-gate",
+      artifact: "review.md",
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -244,8 +372,20 @@ var release_default = {
   description: "Release readiness: every release condition and the observability check.",
   start: "readiness",
   stages: [
-    { id: "readiness", name: "Readiness", gate: "release-gate", artifact: "release.md", next: ["observe"] },
-    { id: "observe", name: "Observe", gate: "observability-gate", artifact: null, next: ["complete"] },
+    {
+      id: "readiness",
+      name: "Readiness",
+      gate: "release-gate",
+      artifact: "release.md",
+      next: ["observe"]
+    },
+    {
+      id: "observe",
+      name: "Observe",
+      gate: "observability-gate",
+      artifact: null,
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -257,10 +397,34 @@ var hotfix_default = {
   start: "triage",
   stages: [
     { id: "triage", name: "Triage", gate: null, artifact: "incident.md", next: ["fix"] },
-    { id: "fix", name: "Minimal fix", gate: "defect-fix-gate", artifact: "root-cause.md", next: ["verify"] },
-    { id: "verify", name: "Targeted checks", gate: "verification-gate", artifact: null, next: ["release"] },
-    { id: "release", name: "Release", gate: "release-gate", artifact: "release.md", next: ["observe"] },
-    { id: "observe", name: "Smoke checks", gate: "observability-gate", artifact: null, next: ["complete"] },
+    {
+      id: "fix",
+      name: "Minimal fix",
+      gate: "defect-fix-gate",
+      artifact: "root-cause.md",
+      next: ["verify"]
+    },
+    {
+      id: "verify",
+      name: "Targeted checks",
+      gate: "verification-gate",
+      artifact: null,
+      next: ["release"]
+    },
+    {
+      id: "release",
+      name: "Release",
+      gate: "release-gate",
+      artifact: "release.md",
+      next: ["observe"]
+    },
+    {
+      id: "observe",
+      name: "Smoke checks",
+      gate: "observability-gate",
+      artifact: null,
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -271,12 +435,36 @@ var incident_response_default = {
   description: "Detect, mitigate, diagnose, repair, verify recovery, write the postmortem.",
   start: "detect",
   stages: [
-    { id: "detect", name: "Detect", gate: null, artifact: "incident.md", next: ["mitigate"] },
+    {
+      id: "detect",
+      name: "Detect",
+      gate: null,
+      artifact: "incident.md",
+      next: ["mitigate"]
+    },
     { id: "mitigate", name: "Mitigate", gate: null, artifact: null, next: ["diagnose"] },
     { id: "diagnose", name: "Diagnose", gate: null, artifact: null, next: ["repair"] },
-    { id: "repair", name: "Repair", gate: "defect-fix-gate", artifact: "root-cause.md", next: ["recover"] },
-    { id: "recover", name: "Verify recovery", gate: "observability-gate", artifact: null, next: ["postmortem"] },
-    { id: "postmortem", name: "Postmortem", gate: null, artifact: "postmortem.md", next: ["complete"] },
+    {
+      id: "repair",
+      name: "Repair",
+      gate: "defect-fix-gate",
+      artifact: "root-cause.md",
+      next: ["recover"]
+    },
+    {
+      id: "recover",
+      name: "Verify recovery",
+      gate: "observability-gate",
+      artifact: null,
+      next: ["postmortem"]
+    },
+    {
+      id: "postmortem",
+      name: "Postmortem",
+      gate: null,
+      artifact: "postmortem.md",
+      next: ["complete"]
+    },
     { id: "complete", name: "Complete", gate: null, artifact: null, next: [] }
   ]
 };
@@ -285,81 +473,51 @@ var incident_response_default = {
 var gates_default = {
   "specification-gate": {
     description: "Acceptance criteria are written in Given/When/Then with the non-functional sections.",
-    facts: [
-      "specification"
-    ]
+    facts: ["specification"]
   },
   "plan-gate": {
     description: "A change plan names the files, the tests and the risks.",
-    facts: [
-      "plan"
-    ]
+    facts: ["plan"]
   },
   "implementation-gate": {
     description: "Implementation may start only with a plan and an active, clean change contract.",
-    facts: [
-      "plan",
-      "contract"
-    ]
+    facts: ["plan", "contract"]
   },
   "tdd-red-gate": {
     description: "A behavioral RED failure was observed for the current behavior.",
-    facts: [
-      "tdd-red"
-    ]
+    facts: ["tdd-red"]
   },
   "tdd-green-gate": {
     description: "The targeted test passes after the minimum implementation.",
-    facts: [
-      "tdd-green"
-    ]
+    facts: ["tdd-green"]
   },
   "tdd-refactor-gate": {
     description: "Refactoring kept the affected tests green.",
-    facts: [
-      "tdd-refactor",
-      "regression"
-    ]
+    facts: ["tdd-refactor", "regression"]
   },
   "defect-reproduction-gate": {
     description: "The defect is reproduced, or its reproduction is documented as impossible.",
-    facts: [
-      "defects"
-    ]
+    facts: ["defects"]
   },
   "defect-fix-gate": {
     description: "The regression test exists and the defect no longer reproduces.",
-    facts: [
-      "defect-fix",
-      "regression"
-    ]
+    facts: ["defect-fix", "regression"]
   },
   "behavior-capture-gate": {
     description: "A behavioral baseline was captured before refactoring.",
-    facts: [
-      "behavior-baseline"
-    ]
+    facts: ["behavior-baseline"]
   },
   "behavior-lock-gate": {
     description: "The public surface matches the baseline or changes are approved.",
-    facts: [
-      "behavior"
-    ]
+    facts: ["behavior"]
   },
   "verification-gate": {
     description: "Evidence is current and the regression scope has run.",
-    facts: [
-      "evidence",
-      "regression"
-    ]
+    facts: ["evidence", "regression"]
   },
   "review-gate": {
     description: "Review findings, architecture and compatibility are resolved.",
-    facts: [
-      "review",
-      "architecture",
-      "compat"
-    ]
+    facts: ["review", "architecture", "compat"]
   },
   "release-gate": {
     description: "Every release condition is satisfied.",
@@ -377,9 +535,7 @@ var gates_default = {
   },
   "observability-gate": {
     description: "Health checks pass after the change.",
-    facts: [
-      "observability"
-    ]
+    facts: ["observability"]
   }
 };
 
@@ -403,8 +559,17 @@ for (const raw of RAW_WORKFLOWS) {
 }
 var GATES_RESULT = parseGates(gates_default);
 var GATES = GATES_RESULT.ok ? GATES_RESULT.value : {};
-var IDLE = { active: false, workflow: "", task: "", stage: "", status: "none", blockers: [] };
-var conductor = atom({ plugin: "workflow-conductor", key: "conductor" }, IDLE, { shape: "conductor-1" });
+var IDLE = {
+  active: false,
+  workflow: "",
+  task: "",
+  stage: "",
+  status: "none",
+  blockers: []
+};
+var conductor = atom({ plugin: "workflow-conductor", key: "conductor" }, IDLE, {
+  shape: "conductor-1"
+});
 var EVIDENCE_IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
 var CONTRACT_IDLE = { active: false, objective: "", violations: 0, mode: "warn" };
 var REVIEW_IDLE = { verdict: "UNKNOWN", openHigh: 0, open: 0, reason: "none" };
@@ -412,23 +577,61 @@ var ARCH_IDLE = { verdict: "UNKNOWN", reason: "none", fresh: 0, baseline: 0 };
 var MIGRATION_IDLE = { verdict: "UNKNOWN", findings: [] };
 var RADAR_IDLE = { verdict: "UNKNOWN", changes: [], scan: "none" };
 var BUDGET_IDLE = { verdict: "UNKNOWN", rows: [] };
-var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, { shape: "status-1" });
-var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, { shape: "status-1" });
-var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, { shape: "gate-1" });
-var architecture = atom({ plugin: "architecture-guard", key: "status" }, ARCH_IDLE, { shape: "status-1" });
-var migration = atom({ plugin: "migration-sentinel", key: "status" }, MIGRATION_IDLE, { shape: "status-1" });
-var dependencies = atom({ plugin: "dependency-radar", key: "status" }, RADAR_IDLE, { shape: "status-1" });
-var performance = atom({ plugin: "performance-budget", key: "status" }, BUDGET_IDLE, { shape: "status-1" });
+var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, {
+  shape: "status-1"
+});
+var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, {
+  shape: "status-1"
+});
+var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, {
+  shape: "gate-1"
+});
+var architecture = atom({ plugin: "architecture-guard", key: "status" }, ARCH_IDLE, {
+  shape: "status-1"
+});
+var migration = atom({ plugin: "migration-sentinel", key: "status" }, MIGRATION_IDLE, {
+  shape: "status-1"
+});
+var dependencies = atom({ plugin: "dependency-radar", key: "status" }, RADAR_IDLE, {
+  shape: "status-1"
+});
+var performance = atom({ plugin: "performance-budget", key: "status" }, BUDGET_IDLE, {
+  shape: "status-1"
+});
 var SPEC_IDLE = { verdict: "UNKNOWN", phase: "none", reason: "not run" };
-var specification = atom({ plugin: "specification-guard", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var plan = atom({ plugin: "change-planner", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var regressionGate = atom({ plugin: "regression-orchestrator", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var tddGate = atom({ plugin: "tdd-conductor", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var defectGate = atom({ plugin: "defect-protocol", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var behaviorGate = atom({ plugin: "behavior-lock", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var compatGate = atom({ plugin: "contract-compatibility-guard", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var observabilityGate = atom({ plugin: "observability-verifier", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
-var releaseGate = atom({ plugin: "release-conductor", key: "gate" }, SPEC_IDLE, { shape: "gate-1" });
+var specification = atom({ plugin: "specification-guard", key: "gate" }, SPEC_IDLE, {
+  shape: "gate-1"
+});
+var plan = atom({ plugin: "change-planner", key: "gate" }, SPEC_IDLE, {
+  shape: "gate-1"
+});
+var regressionGate = atom(
+  { plugin: "regression-orchestrator", key: "gate" },
+  SPEC_IDLE,
+  { shape: "gate-1" }
+);
+var tddGate = atom({ plugin: "tdd-conductor", key: "gate" }, SPEC_IDLE, {
+  shape: "gate-1"
+});
+var defectGate = atom({ plugin: "defect-protocol", key: "gate" }, SPEC_IDLE, {
+  shape: "gate-1"
+});
+var behaviorGate = atom({ plugin: "behavior-lock", key: "gate" }, SPEC_IDLE, {
+  shape: "gate-1"
+});
+var compatGate = atom(
+  { plugin: "contract-compatibility-guard", key: "gate" },
+  SPEC_IDLE,
+  { shape: "gate-1" }
+);
+var observabilityGate = atom(
+  { plugin: "observability-verifier", key: "gate" },
+  SPEC_IDLE,
+  { shape: "gate-1" }
+);
+var releaseGate = atom({ plugin: "release-conductor", key: "gate" }, SPEC_IDLE, {
+  shape: "gate-1"
+});
 async function factsOf($) {
   const [ev, ct, rv, ar, mg, rd, bd, sp, pl, rg, td, df, bh, cp, ob, rl] = await Promise.all([
     read($, evidence),
@@ -533,7 +736,7 @@ Task: ${task}
 }
 async function appendArtifact($, task, file, text) {
   const path = stateRelativePath(`tasks/${task}/${file}`);
-  let existing = "";
+  let existing;
   try {
     existing = await $.fs.read(path);
   } catch {
@@ -555,7 +758,13 @@ function statusText(definition, run, blockers) {
   }
   if (blockers.length > 0) lines.push("", "Blocked:", ...blockers.map((item) => `  ${item}`));
   if (run.exceptions.length > 0) {
-    lines.push("", "Approved deferrals:", ...run.exceptions.map((item) => `  ${item.gate}: ${item.reason} (approved by ${item.approvedBy})`));
+    lines.push(
+      "",
+      "Approved deferrals:",
+      ...run.exceptions.map(
+        (item) => `  ${item.gate}: ${item.reason} (approved by ${item.approvedBy})`
+      )
+    );
   }
   return lines.join("\n");
 }
@@ -565,8 +774,14 @@ function register(on) {
       name: "workflow",
       description: "Delivery workflow: /workflow start|status|advance|defer|cancel"
     });
-    await $.command.register({ name: "record", description: "Append to a task artifact: /record <file.md> <text>" });
-    await $.command.register({ name: "decision", description: "Record a decision: /decision <title> | <decision> | <consequences>" });
+    await $.command.register({
+      name: "record",
+      description: "Append to a task artifact: /record <file.md> <text>"
+    });
+    await $.command.register({
+      name: "decision",
+      description: "Record a decision: /decision <title> | <decision> | <consequences>"
+    });
     return next(e);
   });
   on("command.run", { command: "workflow" }, async ($, e) => {
@@ -590,7 +805,8 @@ function register(on) {
       await saveRun($, started);
       return { text: statusText(definition2, started, await blockersOf($, started, definition2)) };
     }
-    if (run === null) return { text: "No workflow is running. Use /workflow start <workflow> <task-id>." };
+    if (run === null)
+      return { text: "No workflow is running. Use /workflow start <workflow> <task-id>." };
     const definition = definitionOf(run);
     if (definition === void 0) return { text: `Workflow ${run.workflowId} is not available.` };
     if (subcommand === "status") {
@@ -600,14 +816,16 @@ function register(on) {
     if (subcommand === "advance") {
       const current = stageOf(definition, run.currentStage);
       const target = rest[0] ?? (current !== void 0 && current.next.length === 1 ? current.next[0] : void 0);
-      if (target === void 0) return { text: `Name the next stage: one of ${current?.next.join(", ") ?? "none"}` };
+      if (target === void 0)
+        return { text: `Name the next stage: one of ${current?.next.join(", ") ?? "none"}` };
       const facts = withDeferrals(await factsOf($), run.exceptions);
       const result = advanceRun(definition, GATES, run, target, facts, await $.clock.now());
       if (!result.ok) {
         const evaluation = result.evaluation;
         const lines = [result.reason];
         if (evaluation !== null) {
-          if (evaluation.missing.length > 0) lines.push(`missing evidence: ${evaluation.missing.join(", ")}`);
+          if (evaluation.missing.length > 0)
+            lines.push(`missing evidence: ${evaluation.missing.join(", ")}`);
           if (evaluation.failing.length > 0) lines.push(`failing: ${evaluation.failing.join(", ")}`);
         }
         return { text: lines.join("\n") };
@@ -615,24 +833,38 @@ function register(on) {
       const stage = stageOf(definition, target);
       if (stage?.artifact) await ensureArtifact($, run.taskId, stage.artifact, stage.name);
       await saveRun($, result.run);
-      return { text: statusText(definition, result.run, await blockersOf($, result.run, definition)) };
+      return {
+        text: statusText(definition, result.run, await blockersOf($, result.run, definition))
+      };
     }
     if (subcommand === "defer") {
       const [gateId = "", ...reasonWords] = rest;
       const reason = truncate(reasonWords.join(" ").trim(), 300);
       if (GATES[gateId] === void 0 || reason === "") {
-        return { text: "Usage: /workflow defer <gate-id> <reason>. The reason is recorded with its approver." };
+        return {
+          text: "Usage: /workflow defer <gate-id> <reason>. The reason is recorded with its approver."
+        };
       }
       const approver = (await $.ui.ask(`Who approves deferring ${gateId}? Enter a name or role.`)).trim();
       if (approver === "") return { text: "No approver given; nothing was deferred." };
-      const exception = { gate: gateId, reason, approvedBy: truncate(approver, 120), at: await $.clock.now() };
+      const exception = {
+        gate: gateId,
+        reason,
+        approvedBy: truncate(approver, 120),
+        at: await $.clock.now()
+      };
       const updated = { ...run, exceptions: [...run.exceptions, exception] };
       await saveRun($, updated);
-      await appendArtifact($, run.taskId, "decision-log.md", `## Deferred ${gateId}
+      await appendArtifact(
+        $,
+        run.taskId,
+        "decision-log.md",
+        `## Deferred ${gateId}
 
 ${reason}
 
-Approved by: ${exception.approvedBy}`);
+Approved by: ${exception.approvedBy}`
+      );
       return { text: `${gateId} deferred with approval. Missing evidence stays visible in status.` };
     }
     if (subcommand === "cancel") {
@@ -646,7 +878,8 @@ Approved by: ${exception.approvedBy}`);
     const [file = "", ...rest] = e.args.trim().split(/\s+/);
     const text = rest.join(" ").trim();
     if (run === null) return { text: "No task is running." };
-    if (!/^[a-z0-9-]+\.md$/.test(file) || text === "") return { text: "Usage: /record <name.md> <text>" };
+    if (!/^[a-z0-9-]+\.md$/.test(file) || text === "")
+      return { text: "Usage: /record <name.md> <text>" };
     await appendArtifact($, run.taskId, file, truncate(text, 4e3));
     return { text: `Recorded in ${file}.` };
   });
@@ -654,7 +887,8 @@ Approved by: ${exception.approvedBy}`);
     const run = await loadRun($);
     if (run === null) return { text: "No task is running." };
     const [title = "", decision = "", consequences = ""] = e.args.split("|").map((part) => part.trim());
-    if (title === "" || decision === "") return { text: "Usage: /decision <title> | <decision> | <consequences>" };
+    if (title === "" || decision === "")
+      return { text: "Usage: /decision <title> | <decision> | <consequences>" };
     const at = new Date(await $.clock.now()).toISOString();
     await appendArtifact(
       $,
@@ -678,7 +912,7 @@ Approved by: ${exception.approvedBy}`);
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e);
     const current = await read($, conductor);
-    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, current.workflow || "no workflow", " · ", current.task || "-", " · stage ", current.stage || "-", " · ", current.status), current.blockers.map((item) => /* @__PURE__ */ h(Text, { key: item }, "blocked: ", item)));
+    return /* @__PURE__ */ h(Box, { flexDirection: "column" }, /* @__PURE__ */ h(Text, null, current.workflow || "no workflow", " · ", current.task || "-", " · stage ", current.stage || "-", " ", "· ", current.status), current.blockers.map((item) => /* @__PURE__ */ h(Text, { key: item }, "blocked: ", item)));
   });
 }
 export {

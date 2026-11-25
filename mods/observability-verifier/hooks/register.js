@@ -42,7 +42,9 @@ function truncate(text, max) {
 
 // mods/observability-verifier/src/register.tsx
 var IDLE = { verdict: "UNKNOWN", phase: "none", reason: "no health check run" };
-var gate = atom({ plugin: "observability-verifier", key: "gate" }, IDLE, { shape: "gate-1" });
+var gate = atom({ plugin: "observability-verifier", key: "gate" }, IDLE, {
+  shape: "gate-1"
+});
 async function checksOf($) {
   try {
     const parsed = JSON.parse(await $.fs.read(stateRelativePath("observability.json")));
@@ -66,7 +68,9 @@ function register(on) {
     if (e.args.trim() !== "check") return { text: "Usage: /observe check" };
     const checks = await checksOf($);
     if (checks.length === 0) {
-      return { text: "No checks configured. Add a list of {name, url, expectStatus} to .agentic-mods/observability.json." };
+      return {
+        text: "No checks configured. Add a list of {name, url, expectStatus} to .agentic-mods/observability.json."
+      };
     }
     const lines = [];
     let failures = 0;
@@ -75,10 +79,14 @@ function register(on) {
         const response = await $.http.fetch(check.url);
         const passed = response.status === check.expectStatus;
         if (!passed) failures++;
-        lines.push(`${check.name}: ${passed ? "PASS" : "FAIL"} (${response.status}, expected ${check.expectStatus})`);
+        lines.push(
+          `${check.name}: ${passed ? "PASS" : "FAIL"} (${response.status}, expected ${check.expectStatus})`
+        );
       } catch (error) {
         failures++;
-        lines.push(`${check.name}: FAIL (${truncate(error instanceof Error ? error.message : "request failed", 120)})`);
+        lines.push(
+          `${check.name}: FAIL (${truncate(error instanceof Error ? error.message : "request failed", 120)})`
+        );
       }
     }
     const verdict = failures === 0 ? "PASS" : "FAIL";

@@ -1,17 +1,21 @@
 import { atom, read, update } from 'claude-code'
 import type { On } from 'claude-code'
 
-import { isAbsolutePath, hasParentSegment, isProtectedPath, loadConfig, normalizePath } from '@agentic-mods/core'
+import {
+  isAbsolutePath,
+  hasParentSegment,
+  isProtectedPath,
+  loadConfig,
+  normalizePath,
+} from '@agentic-mods/core'
 import type { PreviewDocument } from '../types'
 
 const PANE = 'markdown-preview'
 const MAX_BYTES = 200_000
 const IDLE: PreviewDocument = { path: '', text: '' }
-const document = atom(
-  { plugin: 'markdown-preview', key: 'document' } as const,
-  IDLE,
-  { shape: 'document-1' },
-)
+const document = atom({ plugin: 'markdown-preview', key: 'document' } as const, IDLE, {
+  shape: 'document-1',
+})
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
@@ -27,7 +31,7 @@ export function register(on: On): void {
     if (path === '' || isAbsolutePath(path) || hasParentSegment(path)) {
       return { text: 'Usage: /preview <relative path inside the repository>' }
     }
-    const config = (await loadConfig(p => $.fs.read(p))).value.guard
+    const config = (await loadConfig((p) => $.fs.read(p))).value.guard
     if (isProtectedPath(path, config.protectedPaths, config.protectedExceptions)) {
       return { text: `${path} is a protected secret file and is not rendered.` }
     }

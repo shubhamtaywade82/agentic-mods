@@ -4,7 +4,13 @@
   "start": "assess",
   "stages": [
     { "id": "assess", "name": "Assess risk", "gate": null, "artifact": null, "next": ["run"] },
-    { "id": "run", "name": "Run scope", "gate": "verification-gate", "artifact": null, "next": ["complete"] },
+    {
+      "id": "run",
+      "name": "Run scope",
+      "gate": "verification-gate",
+      "artifact": null,
+      "next": ["complete"]
+    },
     { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
   ]
 }

@@ -10,16 +10,27 @@ import { join } from 'node:path'
 import { ROOT, run } from './lib/repo.mjs'
 import { VENDORED } from './lib/vendored.mjs'
 
-const EXCLUDED = new Set(['tests', 'vitest.config.ts', 'package.json', 'tsconfig.json', 'node_modules', '.claude-plugin/types'])
+const EXCLUDED = new Set([
+  'tests',
+  'vitest.config.ts',
+  'package.json',
+  'tsconfig.json',
+  'node_modules',
+  '.claude-plugin/types',
+])
 
 const source = process.argv[2]
 if (!source || !existsSync(join(source, 'plugins'))) {
-  process.stderr.write('usage: node packages/tooling/sync-sdlc-kit.mjs <clone of agentic-sdlc-kit>\n')
+  process.stderr.write(
+    'usage: node packages/tooling/sync-sdlc-kit.mjs <clone of agentic-sdlc-kit>\n',
+  )
   process.exit(1)
 }
 
 const commit = execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
-const remote = execFileSync('git', ['-C', source, 'config', '--get', 'remote.origin.url'], { encoding: 'utf8' }).trim()
+const remote = execFileSync('git', ['-C', source, 'config', '--get', 'remote.origin.url'], {
+  encoding: 'utf8',
+}).trim()
 let allOk = true
 
 for (const name of VENDORED) {
@@ -33,10 +44,10 @@ for (const name of VENDORED) {
   mkdirSync(to, { recursive: true })
   cpSync(from, to, {
     recursive: true,
-    filter: item => {
+    filter: (item) => {
       const rel = item.slice(from.length + 1).replace(/\\/g, '/')
       if (rel === '') return true
-      return ![...EXCLUDED].some(excluded => rel === excluded || rel.startsWith(`${excluded}/`))
+      return ![...EXCLUDED].some((excluded) => rel === excluded || rel.startsWith(`${excluded}/`))
     },
   })
   allOk = run(`vendor plugins/${name} @ ${commit.slice(0, 7)}`, { ok: true }) && allOk

@@ -1,17 +1,23 @@
-import type { On } from 'claude-code'
+import type { EngineInterface, On } from 'claude-code'
 
 import { formatDuration } from '@agentic-mods/core'
 
 const COUNTERS = ['turns', 'tools', 'edits'] as const
 
-async function counter($: Parameters<On>[0] extends never ? never : import('claude-code').EngineInterface, key: string): Promise<number> {
+async function counter(
+  $: Parameters<On>[0] extends never ? never : EngineInterface,
+  key: string,
+): Promise<number> {
   return Number((await $.store.get(key)) ?? 0)
 }
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.store.set('startedAt', await $.clock.now())
-    await $.command.register({ name: 'wrapped', description: 'Summarise this session: turns, tool calls, edits' })
+    await $.command.register({
+      name: 'wrapped',
+      description: 'Summarise this session: turns, tool calls, edits',
+    })
     return next(e)
   })
 
@@ -28,10 +34,10 @@ export function register(on: On): void {
     return next(e)
   })
 
-  on('command.run', { command: 'wrapped' }, async $ => {
+  on('command.run', { command: 'wrapped' }, async ($) => {
     const startedAt = Number((await $.store.get('startedAt')) ?? (await $.clock.now()))
     const elapsed = formatDuration((await $.clock.now()) - startedAt)
-    const values = await Promise.all(COUNTERS.map(key => counter($, key)))
+    const values = await Promise.all(COUNTERS.map((key) => counter($, key)))
     const [turns = 0, tools = 0, edits = 0] = values
     return {
       text: `This session: ${elapsed} · ${turns} turn(s) · ${tools} tool call(s) · ${edits} file edit(s).`,

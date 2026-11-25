@@ -1,81 +1,51 @@
 {
   "specification-gate": {
     "description": "Acceptance criteria are written in Given/When/Then with the non-functional sections.",
-    "facts": [
-      "specification"
-    ]
+    "facts": ["specification"]
   },
   "plan-gate": {
     "description": "A change plan names the files, the tests and the risks.",
-    "facts": [
-      "plan"
-    ]
+    "facts": ["plan"]
   },
   "implementation-gate": {
     "description": "Implementation may start only with a plan and an active, clean change contract.",
-    "facts": [
-      "plan",
-      "contract"
-    ]
+    "facts": ["plan", "contract"]
   },
   "tdd-red-gate": {
     "description": "A behavioral RED failure was observed for the current behavior.",
-    "facts": [
-      "tdd-red"
-    ]
+    "facts": ["tdd-red"]
   },
   "tdd-green-gate": {
     "description": "The targeted test passes after the minimum implementation.",
-    "facts": [
-      "tdd-green"
-    ]
+    "facts": ["tdd-green"]
   },
   "tdd-refactor-gate": {
     "description": "Refactoring kept the affected tests green.",
-    "facts": [
-      "tdd-refactor",
-      "regression"
-    ]
+    "facts": ["tdd-refactor", "regression"]
   },
   "defect-reproduction-gate": {
     "description": "The defect is reproduced, or its reproduction is documented as impossible.",
-    "facts": [
-      "defects"
-    ]
+    "facts": ["defects"]
   },
   "defect-fix-gate": {
     "description": "The regression test exists and the defect no longer reproduces.",
-    "facts": [
-      "defect-fix",
-      "regression"
-    ]
+    "facts": ["defect-fix", "regression"]
   },
   "behavior-capture-gate": {
     "description": "A behavioral baseline was captured before refactoring.",
-    "facts": [
-      "behavior-baseline"
-    ]
+    "facts": ["behavior-baseline"]
   },
   "behavior-lock-gate": {
     "description": "The public surface matches the baseline or changes are approved.",
-    "facts": [
-      "behavior"
-    ]
+    "facts": ["behavior"]
   },
   "verification-gate": {
     "description": "Evidence is current and the regression scope has run.",
-    "facts": [
-      "evidence",
-      "regression"
-    ]
+    "facts": ["evidence", "regression"]
   },
   "review-gate": {
     "description": "Review findings, architecture and compatibility are resolved.",
-    "facts": [
-      "review",
-      "architecture",
-      "compat"
-    ]
+    "facts": ["review", "architecture", "compat"]
   },
   "release-gate": {
     "description": "Every release condition is satisfied.",
@@ -93,8 +63,6 @@
   },
   "observability-gate": {
     "description": "Health checks pass after the change.",
-    "facts": [
-      "observability"
-    ]
+    "facts": ["observability"]
   }
 }

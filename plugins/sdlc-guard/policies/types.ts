@@ -22,27 +22,27 @@ export type ActionCategory =
   | 'shell.unparsed'
   // Release / deploy:
   | 'release.publish'
-  | 'release.deploy';
+  | 'release.deploy'
 
-export type ActionImpact = 'local' | 'shared-branch' | 'production';
+export type ActionImpact = 'local' | 'shared-branch' | 'production'
 
 export interface ClassifiedAction {
-  category: ActionCategory;
-  impact: ActionImpact;
-  scope: { paths: string[] };
+  category: ActionCategory
+  impact: ActionImpact
+  scope: { paths: string[] }
 }
 
 export interface PolicyContext {
-  interactive: boolean;
-  scopeFileCount?: number;
-  isProduction?: boolean;
+  interactive: boolean
+  scopeFileCount?: number
+  isProduction?: boolean
 }
 
-export type PolicyVerdict = 'allow' | 'deny' | 'require-approval';
+export type PolicyVerdict = 'allow' | 'deny' | 'require-approval'
 
 export interface PolicyEvaluation {
-  verdict: PolicyVerdict;
-  reason: string;
+  verdict: PolicyVerdict
+  reason: string
 }
 
 const DESTRUCTIVE_CATEGORIES: ReadonlyArray<ActionCategory> = [
@@ -59,8 +59,8 @@ const DESTRUCTIVE_CATEGORIES: ReadonlyArray<ActionCategory> = [
   'shell.unparsed',
   'release.publish',
   'release.deploy',
-];
+]
 
 export function isDestructive(action: ClassifiedAction): boolean {
-  return DESTRUCTIVE_CATEGORIES.includes(action.category);
+  return DESTRUCTIVE_CATEGORIES.includes(action.category)
 }

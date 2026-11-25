@@ -64,7 +64,9 @@ function truncate(text, max) {
 // mods/contract-compatibility-guard/src/register.tsx
 var CONTRACT_FILE = /(openapi|swagger)[^/]*\.(ya?ml|json)$|\.proto$|schema\.graphql$|asyncapi[^/]*\.(ya?ml|json)$/i;
 var IDLE = { verdict: "UNKNOWN", phase: "none", reason: "no compatibility check run" };
-var gate = atom({ plugin: "contract-compatibility-guard", key: "gate" }, IDLE, { shape: "gate-1" });
+var gate = atom({ plugin: "contract-compatibility-guard", key: "gate" }, IDLE, {
+  shape: "gate-1"
+});
 async function commandsOf($) {
   try {
     const parsed = JSON.parse(await $.fs.read(stateRelativePath("compat.json")));
@@ -93,7 +95,9 @@ function register(on) {
     const commands = await commandsOf($);
     const names = only === "" ? Object.keys(commands) : [only];
     if (names.length === 0 || names.some((name) => commands[name] === void 0)) {
-      return { text: 'No compatibility tool configured. Add {"name": ["argv", ...]} to .agentic-mods/compat.json.' };
+      return {
+        text: 'No compatibility tool configured. Add {"name": ["argv", ...]} to .agentic-mods/compat.json.'
+      };
     }
     const lines = [];
     let verdict = "PASS";
@@ -103,12 +107,18 @@ function register(on) {
       try {
         result = await $.process.run(argv, { timeoutMs: 3e5 });
       } catch (error) {
-        result = { exitCode: -1, stdout: "", stderr: error instanceof Error ? error.message : "could not start" };
+        result = {
+          exitCode: -1,
+          stdout: "",
+          stderr: error instanceof Error ? error.message : "could not start"
+        };
       }
       if (result.exitCode !== 0) verdict = "FAIL";
       const tail = redact(`${result.stdout}
 ${result.stderr}`).split("\n").slice(-6).join("\n");
-      lines.push(`${name}: ${result.exitCode === 0 ? "compatible" : `incompatible or error (exit ${result.exitCode})`}`);
+      lines.push(
+        `${name}: ${result.exitCode === 0 ? "compatible" : `incompatible or error (exit ${result.exitCode})`}`
+      );
       if (result.exitCode !== 0) lines.push(truncate(tail, 800));
     }
     await update($, gate, () => ({
@@ -120,13 +130,17 @@ ${result.stderr}`).split("\n").slice(-6).join("\n");
   });
   on("tool.call", { tool: "Edit" }, async ($, e, next) => {
     if (CONTRACT_FILE.test(e.file_path)) {
-      $.ui.toast("contract-compatibility-guard: a schema changed. Run /compat run before the review gate.");
+      $.ui.toast(
+        "contract-compatibility-guard: a schema changed. Run /compat run before the review gate."
+      );
     }
     return next(e);
   });
   on("tool.call", { tool: "Write" }, async ($, e, next) => {
     if (CONTRACT_FILE.test(e.file_path)) {
-      $.ui.toast("contract-compatibility-guard: a schema changed. Run /compat run before the review gate.");
+      $.ui.toast(
+        "contract-compatibility-guard: a schema changed. Run /compat run before the review gate."
+      );
     }
     return next(e);
   });

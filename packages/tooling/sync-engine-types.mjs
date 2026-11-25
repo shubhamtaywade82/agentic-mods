@@ -12,7 +12,10 @@ import { tmpdir } from 'node:os'
 import { DEV_MODS_ROOT, ENGINE_TYPES_DIR, ENGINE_TYPES_FILE, listMods, ROOT } from './lib/repo.mjs'
 
 function newestSkillDeclaration() {
-  const bases = [join('/tmp', 'claude-0', 'bundled-skills'), join(tmpdir(), 'claude-0', 'bundled-skills')]
+  const bases = [
+    join('/tmp', 'claude-0', 'bundled-skills'),
+    join(tmpdir(), 'claude-0', 'bundled-skills'),
+  ]
   const candidates = []
   for (const base of bases) {
     if (!existsSync(base)) continue
@@ -29,7 +32,7 @@ function newestSkillDeclaration() {
 
 function safeList(dir) {
   try {
-    return readdirSync(dir).filter(name => statSync(join(dir, name)).isDirectory())
+    return readdirSync(dir).filter((name) => statSync(join(dir, name)).isDirectory())
   } catch {
     return []
   }

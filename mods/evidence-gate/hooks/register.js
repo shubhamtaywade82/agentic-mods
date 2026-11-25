@@ -269,7 +269,9 @@ var DANGER_RULES = [
     id: "git-force-push",
     level: "confirm",
     reason: "rewrites remote history",
-    matches: (argv) => gitSubcommand(argv) === "push" && argv.some((token) => token === "--force" || token === "-f" || token.startsWith("--force-with-lease"))
+    matches: (argv) => gitSubcommand(argv) === "push" && argv.some(
+      (token) => token === "--force" || token === "-f" || token.startsWith("--force-with-lease")
+    )
   },
   {
     id: "git-hard-reset",
@@ -680,7 +682,9 @@ var PANE = "evidence-gate";
 var MAX_RECORDS = 50;
 var MAX_TIMEOUT_MS = 6e5;
 var IDLE = { overall: "UNKNOWN", checks: [], fingerprint: null };
-var status = atom({ plugin: "evidence-gate", key: "status" }, IDLE, { shape: "status-1" });
+var status = atom({ plugin: "evidence-gate", key: "status" }, IDLE, {
+  shape: "status-1"
+});
 function runnerOf($) {
   return async (argv) => {
     const result = await $.process.run(argv);
@@ -724,7 +728,9 @@ async function snapshotOf($) {
     await $.clock.now(),
     config.evidence.maxAgeMinutes * 6e4
   );
-  const configured = Object.values(config.evidence.commands).some((list) => Array.isArray(list) && list.length > 0);
+  const configured = Object.values(config.evidence.commands).some(
+    (list) => Array.isArray(list) && list.length > 0
+  );
   return { config, configured, statuses, overall: overallVerdict(statuses), fingerprint };
 }
 async function publish($, snap) {

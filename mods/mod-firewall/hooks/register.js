@@ -383,7 +383,15 @@ var NATIVE_MODS = [
   "change-planner",
   "observability-verifier",
   "release-conductor",
-  "ci-triage"
+  "ci-triage",
+  // local integrated mods
+  "design-patterns",
+  "guardian",
+  "mod-template",
+  "pulse",
+  "sdlc",
+  "trace",
+  "verify"
 ];
 function isNativeMod(name) {
   return NATIVE_MODS.includes(name);
@@ -413,7 +421,7 @@ function executableOf(argv) {
 }
 async function audit($, record) {
   const path = stateRelativePath("audit/firewall.jsonl");
-  let existing = "";
+  let existing;
   try {
     existing = await $.fs.read(path);
   } catch {

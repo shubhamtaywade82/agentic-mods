@@ -56,11 +56,13 @@ export type RunState = {
 }
 
 function stringsOf(value: unknown): string[] | null {
-  return Array.isArray(value) && value.every(item => typeof item === 'string') ? [...value] : null
+  return Array.isArray(value) && value.every((item) => typeof item === 'string') ? [...value] : null
 }
 
 /** Validates a workflow definition. Returns the first problem found. */
-export function parseWorkflow(input: unknown): { ok: true; value: WorkflowDefinition } | { ok: false; error: string } {
+export function parseWorkflow(
+  input: unknown,
+): { ok: true; value: WorkflowDefinition } | { ok: false; error: string } {
   if (!isJsonObject(input)) return { ok: false, error: 'workflow must be an object' }
   const id = input['id']
   const description = input['description']
@@ -79,25 +81,30 @@ export function parseWorkflow(input: unknown): { ok: true; value: WorkflowDefini
     const next = stringsOf(raw['next'])
     if (next === null) return { ok: false, error: `stage ${raw['id']} needs a next list` }
     const gate = raw['gate'] === null || raw['gate'] === undefined ? null : raw['gate']
-    const artifact = raw['artifact'] === null || raw['artifact'] === undefined ? null : raw['artifact']
-    if (gate !== null && typeof gate !== 'string') return { ok: false, error: `stage ${raw['id']} gate must be a string` }
+    const artifact =
+      raw['artifact'] === null || raw['artifact'] === undefined ? null : raw['artifact']
+    if (gate !== null && typeof gate !== 'string')
+      return { ok: false, error: `stage ${raw['id']} gate must be a string` }
     if (artifact !== null && typeof artifact !== 'string') {
       return { ok: false, error: `stage ${raw['id']} artifact must be a string` }
     }
     stages.push({ id: raw['id'], name: raw['name'], gate, artifact, next })
   }
-  const ids = new Set(stages.map(stage => stage.id))
+  const ids = new Set(stages.map((stage) => stage.id))
   if (!ids.has(start)) return { ok: false, error: `start stage ${start} is not defined` }
   for (const stage of stages) {
     for (const target of stage.next) {
-      if (!ids.has(target)) return { ok: false, error: `stage ${stage.id} points at undefined ${target}` }
+      if (!ids.has(target))
+        return { ok: false, error: `stage ${stage.id} points at undefined ${target}` }
     }
   }
   return { ok: true, value: { id, description, start, stages } }
 }
 
 /** Validates the gate catalogue: each gate names the facts it needs. */
-export function parseGates(input: unknown): { ok: true; value: Record<string, GateDefinition> } | { ok: false; error: string } {
+export function parseGates(
+  input: unknown,
+): { ok: true; value: Record<string, GateDefinition> } | { ok: false; error: string } {
   if (!isJsonObject(input)) return { ok: false, error: 'gates must be an object keyed by gate id' }
   const out: Record<string, GateDefinition> = {}
   for (const [id, raw] of Object.entries(input)) {
@@ -105,14 +112,15 @@ export function parseGates(input: unknown): { ok: true; value: Record<string, Ga
       return { ok: false, error: `gate ${id} needs a description` }
     }
     const facts = stringsOf(raw['facts'])
-    if (facts === null || facts.length === 0) return { ok: false, error: `gate ${id} needs a non-empty facts list` }
+    if (facts === null || facts.length === 0)
+      return { ok: false, error: `gate ${id} needs a non-empty facts list` }
     out[id] = { id, description: raw['description'], facts }
   }
   return { ok: true, value: out }
 }
 
 export function stageOf(definition: WorkflowDefinition, id: string): StageDefinition | undefined {
-  return definition.stages.find(stage => stage.id === id)
+  return definition.stages.find((stage) => stage.id === id)
 }
 
 /**
@@ -124,7 +132,7 @@ export function evaluateGate(
   facts: Readonly<Record<string, FactValue>>,
   exceptions: readonly Exception[],
 ): GateEvaluation {
-  const excepted = exceptions.some(item => item.gate === gate.id)
+  const excepted = exceptions.some((item) => item.gate === gate.id)
   const missing: string[] = []
   const failing: string[] = []
   const deferred: string[] = []
@@ -143,7 +151,12 @@ export function evaluateGate(
   }
 }
 
-export function startRun(definition: WorkflowDefinition, runId: string, taskId: string, at: number): RunState {
+export function startRun(
+  definition: WorkflowDefinition,
+  runId: string,
+  taskId: string,
+  at: number,
+): RunState {
   return {
     id: runId,
     workflowId: definition.id,
@@ -163,7 +176,9 @@ export function advanceRun(
   target: string,
   facts: Readonly<Record<string, FactValue>>,
   at: number,
-): { ok: true; run: RunState; evaluation: GateEvaluation | null } | { ok: false; reason: string; evaluation: GateEvaluation | null } {
+):
+  | { ok: true; run: RunState; evaluation: GateEvaluation | null }
+  | { ok: false; reason: string; evaluation: GateEvaluation | null } {
   const current = stageOf(definition, run.currentStage)
   if (run.status !== 'active' || current === undefined) {
     return { ok: false, reason: `run is ${run.status}`, evaluation: null }
@@ -172,11 +187,19 @@ export function advanceRun(
     return { ok: false, reason: `${current.id} cannot move to ${target}`, evaluation: null }
   }
   const targetStage = stageOf(definition, target)
-  if (targetStage === undefined) return { ok: false, reason: `${target} is not a stage`, evaluation: null }
+  if (targetStage === undefined)
+    return { ok: false, reason: `${target} is not a stage`, evaluation: null }
 
   // The gate of the stage being left is what must be satisfied before leaving it.
   const gateId = current.gate
-  const evaluation = gateId === null ? null : evaluateGate(gates[gateId] ?? { id: gateId, description: '', facts: [] }, facts, run.exceptions)
+  const evaluation =
+    gateId === null
+      ? null
+      : evaluateGate(
+          gates[gateId] ?? { id: gateId, description: '', facts: [] },
+          facts,
+          run.exceptions,
+        )
   if (evaluation !== null && !evaluation.allowed) {
     return { ok: false, reason: `${current.id} gate is not satisfied`, evaluation }
   }

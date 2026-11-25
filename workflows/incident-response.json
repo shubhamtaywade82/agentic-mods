@@ -3,12 +3,36 @@
   "description": "Detect, mitigate, diagnose, repair, verify recovery, write the postmortem.",
   "start": "detect",
   "stages": [
-    { "id": "detect", "name": "Detect", "gate": null, "artifact": "incident.md", "next": ["mitigate"] },
+    {
+      "id": "detect",
+      "name": "Detect",
+      "gate": null,
+      "artifact": "incident.md",
+      "next": ["mitigate"]
+    },
     { "id": "mitigate", "name": "Mitigate", "gate": null, "artifact": null, "next": ["diagnose"] },
     { "id": "diagnose", "name": "Diagnose", "gate": null, "artifact": null, "next": ["repair"] },
-    { "id": "repair", "name": "Repair", "gate": "defect-fix-gate", "artifact": "root-cause.md", "next": ["recover"] },
-    { "id": "recover", "name": "Verify recovery", "gate": "observability-gate", "artifact": null, "next": ["postmortem"] },
-    { "id": "postmortem", "name": "Postmortem", "gate": null, "artifact": "postmortem.md", "next": ["complete"] },
+    {
+      "id": "repair",
+      "name": "Repair",
+      "gate": "defect-fix-gate",
+      "artifact": "root-cause.md",
+      "next": ["recover"]
+    },
+    {
+      "id": "recover",
+      "name": "Verify recovery",
+      "gate": "observability-gate",
+      "artifact": null,
+      "next": ["postmortem"]
+    },
+    {
+      "id": "postmortem",
+      "name": "Postmortem",
+      "gate": null,
+      "artifact": "postmortem.md",
+      "next": ["complete"]
+    },
     { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
   ]
 }

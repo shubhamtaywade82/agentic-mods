@@ -29,30 +29,47 @@ async function loadPlan($: EngineInterface): Promise<Plan | null> {
 }
 
 function verdictOf(plan: Plan): GateState['verdict'] {
-  return plan.files.length > 0 && plan.tests.length > 0 && plan.risks.trim() !== '' ? 'PASS' : 'UNKNOWN'
+  return plan.files.length > 0 && plan.tests.length > 0 && plan.risks.trim() !== ''
+    ? 'PASS'
+    : 'UNKNOWN'
 }
 
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'change-plan',
-      description: 'Change plan: /change-plan set <objective> | <files> | <tests> | <risks>, /change-plan show, /change-plan contract',
+      description:
+        'Change plan: /change-plan set <objective> | <files> | <tests> | <risks>, /change-plan show, /change-plan contract',
     })
     return next(e)
   })
 
   on('command.run', { command: 'change-plan' }, async ($, e) => {
-    const [subcommand = 'show', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = 'show', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
 
     if (subcommand === 'set') {
-      const [objective = '', files = '', tests = '', risks = ''] = rest.join(' ').split('|').map(part => part.trim())
+      const [objective = '', files = '', tests = '', risks = ''] = rest
+        .join(' ')
+        .split('|')
+        .map((part) => part.trim())
       if (objective === '' || files === '' || tests === '' || risks === '') {
-        return { text: 'Usage: /plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>' }
+        return {
+          text: 'Usage: /change-plan set <objective> | <comma-separated files> | <comma-separated tests> | <risks>',
+        }
       }
       const plan: Plan = {
         objective: truncate(objective, 300),
-        files: files.split(',').map(path => normalizePath(path)).filter(path => path !== ''),
-        tests: tests.split(',').map(path => normalizePath(path)).filter(path => path !== ''),
+        files: files
+          .split(',')
+          .map((path) => normalizePath(path))
+          .filter((path) => path !== ''),
+        tests: tests
+          .split(',')
+          .map((path) => normalizePath(path))
+          .filter((path) => path !== ''),
         risks: truncate(risks, 1000),
       }
       await $.fs.write(stateRelativePath('plan.json'), `${JSON.stringify(plan, null, 2)}\n`)
@@ -68,7 +85,12 @@ export function register(on: On): void {
     if (plan === null) return { text: 'No plan recorded. Use /change-plan set first.' }
 
     if (subcommand === 'contract') {
-      const contract = { objective: plan.objective, allowed: plan.files, forbidden: [], mode: 'warn' }
+      const contract = {
+        objective: plan.objective,
+        allowed: plan.files,
+        forbidden: [],
+        mode: 'warn',
+      }
       await $.fs.write(stateRelativePath('contract.json'), `${JSON.stringify(contract, null, 2)}\n`)
       return { text: `Change contract written: ${plan.files.length} allowed path(s), mode warn.` }
     }

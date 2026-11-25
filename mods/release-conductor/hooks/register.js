@@ -84,7 +84,11 @@ function assessReadiness(input) {
     verdict: input.evidence.overall,
     detail: input.evidence.checks.length === 0 ? "no checks configured or run" : failing.length === 0 ? "all required checks current" : failing.map((item) => `${item.check} ${item.verdict} (${item.reason})`).join("; ")
   };
-  const review2 = { label: "Review", verdict: input.review.verdict, detail: input.review.reason };
+  const review2 = {
+    label: "Review",
+    verdict: input.review.verdict,
+    detail: input.review.reason
+  };
   const architecture2 = {
     label: "Architecture",
     verdict: input.architecture.verdict,
@@ -106,13 +110,27 @@ var ARCH_IDLE = { verdict: "UNKNOWN", reason: "none", fresh: 0, baseline: 0 };
 var MIGRATION_IDLE = { verdict: "UNKNOWN", findings: [] };
 var RADAR_IDLE = { verdict: "UNKNOWN", changes: [], scan: "none" };
 var BUDGET_IDLE = { verdict: "UNKNOWN", rows: [] };
-var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, { shape: "status-1" });
-var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, { shape: "status-1" });
-var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, { shape: "gate-1" });
-var architecture = atom({ plugin: "architecture-guard", key: "status" }, ARCH_IDLE, { shape: "status-1" });
-var migration = atom({ plugin: "migration-sentinel", key: "status" }, MIGRATION_IDLE, { shape: "status-1" });
-var dependencies = atom({ plugin: "dependency-radar", key: "status" }, RADAR_IDLE, { shape: "status-1" });
-var performance = atom({ plugin: "performance-budget", key: "status" }, BUDGET_IDLE, { shape: "status-1" });
+var evidence = atom({ plugin: "evidence-gate", key: "status" }, EVIDENCE_IDLE, {
+  shape: "status-1"
+});
+var contract = atom({ plugin: "change-contract", key: "status" }, CONTRACT_IDLE, {
+  shape: "status-1"
+});
+var review = atom({ plugin: "review-tracker", key: "gate" }, REVIEW_IDLE, {
+  shape: "gate-1"
+});
+var architecture = atom({ plugin: "architecture-guard", key: "status" }, ARCH_IDLE, {
+  shape: "status-1"
+});
+var migration = atom({ plugin: "migration-sentinel", key: "status" }, MIGRATION_IDLE, {
+  shape: "status-1"
+});
+var dependencies = atom({ plugin: "dependency-radar", key: "status" }, RADAR_IDLE, {
+  shape: "status-1"
+});
+var performance = atom({ plugin: "performance-budget", key: "status" }, BUDGET_IDLE, {
+  shape: "status-1"
+});
 function runnerOf($) {
   return async (argv) => {
     const result = await $.process.run(argv);
@@ -163,11 +181,27 @@ function register(on) {
         detail: `${rollbackFile} exists`
       },
       ...await Promise.all(
-        assets.map(async (asset) => ({ label: `asset ${asset}`, ok: await exists($, asset), detail: "listed in release.json" }))
+        assets.map(async (asset) => ({
+          label: `asset ${asset}`,
+          ok: await exists($, asset),
+          detail: "listed in release.json"
+        }))
       ),
-      { label: "migrations reviewed", ok: mg.verdict === "PASS", detail: `migration-sentinel: ${mg.verdict}` },
-      { label: "dependencies reviewed", ok: rd.verdict === "PASS", detail: `dependency-radar: ${rd.verdict}` },
-      { label: "performance budgets", ok: bd.verdict === "PASS", detail: `performance-budget: ${bd.verdict}` }
+      {
+        label: "migrations reviewed",
+        ok: mg.verdict === "PASS",
+        detail: `migration-sentinel: ${mg.verdict}`
+      },
+      {
+        label: "dependencies reviewed",
+        ok: rd.verdict === "PASS",
+        detail: `dependency-radar: ${rd.verdict}`
+      },
+      {
+        label: "performance budgets",
+        ok: bd.verdict === "PASS",
+        detail: `performance-budget: ${bd.verdict}`
+      }
     ];
     const checklistOk = items.every((item) => item.ok);
     const verdict = readiness.verdict === "NOT READY" ? "FAIL" : readiness.verdict === "READY" && checklistOk ? "PASS" : "UNKNOWN";
@@ -177,7 +211,11 @@ function register(on) {
     ];
     await $.fs.write(stateRelativePath("release/checklist.md"), `${lines.join("\n")}
 `);
-    await update($, gate, () => ({ verdict, phase: "checked", reason: `readiness ${readiness.verdict}` }));
+    await update($, gate, () => ({
+      verdict,
+      phase: "checked",
+      reason: `readiness ${readiness.verdict}`
+    }));
     return { text: lines.join("\n") };
   });
 }

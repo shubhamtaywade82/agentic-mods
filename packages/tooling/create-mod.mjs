@@ -58,7 +58,10 @@ declare module 'claude-code' {
 mkdirSync(join(dir, '.claude-plugin'), { recursive: true })
 mkdirSync(join(dir, 'hooks'), { recursive: true })
 mkdirSync(join(dir, 'src'), { recursive: true })
-writeFileSync(join(dir, '.claude-plugin', 'plugin.json'), `${JSON.stringify(pluginJson, null, 2)}\n`)
+writeFileSync(
+  join(dir, '.claude-plugin', 'plugin.json'),
+  `${JSON.stringify(pluginJson, null, 2)}\n`,
+)
 writeFileSync(
   join(dir, 'hooks', 'hooks.json'),
   `${JSON.stringify({ modules: ['./register.js'] }, null, 2)}\n`,
@@ -69,7 +72,12 @@ writeFileSync(
   `${JSON.stringify(
     {
       extends: '../../tsconfig.mod.json',
-      include: ['src', 'types', '../../packages/tooling/engine-types/claude-code.d.ts', '../../packages/core/src'],
+      include: [
+        'src',
+        'types',
+        '../../packages/tooling/engine-types/claude-code.d.ts',
+        '../../packages/core/src',
+      ],
       compilerOptions: { paths: { '@agentic-mods/core': ['../../packages/core/src/index.ts'] } },
     },
     null,
@@ -86,6 +94,6 @@ process.stdout.write(`created mods/${name}\nnext: pnpm build && pnpm typecheck &
 function toPascal(kebab) {
   return kebab
     .split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
 }

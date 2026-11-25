@@ -151,7 +151,7 @@ export function parseConfig(input: unknown): ConfigParse {
       ? candidate
       : undefined
   const asStrings = (candidate: unknown): string[] | undefined =>
-    Array.isArray(candidate) && candidate.every(item => typeof item === 'string')
+    Array.isArray(candidate) && candidate.every((item) => typeof item === 'string')
       ? [...candidate]
       : undefined
   const asMode = (candidate: unknown): Mode | undefined =>
@@ -159,7 +159,7 @@ export function parseConfig(input: unknown): ConfigParse {
       ? candidate
       : undefined
   const asTier = (candidate: unknown): GuardTier | undefined =>
-    GUARD_TIERS.find(tier => tier === candidate)
+    GUARD_TIERS.find((tier) => tier === candidate)
 
   const guard = section(input, 'guard')
   value.guard.confirmTier = read(guard, 'guard', 'confirmTier', asTier, value.guard.confirmTier)
@@ -183,7 +183,7 @@ export function parseConfig(input: unknown): ConfigParse {
     evidence,
     'evidence',
     'required',
-    candidate => {
+    (candidate) => {
       if (!Array.isArray(candidate) || !candidate.every(isCheckName)) return undefined
       return candidate.filter(isCheckName)
     },
@@ -279,16 +279,16 @@ function parseCommands(
     const valid =
       Array.isArray(list) &&
       list.every(
-        argv =>
+        (argv) =>
           Array.isArray(argv) &&
           argv.length > 0 &&
-          argv.every(item => typeof item === 'string' && item.length > 0),
+          argv.every((item) => typeof item === 'string' && item.length > 0),
       )
     if (!valid) {
       errors.push(`evidence.commands.${key} must be a list of argv arrays; check skipped`)
       continue
     }
-    out[key] = (list as string[][]).map(argv => [...argv])
+    out[key] = (list as string[][]).map((argv) => [...argv])
   }
   return out
 }
@@ -306,9 +306,9 @@ function parseLayers(architecture: JsonObject, errors: string[]): Layer[] {
       !isJsonObject(item) ||
       typeof item['name'] !== 'string' ||
       !Array.isArray(item['paths']) ||
-      !item['paths'].every(path => typeof path === 'string') ||
+      !item['paths'].every((path) => typeof path === 'string') ||
       !Array.isArray(item['mayDependOn']) ||
-      !item['mayDependOn'].every(name => typeof name === 'string')
+      !item['mayDependOn'].every((name) => typeof name === 'string')
     ) {
       errors.push('architecture.layers entry is invalid; entry skipped')
       continue
@@ -329,9 +329,7 @@ export const CONFIG_PATH = `${STATE_DIR}/config.json`
  * Loads `.agentic-mods/config.json` through an injected reader. A missing file is not an
  * error: defaults apply silently. Malformed JSON and invalid fields are reported in `errors`.
  */
-export async function loadConfig(
-  read: (path: string) => Promise<string>,
-): Promise<ConfigParse> {
+export async function loadConfig(read: (path: string) => Promise<string>): Promise<ConfigParse> {
   let text: string
   try {
     text = await read(CONFIG_PATH)

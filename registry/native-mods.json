@@ -105,6 +105,12 @@
       "path": "mods/dependency-radar"
     },
     {
+      "name": "design-patterns",
+      "version": "0.1.0",
+      "description": "Design-pattern lookup mod: indexes all 22 GoF patterns with use-when and idiom-first lines, and adds a /patterns command to look one up, list a category, or suggest candidates for a described problem",
+      "path": "mods/design-patterns"
+    },
+    {
       "name": "engineering-cockpit",
       "version": "0.2.0",
       "description": "One pane with the verification state of the change: contract, impact, evidence, review, architecture, migration, dependencies, performance and release readiness. It reads what the other mods publish and changes nothing.",
@@ -127,6 +133,12 @@
       "description": "Runs the configured build, test, lint, type-check and security commands, records their exit codes against a fingerprint of the repository, and holds git commit, push and PR creation until the required checks are current.",
       "types": "./types/index.d.ts",
       "path": "mods/evidence-gate"
+    },
+    {
+      "name": "guardian",
+      "version": "0.1.0",
+      "description": "Tool governance mod: redacts secrets from Bash/Write/Edit tool calls, and blocks destructive shell commands (rm -rf, force pushes, prod migrations) with an explanation, so nothing sensitive or irreversible runs silently",
+      "path": "mods/guardian"
     },
     {
       "name": "incident-timeline",
@@ -169,6 +181,12 @@
       "path": "mods/mod-firewall"
     },
     {
+      "name": "mod-template",
+      "version": "0.2.0",
+      "description": "Starter mod for the agentic-mods library: counts tool-call attempts, shows the count beside the spinner, adds /mod-template-tally and /mod-template-usage",
+      "path": "mods/mod-template"
+    },
+    {
       "name": "next-steps",
       "version": "0.2.0",
       "description": "After a turn that changed files, offers up to three suggested next prompts in a row above the prompt. Taking one puts it in the prompt box for editing.",
@@ -200,6 +218,12 @@
         "architecture-guard"
       ],
       "path": "mods/pr-readiness"
+    },
+    {
+      "name": "pulse",
+      "version": "0.1.0",
+      "description": "Session observability mod: tracks tool-call attempts per tool, estimates context-window pressure, and shows a compact live readout beside the spinner plus /pulse-report and /pulse-usage commands",
+      "path": "mods/pulse"
     },
     {
       "name": "regression-orchestrator",
@@ -236,6 +260,12 @@
       "description": "Turns review findings into tracked records with a lifecycle and a required reason or evidence at each resolution. Unresolved high-severity findings fail the review gate.",
       "types": "./types/index.d.ts",
       "path": "mods/review-tracker"
+    },
+    {
+      "name": "sdlc",
+      "version": "0.1.0",
+      "description": "Complete SDLC kit: an 8-stage feature lifecycle (clarify > PRD > spec > plan > TDD build > review > debug > release) with slash commands, sub-agent roles, templates and checklists",
+      "path": "mods/sdlc"
     },
     {
       "name": "session-meter",
@@ -285,11 +315,23 @@
       "path": "mods/test-impact"
     },
     {
+      "name": "trace",
+      "version": "0.1.0",
+      "description": "Execution observability mod: builds a bounded hierarchical runtime tree (main agent -> subagents -> tool calls) from session/turn/agent.spawn/tool events, and exposes /trace and /trace-summary commands",
+      "path": "mods/trace"
+    },
+    {
       "name": "turn-replay",
       "version": "0.2.0",
       "description": "Records every Edit and Write as a diff, grouped by turn, and shows them one at a time in a pane so a large change can be reviewed in steps.",
       "types": "./types/index.d.ts",
       "path": "mods/turn-replay"
+    },
+    {
+      "name": "verify",
+      "version": "0.1.0",
+      "description": "Verification-driven escalation engine: classify a task's complexity/risk, route it (model + effort), execute, verify with deterministic checks, and escalate (retry or climb the route ladder) on failure until it passes or the policy is exhausted. The engine is runtime-agnostic and lives in packages/core; this mod adapts it to Claude Code commands.",
+      "path": "mods/verify"
     },
     {
       "name": "workflow-conductor",

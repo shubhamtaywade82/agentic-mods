@@ -25,9 +25,11 @@ for (const name of VENDORED) {
   rmSync(target, { recursive: true, force: true })
   cpSync(from, target, {
     recursive: true,
-    filter: source => {
+    filter: (source) => {
       const rel = source.slice(from.length + 1).replace(/\\/g, '/')
-      return rel === '' || !(rel === '.claude-plugin/types' || rel.startsWith('.claude-plugin/types/'))
+      return (
+        rel === '' || !(rel === '.claude-plugin/types' || rel.startsWith('.claude-plugin/types/'))
+      )
     },
   })
   allOk = run(`deploy plugins/${name} -> ${target}`, { ok: true }) && allOk
@@ -42,10 +44,10 @@ for (const mod of listMods()) {
   rmSync(target, { recursive: true, force: true })
   cpSync(mod.dir, target, {
     recursive: true,
-    filter: source => {
+    filter: (source) => {
       const rel = source.slice(mod.dir.length + 1).replace(/\\/g, '/')
       if (rel === '') return true
-      return ![...EXCLUDED].some(excluded => rel === excluded || rel.startsWith(`${excluded}/`))
+      return ![...EXCLUDED].some((excluded) => rel === excluded || rel.startsWith(`${excluded}/`))
     },
   })
   allOk = run(`deploy mods/${mod.name} -> ${target}`, { ok: true }) && allOk

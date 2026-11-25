@@ -3,8 +3,20 @@
   "description": "Verify the change, then review it against the readiness gates.",
   "start": "verify",
   "stages": [
-    { "id": "verify", "name": "Verify", "gate": "verification-gate", "artifact": null, "next": ["review"] },
-    { "id": "review", "name": "Review", "gate": "review-gate", "artifact": "review.md", "next": ["complete"] },
+    {
+      "id": "verify",
+      "name": "Verify",
+      "gate": "verification-gate",
+      "artifact": null,
+      "next": ["review"]
+    },
+    {
+      "id": "review",
+      "name": "Review",
+      "gate": "review-gate",
+      "artifact": "review.md",
+      "next": ["complete"]
+    },
     { "id": "complete", "name": "Complete", "gate": null, "artifact": null, "next": [] }
   ]
 }

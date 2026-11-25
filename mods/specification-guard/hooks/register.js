@@ -22,7 +22,13 @@ function truncate(text, max) {
 }
 
 // packages/core/src/spec.ts
-var REQUIRED_SECTIONS = ["performance", "security", "compatibility", "observability", "rollback"];
+var REQUIRED_SECTIONS = [
+  "performance",
+  "security",
+  "compatibility",
+  "observability",
+  "rollback"
+];
 function validateSpec(text) {
   const issues = [];
   const lines = text.split("\n");
@@ -62,7 +68,9 @@ function validateSpec(text) {
 
 // mods/specification-guard/src/register.tsx
 var IDLE = { verdict: "UNKNOWN", phase: "none", reason: "no specification checked" };
-var gate = atom({ plugin: "specification-guard", key: "gate" }, IDLE, { shape: "gate-1" });
+var gate = atom({ plugin: "specification-guard", key: "gate" }, IDLE, {
+  shape: "gate-1"
+});
 var TEMPLATE = [
   "Feature: <name>",
   "",
@@ -103,7 +111,10 @@ function register(on) {
     await update($, gate, () => ({
       verdict: report.verdict,
       phase: "specified",
-      reason: truncate(`${report.scenarios} scenario(s), ${report.issues.length} issue(s) in ${path}`, 200)
+      reason: truncate(
+        `${report.scenarios} scenario(s), ${report.issues.length} issue(s) in ${path}`,
+        200
+      )
     }));
     const lines = [
       `specification: ${report.verdict} (${report.scenarios} scenario(s))`,

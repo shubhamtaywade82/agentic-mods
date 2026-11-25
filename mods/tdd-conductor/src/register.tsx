@@ -18,8 +18,14 @@ const gate = atom({ plugin: 'tdd-conductor', key: 'gate' } as const, IDLE, { sha
 
 async function commandOf($: EngineInterface): Promise<string[] | null> {
   try {
-    const parsed = JSON.parse(await $.fs.read(stateRelativePath('tdd.json'))) as { command?: unknown }
-    if (Array.isArray(parsed.command) && parsed.command.length > 0 && parsed.command.every(item => typeof item === 'string')) {
+    const parsed = JSON.parse(await $.fs.read(stateRelativePath('tdd.json'))) as {
+      command?: unknown
+    }
+    if (
+      Array.isArray(parsed.command) &&
+      parsed.command.length > 0 &&
+      parsed.command.every((item) => typeof item === 'string')
+    ) {
       return [...(parsed.command as string[])]
     }
   } catch {
@@ -30,10 +36,17 @@ async function commandOf($: EngineInterface): Promise<string[] | null> {
 
 async function phaseOf($: EngineInterface): Promise<TddPhase> {
   const value = await $.store.get('phase')
-  return value === 'red' || value === 'green' || value === 'refactor' || value === 'complete' ? value : 'idle'
+  return value === 'red' || value === 'green' || value === 'refactor' || value === 'complete'
+    ? value
+    : 'idle'
 }
 
-async function publish($: EngineInterface, phase: TddPhase, verdict: GateState['verdict'], reason: string): Promise<void> {
+async function publish(
+  $: EngineInterface,
+  phase: TddPhase,
+  verdict: GateState['verdict'],
+  reason: string,
+): Promise<void> {
   await $.store.set('phase', phase)
   await update($, gate, () => ({ verdict, phase, reason: truncate(reason, 200) }))
 }
@@ -44,9 +57,12 @@ async function runTests(
   testPath: string,
 ): Promise<{ exitCode: number; stdout: string; stderr: string } | string> {
   const command = await commandOf($)
-  if (command === null) return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.'
+  if (command === null)
+    return 'No test command configured. Add {"command": [...]} to .agentic-mods/tdd.json.'
   try {
-    const result = await $.process.run([...command, normalizePath(testPath)], { timeoutMs: 600_000 })
+    const result = await $.process.run([...command, normalizePath(testPath)], {
+      timeoutMs: 600_000,
+    })
     return { exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr }
   } catch (error) {
     return `Could not run the test command: ${error instanceof Error ? error.message : 'unknown error'}`
@@ -65,17 +81,23 @@ export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'tdd',
-      description: 'TDD cycle: /tdd red|green|refactor|complete <test path>, /tdd exception <reason>, /tdd status',
+      description:
+        'TDD cycle: /tdd red|green|refactor|complete <test path>, /tdd exception <reason>, /tdd status',
     })
     return next(e)
   })
 
   on('command.run', { command: 'tdd' }, async ($, e) => {
-    const [subcommand = 'status', ...rest] = e.args.trim().split(/\s+/).filter(word => word.length > 0)
+    const [subcommand = 'status', ...rest] = e.args
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
     const phase = await phaseOf($)
 
     if (subcommand === 'status') {
-      return { text: `TDD phase: ${phase}${(await $.store.get('exception')) === true ? ' (exception recorded)' : ''}` }
+      return {
+        text: `TDD phase: ${phase}${(await $.store.get('exception')) === true ? ' (exception recorded)' : ''}`,
+      }
     }
 
     if (subcommand === 'exception') {
@@ -99,16 +121,22 @@ export function register(on: On): void {
       const kind = classifyFailure(run.stdout, run.stderr)
       if (run.exitCode === 0) {
         await publish($, phase, 'UNKNOWN', 'the test passed: RED needs a failing test')
-        return { text: 'RED rejected: the test passed. Write a test that fails for the missing behavior.' }
+        return {
+          text: 'RED rejected: the test passed. Write a test that fails for the missing behavior.',
+        }
       }
       if (kind !== 'behavioral') {
         await publish($, phase, 'UNKNOWN', `RED rejected: the failure is ${kind}, not behavioral`)
-        return { text: `RED rejected: the failure is ${kind}. Fix the environment or compile error first.` }
+        return {
+          text: `RED rejected: the failure is ${kind}. Fix the environment or compile error first.`,
+        }
       }
       const transition = nextPhase(phase, 'red-verified')
       if (!transition.ok) return { text: transition.reason }
       await publish($, transition.phase, 'PASS', `RED verified: ${testPath}`)
-      return { text: `RED verified: ${testPath} fails for a behavioral reason. Implement the minimum to pass it.` }
+      return {
+        text: `RED verified: ${testPath} fails for a behavioral reason. Implement the minimum to pass it.`,
+      }
     }
 
     if (subcommand === 'green') {
@@ -128,8 +156,15 @@ export function register(on: On): void {
     if (subcommand === 'refactor') {
       const transition = nextPhase(phase, 'refactor')
       if (!transition.ok) return { text: transition.reason }
-      await publish($, transition.phase, 'UNKNOWN', 'REFACTOR started: run /tdd green <test> to confirm it stays green')
-      return { text: 'REFACTOR started. Keep behavior unchanged; confirm with /tdd green <test path>.' }
+      await publish(
+        $,
+        transition.phase,
+        'UNKNOWN',
+        'REFACTOR started: run /tdd green <test> to confirm it stays green',
+      )
+      return {
+        text: 'REFACTOR started. Keep behavior unchanged; confirm with /tdd green <test path>.',
+      }
     }
 
     if (subcommand === 'complete') {
@@ -139,16 +174,22 @@ export function register(on: On): void {
       return { text: 'Cycle complete.' }
     }
 
-    return { text: 'Usage: /tdd red|green|refactor|complete <test path> | /tdd exception <reason> | /tdd status' }
+    return {
+      text: 'Usage: /tdd red|green|refactor|complete <test path> | /tdd exception <reason> | /tdd status',
+    }
   })
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const denial = await guardProduction($, e.file_path)
     return denial === null ? next(e) : { deny: denial }
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'tdd-conductor failed closed on Edit.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'tdd-conductor failed closed on Edit.' },
+  )
 
   on('tool.call', { tool: 'Write' }, async ($, e, next) => {
     const denial = await guardProduction($, e.file_path)
     return denial === null ? next(e) : { deny: denial }
-  }).catch((_$, e, next) => (next.called ? next(e) : { deny: 'tdd-conductor failed closed on Write.' }))
+  }).catch((_$, e, next) =>
+    next.called ? next(e) : { deny: 'tdd-conductor failed closed on Write.' },
+  )
 }
