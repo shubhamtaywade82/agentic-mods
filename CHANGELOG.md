@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- README install guide for users: add the marketplace, install a mod or a whole preset, update and
+  uninstall. Verified from GitHub into a clean Claude Code config: a mod installs, loads and answers
+  its command, `engineering-cockpit` brings its eight dependencies, and the `essential` preset
+  installs all 13 plugins.
+
 ### Design
 
 - One look across the catalog: `packages/core/src/ui.tsx` holds the palette (theme keys, so colors
@@ -27,9 +34,9 @@
 
 ### Fixed (from the manual live pass)
 
-- Every preset left out some of its mods' dependencies; `engineering-cockpit` alone needs eight. Since
-  `/plugin install` does not install dependencies and a mod with a missing one never loads, the
-  cockpit never loaded from any preset. Presets now list their full dependency closure, and
+- Every preset left out some of its mods' dependencies; `engineering-cockpit` alone needs eight. A
+  session started with `--plugin-dir` loads only the folders it is given and a mod with a missing
+  dependency never loads, so the cockpit never loaded from a preset loaded that way. Presets now list their full dependency closure, and
   `pnpm registry` fails a preset that misses one.
 - The README preset table was out of date; it now matches `presets/*.json`.
 - guardian's README says to load one approval guard: guardian, `command-guard` and `sdlc-guard`

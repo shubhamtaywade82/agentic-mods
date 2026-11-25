@@ -49,8 +49,8 @@ const manifests = sources.map((source) => {
   }
 })
 
-// /plugin install does not install a plugin's dependencies, and a plugin whose dependency is
-// absent never loads, so a preset must list every dependency of every mod it names.
+// A session started with --plugin-dir loads only the folders it is given, and a plugin whose
+// dependency is absent never loads, so a preset must list every dependency of every mod it names.
 function missingDependencies(presetMods) {
   const listed = new Set(presetMods)
   const dependenciesOf = new Map(
