@@ -181,7 +181,12 @@ function register(on) {
     if (budgets.length === 0) {
       return { text: "No budgets: add .agentic-mods/budgets.json as a list of {name, max, unit}." };
     }
-    const metrics = parseMetrics(chosen, await $.fs.read(path));
+    let metrics;
+    try {
+      metrics = parseMetrics(chosen, await $.fs.read(path));
+    } catch (error) {
+      return { text: `Cannot read or parse ${path} as ${chosen}: ${error instanceof Error ? error.message : "unknown error"}` };
+    }
     const rows = evaluateBudgets(metrics, budgets);
     const verdict = worstVerdict(rows.map((row) => row.verdict));
     const lines = rows.map((row) => {

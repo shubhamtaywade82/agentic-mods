@@ -1,6 +1,6 @@
 {
   "name": "next-steps",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "After a turn that changed files, offers up to three suggested next prompts in a row above the prompt. Taking one puts it in the prompt box for editing.",
   "types": "./types/index.d.ts",
   "author": {

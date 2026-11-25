@@ -1,6 +1,9 @@
 // mods/commentary/src/register.tsx
 import { atom, read, update } from "claude-code";
 
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+
 // packages/core/src/classify.ts
 function splitSegments(command) {
   return command.split(/&&|\|\||;|\||\n/).map((segment) => segment.trim()).filter((segment) => segment.length > 0);
@@ -285,9 +288,6 @@ function analyzeCommand(command) {
   }
   return { checks, gitActions, dangers };
 }
-
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
 
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;

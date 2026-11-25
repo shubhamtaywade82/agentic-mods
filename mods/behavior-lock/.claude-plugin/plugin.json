@@ -1,6 +1,6 @@
 {
   "name": "behavior-lock",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Captures the exported surface of TypeScript or JavaScript files before a refactoring, then compares it afterwards. Removed or changed exports fail the gate; added exports are reported as additive. The surface is read as text, not type-checked.",
   "types": "./types/index.d.ts",
   "author": {

@@ -14,12 +14,6 @@ function describeDecision(decision) {
   return decision.remediation === void 0 ? head : `${head} ${decision.remediation}`;
 }
 
-// packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
-function isCheckName(value) {
-  return typeof value === "string" && CHECKS.includes(value);
-}
-
 // packages/core/src/paths.ts
 var STATE_DIR = ".agentic-mods";
 var DEFAULT_PROTECTED_GLOBS = [
@@ -92,6 +86,12 @@ function globToRegExp(glob) {
     }
   }
   return new RegExp(`^${pattern}$`);
+}
+
+// packages/core/src/classify.ts
+var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+function isCheckName(value) {
+  return typeof value === "string" && CHECKS.includes(value);
 }
 
 // packages/core/src/util.ts

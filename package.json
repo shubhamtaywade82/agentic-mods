@@ -20,7 +20,8 @@
     "registry": "node packages/tooling/generate-registry.mjs",
     "deploy:dev": "node packages/tooling/deploy-dev.mjs",
     "package": "node packages/tooling/package-mods.mjs",
-    "create-mod": "node packages/tooling/create-mod.mjs"
+    "create-mod": "node packages/tooling/create-mod.mjs",
+    "check": "node packages/tooling/check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -1,12 +1,6 @@
 // mods/markdown-preview/src/register.tsx
 import { atom, read, update } from "claude-code";
 
-// packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
-function isCheckName(value) {
-  return typeof value === "string" && CHECKS.includes(value);
-}
-
 // packages/core/src/paths.ts
 var STATE_DIR = ".agentic-mods";
 var DEFAULT_PROTECTED_GLOBS = [
@@ -73,6 +67,12 @@ function matchesAnyGlob(path, globs) {
 }
 function isProtectedPath(path, protectedGlobs = DEFAULT_PROTECTED_GLOBS, exceptions = DEFAULT_PROTECTED_EXCEPTIONS) {
   return matchesAnyGlob(path, protectedGlobs) && !matchesAnyGlob(path, exceptions);
+}
+
+// packages/core/src/classify.ts
+var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+function isCheckName(value) {
+  return typeof value === "string" && CHECKS.includes(value);
 }
 
 // packages/core/src/util.ts
@@ -343,11 +343,16 @@ function register(on) {
     if (isProtectedPath(path, config.protectedPaths, config.protectedExceptions)) {
       return { text: `${path} is a protected secret file and is not rendered.` };
     }
-    const stat = await $.fs.stat(path);
-    if (stat.kind !== "file" || stat.size > MAX_BYTES) {
-      return { text: `${path} is not a readable file under ${MAX_BYTES} bytes.` };
+    let text;
+    try {
+      const stat = await $.fs.stat(path);
+      if (stat.kind !== "file" || stat.size > MAX_BYTES) {
+        return { text: `${path} is not a readable file under ${MAX_BYTES} bytes.` };
+      }
+      text = await $.fs.read(path);
+    } catch {
+      return { text: `${path} does not exist or cannot be read.` };
     }
-    const text = await $.fs.read(path);
     await update($, document, () => ({ path, text }));
     await $.ui.open({ id: PANE, title: "Preview" });
     return { text: `Previewing ${path}.` };

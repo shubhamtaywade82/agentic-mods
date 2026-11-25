@@ -1,6 +1,6 @@
 {
   "name": "session-meter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shows context fill, session cost and rate-limit windows above the prompt, and warns when a threshold is crossed.",
   "types": "./types/index.d.ts",
   "author": {

@@ -3,6 +3,7 @@ import type { EngineInterface, On } from 'claude-code'
 
 import {
   analyzeCommand,
+  secretFileReads,
   type GuardTier,
   isProtectedPath,
   loadConfig,
@@ -120,6 +121,13 @@ export function register(on: On): void {
   })
 
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+    const config = await configOf($)
+    const reads = secretFileReads(e.command, config.guard.protectedPaths, config.guard.protectedExceptions)
+    if (reads.length > 0) {
+      const text = `command-guard: ${reads.join(', ')} is a protected secret file and this command would read it. Read it yourself, or add an exception in .agentic-mods/config.json.`
+      await recordBlock($, 'Bash', text)
+      return { deny: text }
+    }
     const judgement = await judgeCommand($, e.command)
     if (judgement.kind === 'deny') {
       await recordBlock($, 'Bash', judgement.text)

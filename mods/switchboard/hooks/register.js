@@ -1,3 +1,6 @@
+// packages/core/src/paths.ts
+var STATE_DIR = ".agentic-mods";
+
 // packages/core/src/coordination.ts
 function claimPath(claims, claim, ttlMs, now) {
   const fresh = pruneClaims(claims, ttlMs, now);
@@ -13,9 +16,6 @@ function claimPath(claims, claim, ttlMs, now) {
 function pruneClaims(claims, ttlMs, now) {
   return claims.filter((claim) => now - claim.at <= ttlMs);
 }
-
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
 
 // packages/core/src/config.ts
 var CONFIG_PATH = `${STATE_DIR}/config.json`;

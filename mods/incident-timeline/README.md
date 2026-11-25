@@ -1,0 +1,19 @@
+# incident-timeline
+
+Records an incident as an append-only timeline, switches command-guard to its strict profile while it is open, and writes the postmortem.
+
+## Commands
+
+- `/incident`
+
+## Shared state
+
+Publishes `incident` for other mods and the engineering cockpit.
+
+## Configuration
+
+Reads `.agentic-mods/config.json` when relevant. Invalid fields are reported by `/agentic doctor` and replaced by defaults. See the repository README for the schema.
+
+## Status
+
+Version 0.2.0. Built from the shared core with the engine declarations for Claude Code 2.1.332. Not covered by automated tests yet.

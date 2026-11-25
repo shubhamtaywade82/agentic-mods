@@ -99,7 +99,12 @@ function register(on) {
     let verdict = "PASS";
     for (const name of names) {
       const argv = commands[name] ?? [];
-      const result = await $.process.run(argv, { timeoutMs: 3e5 });
+      let result;
+      try {
+        result = await $.process.run(argv, { timeoutMs: 3e5 });
+      } catch (error) {
+        result = { exitCode: -1, stdout: "", stderr: error instanceof Error ? error.message : "could not start" };
+      }
       if (result.exitCode !== 0) verdict = "FAIL";
       const tail = redact(`${result.stdout}
 ${result.stderr}`).split("\n").slice(-6).join("\n");

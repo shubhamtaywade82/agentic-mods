@@ -75,7 +75,12 @@ export function register(on: On): void {
           results.push(`${name}: not configured in .agentic-mods/regression.json`)
           continue
         }
-        const result = await $.process.run(argv, { timeoutMs: 600_000 })
+        let result: { exitCode: number; stdout: string; stderr: string }
+        try {
+          result = await $.process.run(argv, { timeoutMs: 600_000 })
+        } catch (error) {
+          result = { exitCode: -1, stdout: '', stderr: error instanceof Error ? error.message : 'could not start' }
+        }
         if (result.exitCode !== 0) verdict = 'FAIL'
         results.push(`${name}: ${result.exitCode === 0 ? 'passed' : `failed (exit ${result.exitCode})`}`)
       }

@@ -1,6 +1,6 @@
 {
   "name": "pr-readiness",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Combines scope, evidence, review and architecture into one readiness verdict, and drafts a pull-request verification section from recorded results only.",
   "dependencies": [
     "evidence-gate",

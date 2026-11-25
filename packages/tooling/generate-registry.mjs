@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { z } from 'zod'
 import { listMods, readJson, ROOT, run } from './lib/repo.mjs'
 import { VENDORED } from './lib/vendored.mjs'
+import { commandNamesIn } from './lib/builtin-commands.mjs'
 
 const pluginManifest = z.object({
   name: z.string().regex(/^[a-z0-9-]{2,40}$/),
@@ -50,6 +51,38 @@ for (const file of presets) {
   }
   const unknown = parsed.data.mods.filter(name => !names.has(name))
   allOk = run(`preset ${parsed.data.id}`, { ok: unknown.length === 0, note: unknown.length ? `unknown: ${unknown.join(', ')}` : `${parsed.data.mods.length} mods` }) && allOk
+}
+
+// A README per native mod: the directory requires at least 40 words, and the listing stays current.
+for (const mod of mods) {
+  const source = readFileSync(join(mod.dir, 'src', 'register.tsx'), 'utf8')
+  const manifest = readJson(join(mod.dir, '.claude-plugin', 'plugin.json'))
+  const commands = commandNamesIn(source)
+  const typesPath = join(mod.dir, 'types', 'index.d.ts')
+  const keys = existsSync(typesPath) ? [...readFileSync(typesPath, 'utf8').matchAll(/^\s+(\w+): Shaped</gm)].map(match => match[1]) : []
+  const body = [
+    `# ${mod.name}`,
+    '',
+    manifest.description,
+    '',
+    '## Commands',
+    '',
+    commands.length > 0 ? commands.map(name => `- \`/${name}\``).join('\n') : 'This mod registers no commands; it acts through hooks and the status line.',
+    '',
+    '## Shared state',
+    '',
+    keys.length > 0 ? `Publishes ${keys.map(key => `\`${key}\``).join(', ')} for other mods and the engineering cockpit.` : 'Keeps its values in the session store only.',
+    '',
+    '## Configuration',
+    '',
+    'Reads `.agentic-mods/config.json` when relevant. Invalid fields are reported by `/agentic doctor` and replaced by defaults. See the repository README for the schema.',
+    '',
+    '## Status',
+    '',
+    `Version ${manifest.version}. Built from the shared core with the engine declarations for Claude Code 2.1.332. Not covered by automated tests yet.`,
+    '',
+  ].join('\n')
+  writeFileSync(join(mod.dir, 'README.md'), body)
 }
 
 mkdirSync(join(ROOT, 'registry'), { recursive: true })

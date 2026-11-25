@@ -31,11 +31,16 @@ export function register(on: On): void {
     if (isProtectedPath(path, config.protectedPaths, config.protectedExceptions)) {
       return { text: `${path} is a protected secret file and is not rendered.` }
     }
-    const stat = await $.fs.stat(path)
-    if (stat.kind !== 'file' || stat.size > MAX_BYTES) {
-      return { text: `${path} is not a readable file under ${MAX_BYTES} bytes.` }
+    let text: string
+    try {
+      const stat = await $.fs.stat(path)
+      if (stat.kind !== 'file' || stat.size > MAX_BYTES) {
+        return { text: `${path} is not a readable file under ${MAX_BYTES} bytes.` }
+      }
+      text = await $.fs.read(path)
+    } catch {
+      return { text: `${path} does not exist or cannot be read.` }
     }
-    const text = await $.fs.read(path)
     await update($, document, () => ({ path, text }))
     await $.ui.open({ id: PANE, title: 'Preview' })
     return { text: `Previewing ${path}.` }

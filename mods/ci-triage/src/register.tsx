@@ -17,7 +17,12 @@ export function register(on: On): void {
       return { text: 'Usage: /ci triage <path to the log file>. Download the failed job log first.' }
     }
     const path = normalizePath(rest.join(' '))
-    const log = await $.fs.read(path)
+    let log: string
+    try {
+      log = await $.fs.read(path)
+    } catch {
+      return { text: `Cannot read ${path}. Download the failed job log and pass its path.` }
+    }
     const result = triageLog(log)
     const lines = [
       `category: ${result.category}`,

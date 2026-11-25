@@ -4,9 +4,10 @@ Claude Code mods for engineering work: safety guards, verification evidence, gov
 checks, and delivery workflows. Each mod is an independent plugin built from one shared,
 dependency-free core library.
 
-**Status:** the mods build, type-check and pass `claude plugin validate` (Claude Code 2.1.332).
-They have **not** been exercised in a running session yet, and there are **no tests yet**.
-Both are planned for the next wave. CI and GitHub Actions are deferred.
+**Status:** version 0.2.0, a production candidate. `pnpm check` runs the full release gate: strict
+typecheck, bundle build, lint of the tooling, the engine validator, command-name checks and the registry.
+The mods have **not** been exercised beyond load and hot reload in a live session, and there are **no
+automated tests yet**. CI and GitHub Actions are deferred. See `CHANGELOG.md`.
 
 ## Install
 
@@ -110,6 +111,8 @@ Commands are argv arrays and run without a shell. Other state files live under `
 
 - Evidence is only PASS after a configured command exits 0 under `/evidence run`. Observed tool
   output is never treated as a pass, because the engine's Bash result carries no exit code.
+- With no evidence commands configured, git gates warn instead of blocking. Configure `evidence.commands`
+  and the gate enforces `gateMode`.
 - Completion of a turn cannot be blocked. Gates attach to git commit, push and PR creation instead.
 - Architecture and migration checks read the text of an edit. For an Edit that is only the new text,
   a violation that spans the edit boundary can be missed.
