@@ -12,11 +12,11 @@ import type {
   EscalationPolicy,
   FailureCategory,
   RunOutcome,
-  RoutingPolicy,
   VerificationCheck,
   VerificationCheckResult,
   VerificationResult,
-} from '@agentic-mods/core'
+} from './verification'
+import type { RoutingPolicy } from './routing'
 
 // --------------------------------------------------------------- classifier
 
@@ -44,7 +44,7 @@ export function heuristicClassify(input: ClassifyInput): ClassifyResult {
 export function heuristicClassifyFailure(f: VerificationResult): { category: FailureCategory; detail: string } {
   const detail = f.failures[0] ?? 'unspecified'
   const text = detail.toLowerCase()
-  if (text.includes('timeout') || text.includes('temporarily') || text.includes('retry')) {
+  if (text.includes('timeout') || text.includes('timed out') || text.includes('temporarily') || text.includes('retry')) {
     return { category: 'transient', detail }
   }
   if (text.includes('wrong model') || text.includes('too weak') || text.includes('route')) {

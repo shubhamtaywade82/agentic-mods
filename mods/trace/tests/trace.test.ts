@@ -1,7 +1,7 @@
 // Unit tests for trace's pure lib + the packages/core ExecutionTrace it uses.
 
 import { expect, test } from 'claude-code/testing'
-import { InMemoryTrace, renderTree } from '@agentic-mods/core'
+import { InMemoryTrace, renderTree } from '../src/lib/trace'
 import { fileTouchFromTool, summarize, traceSpinnerSuffix, toolLabel } from '../src/lib/summary'
 
 // ------------------------------------------------------- InMemoryTrace core

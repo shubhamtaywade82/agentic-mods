@@ -24,7 +24,6 @@ test('/trace shows the main agent after session start', async ($) => {
 
 test('/trace-summary reports node counts', async ($, on) => {
   on('tool.call', () => ({ result: 'ok' }))
-  on('tool.result', (_$, e) => ({ result: e.result }))
 
   await $.tool.call({ tool: 'Bash', command: 'ls' })
   await $.tool.call({ tool: 'Read', file_path: 'README.md' })
@@ -36,7 +35,6 @@ test('/trace-summary reports node counts', async ($, on) => {
 
 test('a denied tool call is recorded as failed', async ($, on) => {
   on('tool.call', { tool: 'Bash' }, () => ({ deny: 'blocked' }))
-  on('tool.result', (_$, e) => ({ result: e.result }))
 
   await $.tool.call({ tool: 'Bash', command: 'rm -rf /' }).catch(() => undefined)
   const answer = await $.command.run(summaryInput)

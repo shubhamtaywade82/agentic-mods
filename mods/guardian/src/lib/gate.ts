@@ -79,10 +79,11 @@ export function holdForSecretDiff(
  * approve what we could not inspect.
  */
 export function holdForOversizedDiff(command: string, bytes: number, limit: number): HeldOp {
+  const limitKb = Math.round(limit / 1024)
   return {
     command,
     reason: 'diff-oversized',
-    preview: `The staged diff is ${bytes} bytes, above the scan limit of ${limit}. guardian will not approve a diff it could not inspect. Stage smaller hunks or split the commit.`,
+    preview: `The staged diff is ${bytes} bytes, above the scan limit of ${limit} (${limitKb}KB). guardian will not approve a diff it could not inspect. Stage smaller hunks or split the commit.`,
     previewComputed: false,
   }
 }

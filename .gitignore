@@ -19,6 +19,7 @@ mods/*/.claude-plugin/types/
 .DS_Store
 .vscode/
 .idea/
+.omc/
 
 # engine-written declarations inside vendored plugins (never committed)
 plugins/*/.claude-plugin/types/

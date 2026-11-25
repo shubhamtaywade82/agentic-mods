@@ -1,13 +1,4 @@
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
-
-// packages/core/src/config.ts
-var CONFIG_PATH = `${STATE_DIR}/config.json`;
-
-// packages/core/src/hash.ts
-var encoder = new TextEncoder();
-
-// packages/core/src/trace.ts
+// mods/trace/src/lib/trace.ts
 var DEFAULT_MAX_NODES = 500;
 var InMemoryTrace = class {
   nodes = /* @__PURE__ */ new Map();
@@ -176,7 +167,7 @@ function openAgent(trace2, parentId, subagentType, description) {
 // mods/trace/src/register.tsx
 var trace = new InMemoryTrace();
 var openTools = [];
-var mainId = "main";
+var mainId = trace.open({ kind: "main", label: "main", parentId: null });
 function strField(e, key) {
   if (typeof e !== "object" || e === null) return void 0;
   const v = e[key];
@@ -230,11 +221,14 @@ function register(on) {
     return next({ ...e, props: { ...e.props, suffix: traceSpinnerSuffix(summarize(trace)) } });
   });
   on("command.run", { command: "trace" }, async () => {
+    if (!trace.get("main")) {
+      mainId = trace.open({ kind: "main", label: "main", parentId: null });
+    }
     return { text: renderTree(trace.snapshot()) };
   });
   on("command.run", { command: "trace-summary" }, async () => {
     const s = summarize(trace);
-    return { text: `trace: ${s.total} nodes (${s.running} running, ${s.failed} failed, ${s.completed} completed)` };
+    return { text: `trace summary: ${s.total} nodes (${s.agents} agents, ${s.tools} tools; ${s.running} running, ${s.failed} failed, ${s.completed} completed)` };
   });
 }
 export {

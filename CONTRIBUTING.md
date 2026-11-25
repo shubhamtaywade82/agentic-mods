@@ -78,7 +78,7 @@ marketplace lists every mod and vice versa; `tsc` passes against the
 
 What the CLI pass adds: `claude plugin validate` and `claude plugin test` on
 every mod, and marketplace validation. CI runs both passes plus a
-`2.1.287`/`latest` version matrix.
+`2.1.330`/`latest` version matrix.
 
 For guard or secret-pattern changes, add regression tests for: multiple
 distinct secrets of the same kind in one payload, overlapping findings, and

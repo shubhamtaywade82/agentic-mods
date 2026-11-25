@@ -133,5 +133,5 @@ test('redactResult returns findings for the report summary', () => {
   const { findings } = redactResult('AKIAIOSFODNN7EXAMPLE and AKIAI44QH8DHBEXAMPLE')
   const aws = findings.filter((f) => f.kind === 'aws-access-key')
   expect(aws.length).toBe(2)
-  expect(scan(JSON.stringify(findings))).toEqual([]) // findings never carry raw values in their fields beyond `value`; confirm no secret leaks via the kind
+  expect(scan(JSON.stringify(findings.map((f) => ({ kind: f.kind, index: f.index }))))).toEqual([]) // kinds and metadata never leak secrets
 })

@@ -1,13 +1,4 @@
-// packages/core/src/paths.ts
-var STATE_DIR = ".agentic-mods";
-
-// packages/core/src/config.ts
-var CONFIG_PATH = `${STATE_DIR}/config.json`;
-
-// packages/core/src/hash.ts
-var encoder = new TextEncoder();
-
-// packages/core/src/verification.ts
+// mods/verify/src/lib/verification.ts
 var verifyEngine = {
   async run({ initial, classifyFailure, execute, verify, policy }) {
     const attempts = [];
@@ -73,7 +64,7 @@ function heuristicClassify(input) {
 function heuristicClassifyFailure(f) {
   const detail = f.failures[0] ?? "unspecified";
   const text = detail.toLowerCase();
-  if (text.includes("timeout") || text.includes("temporarily") || text.includes("retry")) {
+  if (text.includes("timeout") || text.includes("timed out") || text.includes("temporarily") || text.includes("retry")) {
     return { category: "transient", detail };
   }
   if (text.includes("wrong model") || text.includes("too weak") || text.includes("route")) {
@@ -163,8 +154,8 @@ function strField(e, key) {
   return typeof v === "string" ? v : void 0;
 }
 function pickInitialRoute(effort, policy) {
-  const match = policy.ladder.find((r) => r.effort === effort);
-  return match ?? policy.ladder[0] ?? { model: "claude-3-7-sonnet", effort: "medium" };
+  const match = policy.fallbackRoutes.find((r) => r.effort === effort);
+  return match ?? policy.fallbackRoutes[0] ?? { model: "claude-3-7-sonnet", effort: "medium" };
 }
 function register(on) {
   on("session.start", async ($, e, next) => {

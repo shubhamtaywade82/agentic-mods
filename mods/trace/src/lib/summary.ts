@@ -5,7 +5,7 @@
 // No Claude Code imports here: the adapter passes raw event fields in, and
 // these helpers decide which ExecutionTrace method to call.
 
-import type { ExecutionTrace, FileTouch, NodeKind } from '@agentic-mods/core'
+import type { ExecutionTrace, FileTouch, NodeKind } from './trace'
 
 /** Decide a tool node's label from the event. */
 export function toolLabel(tool: string | undefined, command: string | undefined): string {

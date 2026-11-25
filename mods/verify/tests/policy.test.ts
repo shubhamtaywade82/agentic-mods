@@ -4,7 +4,7 @@
 // loop against stubbed execute/verify effects, with no Claude Code session.
 
 import { expect, test } from 'claude-code/testing'
-import { verifyEngine, type RunOutcome, type VerificationResult } from '@agentic-mods/core'
+import { verifyEngine, type RunOutcome, type VerificationResult } from '../src/lib/verification'
 import {
   DEFAULT_POLICY,
   STRICT_POLICY,

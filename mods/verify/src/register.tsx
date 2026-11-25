@@ -4,9 +4,9 @@ import {
   type ClassifyInput,
   type EscalationPolicy,
   type RunOutcome,
-  type RoutingPolicy,
   type VerificationResult,
-} from '@agentic-mods/core'
+} from './lib/verification'
+import type { RoutingPolicy } from './lib/routing'
 import {
   DEFAULT_POLICY,
   containsCheck,
@@ -27,8 +27,8 @@ function strField(e: unknown, key: string): string | undefined {
 }
 
 function pickInitialRoute(effort: RoutingPolicy['effort'], policy: EscalationPolicy): RoutingPolicy {
-  const match = policy.ladder.find((r) => r.effort === effort)
-  return match ?? policy.ladder[0] ?? { model: 'claude-3-7-sonnet', effort: 'medium' }
+  const match = policy.fallbackRoutes.find((r) => r.effort === effort)
+  return match ?? policy.fallbackRoutes[0] ?? { model: 'claude-3-7-sonnet', effort: 'medium' }
 }
 
 export function register(on: On): void {

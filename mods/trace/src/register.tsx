@@ -1,10 +1,10 @@
 import type { On } from 'claude-code'
-import { InMemoryTrace, renderTree } from '@agentic-mods/core'
+import { InMemoryTrace, renderTree } from './lib/trace'
 import { openAgent, openTool, summarize, traceSpinnerSuffix, fileTouchFromTool } from './lib/summary'
 
 const trace = new InMemoryTrace()
 const openTools: string[] = []
-let mainId = 'main'
+let mainId = trace.open({ kind: 'main', label: 'main', parentId: null })
 
 function strField(e: unknown, key: string): string | undefined {
   if (typeof e !== 'object' || e === null) return undefined
@@ -65,11 +65,14 @@ export function register(on: On): void {
   })
 
   on('command.run', { command: 'trace' }, async () => {
+    if (!trace.get('main')) {
+      mainId = trace.open({ kind: 'main', label: 'main', parentId: null })
+    }
     return { text: renderTree(trace.snapshot()) }
   })
 
   on('command.run', { command: 'trace-summary' }, async () => {
     const s = summarize(trace)
-    return { text: `trace: ${s.total} nodes (${s.running} running, ${s.failed} failed, ${s.completed} completed)` }
+    return { text: `trace summary: ${s.total} nodes (${s.agents} agents, ${s.tools} tools; ${s.running} running, ${s.failed} failed, ${s.completed} completed)` }
   })
 }

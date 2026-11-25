@@ -42,17 +42,12 @@ function mergeKinds(kinds: Record<string, number>): void {
 }
 
 async function requestApproval(
-  $: EngineInterface,
-  command: string,
+  _$: EngineInterface,
+  _command: string,
   _reason: string,
-  preview: string,
+  _preview: string,
 ): Promise<'approve' | 'deny'> {
-  try {
-    const decision = await $.ui.ask(`guardian: ${command}\n${preview}`, ['approve', 'deny'])
-    return decision === 'approve' ? 'approve' : 'deny'
-  } catch {
-    return 'deny'
-  }
+  return 'deny'
 }
 
 async function gateHistoryCommand(

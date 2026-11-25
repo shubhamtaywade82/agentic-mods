@@ -43,12 +43,14 @@ jobs:
       fail-fast: false
       matrix:
         # Minimum supported mods API version + latest release.
-        claude: ["2.1.287", "latest"]
+        claude: ["2.1.330", "latest"]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code@${{ matrix.claude }}
+      - name: Install pinned tooling and Claude Code
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          npm install -g typescript@5.9 @anthropic-ai/claude-code@${{ matrix.claude }}
 
       - name: Warm mod type declarations
         run: |
