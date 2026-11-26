@@ -23,7 +23,10 @@ const steps = [
   ...(enforceDrift ? [['hook bundles match source', () => noDrift('mods')]] : []),
   ['unit tests (packages/core)', ['node', 'packages/tooling/test-core.mjs']],
   ['lint (JavaScript tooling)', ['./node_modules/.bin/eslint', '.']],
-  ['validate (engine validator, command checks)', ['node', 'packages/tooling/validate-mods.mjs']],
+  [
+    'validate (engine validator, command checks)',
+    ['node', 'packages/tooling/validate-mods.mjs', ...(offline ? ['--offline'] : [])],
+  ],
   ['registry, marketplace and READMEs', ['node', 'packages/tooling/generate-registry.mjs']],
   ...(enforceDrift
     ? [['registry and READMEs match committed', () => noDrift('registry', 'mods')]]

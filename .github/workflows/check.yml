@@ -77,6 +77,11 @@ jobs:
           CI: '1'
         run: bash scripts/check.sh
 
+      # The full engine validator: claude plugin validate for every mod and every vendored plugin.
+      # The offline gate skips these because it runs without the CLI.
+      - name: Engine validation of mods and vendored plugins
+        run: node packages/tooling/validate-mods.mjs
+
   # Loads every mod into a headless Claude Code session and runs each registered command. It runs on
   # demand only, because it needs the credentials the CLI requires in CI, which this workflow does not
   # supply by default. Set the ANTHROPIC_API_KEY repository secret before dispatching it.
