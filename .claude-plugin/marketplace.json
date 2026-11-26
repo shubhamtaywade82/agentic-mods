@@ -274,7 +274,7 @@
     {
       "name": "verify",
       "source": "./mods/verify",
-      "description": "Verification-driven escalation engine: classify a task's complexity/risk, route it (model + effort), execute, verify with deterministic checks, and escalate (retry or climb the route ladder) on failure until it passes or the policy is exhausted. The engine is runtime-agnostic and lives in packages/core; this mod adapts it to Claude Code commands.",
+      "description": "Runs the verification checks a repository declares under evidence.commands and passes only when every command exits 0. Only declared commands run, each once, under the process policy. The adapter lives in mods/verify; the check logic lives in packages/core.",
       "version": "0.1.0"
     },
     {

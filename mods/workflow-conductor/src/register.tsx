@@ -4,6 +4,7 @@ import type { EngineInterface, On } from 'claude-code'
 import {
   advanceRun,
   evaluateGate,
+  gateOf,
   type Exception,
   type FactValue,
   type GateDefinition,
@@ -13,6 +14,7 @@ import {
   startRun,
   stageOf,
   stateRelativePath,
+  validateCatalogue,
   type WorkflowDefinition,
   truncate,
   registerCommand,
@@ -60,12 +62,24 @@ const RAW_WORKFLOWS: readonly unknown[] = [
 ]
 
 const WORKFLOWS = new Map<string, WorkflowDefinition>()
+// Every catalogue problem is kept, none is dropped. While the list is non-empty the engine refuses
+// to start, advance or defer, because a stage without a valid gate has no check at all.
+const CATALOGUE_PROBLEMS: string[] = []
 for (const raw of RAW_WORKFLOWS) {
   const parsed = parseWorkflow(raw)
-  if (parsed.ok) WORKFLOWS.set(parsed.value.id, parsed.value)
+  if (!parsed.ok) {
+    CATALOGUE_PROBLEMS.push(parsed.error)
+    continue
+  }
+  if (WORKFLOWS.has(parsed.value.id)) {
+    CATALOGUE_PROBLEMS.push(`duplicate workflow id ${parsed.value.id}`)
+  }
+  WORKFLOWS.set(parsed.value.id, parsed.value)
 }
 const GATES_RESULT = parseGates(gatesCatalogue)
+if (!GATES_RESULT.ok) CATALOGUE_PROBLEMS.push(GATES_RESULT.error)
 const GATES: Readonly<Record<string, GateDefinition>> = GATES_RESULT.ok ? GATES_RESULT.value : {}
+CATALOGUE_PROBLEMS.push(...validateCatalogue([...WORKFLOWS.values()], GATES))
 
 const IDLE: ConductorState = {
   active: false,
@@ -206,7 +220,7 @@ function withDeferrals(
 ): Record<string, FactValue> {
   const out = { ...facts }
   for (const item of exceptions) {
-    const gate = GATES[item.gate]
+    const gate = gateOf(GATES, item.gate)
     if (gate === undefined) continue
     for (const fact of gate.facts) {
       const value = out[fact]
@@ -251,10 +265,13 @@ async function blockersOf(
   if (run === null || definition === undefined || run.status !== 'active') return []
   const stage = stageOf(definition, run.currentStage)
   if (stage === undefined || stage.gate === null) return []
-  const gate = GATES[stage.gate]
-  if (gate === undefined) return []
+  // A gate that is not in the catalogue blocks the stage. Reporting no blockers here would show a
+  // stage as clear when nothing checks it.
+  const gate = gateOf(GATES, stage.gate)
+  if (gate === undefined) return [`${stage.gate}: gate is not in the catalogue`]
   const facts = withDeferrals(await factsOf($), run.exceptions)
   const evaluation = evaluateGate(gate, facts, run.exceptions)
+  if (evaluation.invalid !== undefined) return [evaluation.invalid]
   return [...evaluation.missing, ...evaluation.failing].map((fact) => `${stage.gate}: ${fact}`)
 }
 
@@ -341,6 +358,14 @@ export function register(on: On): void {
       .filter((word) => word.length > 0)
     const run = await loadRun($)
 
+    // A catalogue that does not validate has no trustworthy gates. Starting, advancing and deferring
+    // are refused until it is fixed; status still shows the problems.
+    if (CATALOGUE_PROBLEMS.length > 0 && subcommand !== 'status') {
+      return {
+        text: `workflow-conductor refused: the workflow catalogue is invalid.\n${CATALOGUE_PROBLEMS.map((p) => `  ${p}`).join('\n')}`,
+      }
+    }
+
     if (subcommand === 'start') {
       const [workflowId = '', ...taskParts] = rest
       const task = taskParts
@@ -370,7 +395,11 @@ export function register(on: On): void {
 
     if (subcommand === 'status') {
       await $.ui.open({ id: PANE, title: 'Workflow' })
-      return { text: statusText(definition, run, await blockersOf($, run, definition)) }
+      const status = statusText(definition, run, await blockersOf($, run, definition))
+      if (CATALOGUE_PROBLEMS.length === 0) return { text: status }
+      return {
+        text: `${status}\nCatalogue invalid, so start, advance and defer are refused:\n${CATALOGUE_PROBLEMS.map((p) => `  ${p}`).join('\n')}`,
+      }
     }
 
     if (subcommand === 'advance') {
@@ -403,7 +432,7 @@ export function register(on: On): void {
     if (subcommand === 'defer') {
       const [gateId = '', ...reasonWords] = rest
       const reason = truncate(reasonWords.join(' ').trim(), 300)
-      if (GATES[gateId] === undefined || reason === '') {
+      if (gateOf(GATES, gateId) === undefined || reason === '') {
         return {
           text: 'Usage: /workflow defer <gate-id> <reason>. The reason is recorded with its approver.',
         }

@@ -3,6 +3,7 @@ import type { EngineInterface, On } from 'claude-code'
 import {
   appendJsonLine,
   auditLine,
+  decideProcess,
   isTrustedMod,
   loadConfig,
   stateRelativePath,
@@ -90,6 +91,23 @@ export function register(on: On): void {
   )
 
   on('process.run', async ($, e, next) => {
+    // The process policy judges every launch except the engine's own. Trusting a mod exempts it
+    // from the allowlist below, never from the destructive-operation rules.
+    if (next.origin.plugin !== 'engine') {
+      const policy = decideProcess(e.argv)
+      if (policy.kind !== 'allow') {
+        await audit($, {
+          plugin: PLUGIN,
+          kind: 'process',
+          origin: next.origin.plugin,
+          target: executableOf(e.argv),
+          allowed: false,
+          mode: 'policy',
+          reason: policy.reason,
+        })
+        return { deny: `mod-firewall: ${policy.reason}` }
+      }
+    }
     const denial = await decide(
       $,
       'process',

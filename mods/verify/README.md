@@ -1,43 +1,51 @@
 # verify
 
-A verification-driven escalation engine mod for Claude Code. This is the architectural piece the reference repository (`claude-code-mods`) was **missing entirely**: a loop that runs _after_ a routed task completes, not just before it starts (which is all Switchboard does).
+Runs the verification checks a repository declares, and reports a pass only when every declared command exits 0. It is a deterministic check runner: it does not choose models, and it does not retry.
 
-## The pipeline
+## What changed, and why
 
+The previous version ran whatever text followed `/verify-run` as a process, and escalated failures by re-running commands and by climbing a model/effort ladder that never reached the executor. That gave an unchecked process path, re-executed non-idempotent commands on a "transient" failure, and reported escalation that did not happen. Those behaviours are removed:
+
+- **Only declared commands run.** `/verify-run <check>` names a check. The command is the one declared for it under `evidence.commands` in `.agentic-mods/config.json`. Text is never split into argv.
+- **The process policy applies.** A declared command is judged by the same destructive-operation classifier as a Bash command. A destructive command is refused, even when it is declared. `mod-firewall` judges every process launch again, including launches by native mods.
+- **No retries.** A failed command is reported once and not re-executed.
+- **No model routing.** The mod runs commands. It does not select a model or effort, so it records none.
+
+## Configure checks
+
+```json
+{
+  "evidence": {
+    "commands": {
+      "lint": [["pnpm", "lint"]],
+      "test": [
+        ["pnpm", "test"],
+        ["pnpm", "test:core"]
+      ],
+      "typecheck": [["pnpm", "typecheck"]]
+    }
+  }
+}
 ```
-Task -> classify complexity/risk -> select RoutingPolicy (model + effort)
-     -> execute -> verify with deterministic checks
-       PASS -> complete
-       FAIL -> classify failure -> escalate -> re-execute -> verify again
-```
 
-The engine walks four failure categories:
-
-- **transient** — retry on the same route (network/flaky)
-- **route-mismatch** — climb to the next route in the fallback ladder (wrong model/effort)
-- **deterministic** — abort (retrying identically is pointless)
-- **fatal** — abort immediately
-
-It stops at `maxAttempts` (exhausted) or on a non-retryable failure (aborted).
+Each argv runs without a shell, in declaration order. Check names are `build`, `test`, `lint`, `typecheck` and `security`. A check with no declared command, or with a command the policy refuses, cannot run.
 
 ## Commands
 
-- `/verify-run <command> [args...]`: run the command (split into argv, no shell) and pass only when it exits 0. A failure whose output mentions a timeout or a retry is retried; any other failure aborts. Returns the outcome: status, attempts and the route each attempt recorded.
-- `/verify-status`: session summary (completed / escalated / exhausted / aborted counts, average attempts per run).
+- `/verify-run` lists the checks that can run.
+- `/verify-run <check>` runs the check's commands in order and stops at the first non-zero exit. The result shows each command and its exit code, and the output tail of the failing command.
+- `/verify-status` summarises the checks run this session.
 
-The command adapter runs local commands, so the route it records (model and effort) is bookkeeping only; it does not change which model runs anything. The model and effort ladder takes effect when the engine is driven by an agent runtime that supplies its own `execute`.
+## Limits
+
+- The process policy does not inspect code run inside an interpreter (`python -c`, `node -e`). That is why only declared commands run.
+- `evidence.runTimeoutMs` is not applied by this mod: the engine's `process.run` call is made without a timeout option.
 
 ## Architecture
 
-- `src/lib/verification.ts`: the `VerifyEngine`, `verifyEngine` reference implementation, `RunOutcome`, `EscalationPolicy`, `ClassifyResult` (pure, runtime-agnostic)
-- `src/lib/policy.ts`: `heuristicClassify`, `heuristicClassifyFailure`, `DEFAULT_POLICY`/`STRICT_POLICY` presets, built-in checks, `runChecks`, renderers (pure)
-- `src/register.tsx`: the adapter that exposes the engine as commands, with `$.process.run` as `execute` and an exit-code check as `verify`
-
-## Why this matters
-
-Switchboard (the routing mod) makes a routing decision _before_ a subagent starts. It has no notion of whether the result was actually correct. `verify` closes that gap: it re-routes on failure, escalating the model/effort until deterministic checks pass or the policy is exhausted. Pair the two for the full pipeline: Switchboard picks the first route, verify escalates it.
-
-The engine is deliberately independent of Claude Code's `agent.spawn` event so it can be reused by Nexum and other agent runtimes — only the adapter in `register.ts` knows about Claude Code.
+- `packages/core/src/verify.ts`: check selection, the single-attempt runner, and renderers (pure).
+- `packages/core/src/command-policy.ts`: the process policy, which reuses the sdlc-guard classifier vendored from agentic-sdlc-kit.
+- `src/register.tsx`: the adapter, which exposes the runner as commands and uses `$.process.run` as the executor.
 
 ## Develop
 

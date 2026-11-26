@@ -22,6 +22,8 @@
     "package": "node packages/tooling/package-mods.mjs",
     "create-mod": "node packages/tooling/create-mod.mjs",
     "check": "node packages/tooling/check.mjs",
+    "check:offline": "node packages/tooling/check.mjs --offline",
+    "test:core": "node packages/tooling/test-core.mjs",
     "smoke:live": "node packages/tooling/smoke-live.mjs"
   },
   "devDependencies": {

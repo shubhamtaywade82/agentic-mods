@@ -29,5 +29,7 @@
 - `pnpm build` — fails if a bundle contains an import other than `claude-code`.
 - `pnpm validate` — the engine's own validator, plus the native-list check.
 
-Unit tests are not part of this repository yet. Add them when the test wave starts; the pure
-modules in `packages/core` are the first candidates.
+Unit tests for the pure modules in `packages/core` run with `pnpm test:core` (Node's test runner, with
+test files bundled by esbuild). Mod-level tests in `mods/*/tests` use the `claude-code/testing` harness
+and run under `claude plugin test`, which needs a Claude Code session. Put logic that can be tested
+without a session in `packages/core`.

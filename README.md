@@ -8,9 +8,13 @@ dependency-free core library.
 typecheck, bundle build, lint, the engine validator, command-name checks and the registry. All 47 mods
 and the 4 vendored plugins pass `claude plugin validate` (Claude Code 2.1.332) and `claude plugin test`:
 every mod has tests that run its commands and pass an ordinary tool call through, and guardian, trace,
-verify, sdlc, pulse, design-patterns and mod-template have deeper behaviour tests. GitHub Actions runs
-`scripts/check.sh` on every pull request and on pushes to `main` (`.github/workflows/check.yml`). `pnpm smoke:live` runs every
-command in a real headless session. The approval dialog, panes and bands were checked by hand in an
+verify, sdlc, pulse, design-patterns and mod-template have deeper behaviour tests. On every pull request and on pushes to `main`, GitHub Actions runs the offline release gate
+(`pnpm check:offline`: build from source, fail on any drift between committed bundles or the registry and
+their source, unit tests for `packages/core`, lint, validate, registry), then `scripts/check.sh`, then
+`claude plugin validate` and `claude plugin test` on Claude Code 2.1.330 and latest
+(`.github/workflows/check.yml`). The strict TypeScript typecheck needs engine declarations that only a
+Claude Code session writes, so CI does not run it. `pnpm smoke:live` runs every command in a real headless
+session; CI runs it on demand only. The approval dialog, panes and bands were checked by hand in an
 interactive session before the visual redesign; the redesign itself is covered by render tests on the
 terminal and desktop surfaces. See `CHANGELOG.md`.
 

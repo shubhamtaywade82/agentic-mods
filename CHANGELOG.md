@@ -9,6 +9,26 @@
   its command, `engineering-cockpit` brings its eight dependencies, and the `essential` preset
   installs all 13 plugins.
 
+### Fixed
+
+- `verify`: `/verify-run` runs only the commands declared under `evidence.commands` in
+  `.agentic-mods/config.json`. Before, it executed any text typed after the command through
+  `$.process.run`, outside the Bash guards. Declared commands pass the process policy, run once, and
+  are not retried. Model and effort escalation never reached the executor, so it is removed.
+- `mod-firewall`: the destructive-operation policy applies to every process launch except the
+  engine's own. Trusting a native mod exempts it from the allowlist, never from that policy. The policy
+  reuses the sdlc-guard classifier vendored from agentic-sdlc-kit.
+- Workflow gates fail closed. A stage whose gate is missing from the catalogue blocks the transition,
+  and a gate with no facts never passes. Lookups use the catalogue's own keys, so `constructor` is not a
+  gate. A catalogue that fails validation refuses start, advance and defer, and reports every problem.
+- CI: the offline release gate runs on every pull request: build from source, drift check on committed
+  bundles and registry, unit tests, lint, validate. Before, CI ran only an 8-mod stub typecheck.
+
+### Added
+
+- Unit tests for `packages/core` (`pnpm test:core`, 22 cases): process policy and argv quoting, workflow
+  gate failure modes, the shipped workflow and gate catalogues, and declared-check verification.
+
 ### Design
 
 - One look across the catalog: `packages/core/src/ui.tsx` holds the palette (theme keys, so colors

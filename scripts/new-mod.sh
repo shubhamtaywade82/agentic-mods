@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# LEGACY: this follows the older hook layout and does not update the native trust registry. Use
+# `pnpm create-mod` (packages/tooling/create-mod.mjs) instead.
 # Scaffold a new mod from mods/mod-template.
 # Usage: bash scripts/new-mod.sh <new-mod-name>
 #   - copies mods/mod-template, renames the plugin and commands,

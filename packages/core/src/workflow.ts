@@ -41,6 +41,8 @@ export type GateEvaluation = {
   missing: string[]
   failing: string[]
   deferred: string[]
+  /** Set when the gate itself cannot be satisfied, for example a gate with no facts. */
+  invalid?: string
 }
 
 export type RunStatus = 'active' | 'completed' | 'cancelled'
@@ -124,20 +126,43 @@ export function stageOf(definition: WorkflowDefinition, id: string): StageDefini
 }
 
 /**
+ * Looks a gate up by id. Only the catalogue's own keys count: a plain object lookup would return
+ * `Object.prototype` members for ids such as `constructor` or `toString`, and treat them as gates.
+ */
+export function gateOf(
+  gates: Readonly<Record<string, GateDefinition>>,
+  id: string,
+): GateDefinition | undefined {
+  return Object.hasOwn(gates, id) ? gates[id] : undefined
+}
+
+/**
  * Evaluates a gate. A fact that is missing, UNKNOWN or STALE blocks the gate. A FAIL blocks it
  * too, and is reported separately. DEFERRED is allowed only with a recorded exception.
+ *
+ * A gate with no facts is never allowed. An empty fact list would otherwise be vacuously true,
+ * which is how a misdeclared gate used to pass.
  */
 export function evaluateGate(
   gate: GateDefinition,
   facts: Readonly<Record<string, FactValue>>,
   exceptions: readonly Exception[],
 ): GateEvaluation {
+  if (gate.facts.length === 0) {
+    return {
+      allowed: false,
+      missing: [],
+      failing: [],
+      deferred: [],
+      invalid: `gate ${gate.id} declares no facts and cannot be satisfied`,
+    }
+  }
   const excepted = exceptions.some((item) => item.gate === gate.id)
   const missing: string[] = []
   const failing: string[] = []
   const deferred: string[] = []
   for (const fact of gate.facts) {
-    const value = facts[fact] ?? 'UNKNOWN'
+    const value: FactValue = Object.hasOwn(facts, fact) ? (facts[fact] ?? 'UNKNOWN') : 'UNKNOWN'
     if (value === 'PASS') continue
     if (value === 'FAIL') failing.push(fact)
     else if (value === 'DEFERRED' && excepted) deferred.push(fact)
@@ -149,6 +174,39 @@ export function evaluateGate(
     failing,
     deferred,
   }
+}
+
+/**
+ * Checks a workflow catalogue against its gate catalogue and returns every problem found, not just
+ * the first. The workflow engine must not start while this list is non-empty: a stage whose gate is
+ * undefined would otherwise have no check at all.
+ */
+export function validateCatalogue(
+  workflows: readonly WorkflowDefinition[],
+  gates: Readonly<Record<string, GateDefinition>>,
+): string[] {
+  const problems: string[] = []
+  const workflowIds = new Set<string>()
+  for (const workflow of workflows) {
+    if (workflowIds.has(workflow.id)) problems.push(`duplicate workflow id ${workflow.id}`)
+    workflowIds.add(workflow.id)
+    const stageIds = new Set<string>()
+    for (const stage of workflow.stages) {
+      if (stageIds.has(stage.id)) {
+        problems.push(`workflow ${workflow.id} defines stage ${stage.id} more than once`)
+      }
+      stageIds.add(stage.id)
+      if (stage.gate !== null && gateOf(gates, stage.gate) === undefined) {
+        problems.push(
+          `workflow ${workflow.id} stage ${stage.id} references gate ${stage.gate}, which is not in the gate catalogue`,
+        )
+      }
+    }
+  }
+  for (const [id, gate] of Object.entries(gates)) {
+    if (gate.facts.length === 0) problems.push(`gate ${id} declares no facts`)
+  }
+  return problems
 }
 
 export function startRun(
@@ -190,18 +248,23 @@ export function advanceRun(
   if (targetStage === undefined)
     return { ok: false, reason: `${target} is not a stage`, evaluation: null }
 
-  // The gate of the stage being left is what must be satisfied before leaving it.
-  const gateId = current.gate
-  const evaluation =
-    gateId === null
-      ? null
-      : evaluateGate(
-          gates[gateId] ?? { id: gateId, description: '', facts: [] },
-          facts,
-          run.exceptions,
-        )
+  // The gate of the stage being left is what must be satisfied before leaving it. A gate id that is
+  // not in the catalogue blocks the move: it must never be replaced by an empty, passing gate.
+  let evaluation: GateEvaluation | null = null
+  if (current.gate !== null) {
+    const gate = gateOf(gates, current.gate)
+    if (gate === undefined) {
+      return {
+        ok: false,
+        reason: `${current.id} references gate ${current.gate}, which is not in the gate catalogue`,
+        evaluation: null,
+      }
+    }
+    evaluation = evaluateGate(gate, facts, run.exceptions)
+  }
   if (evaluation !== null && !evaluation.allowed) {
-    return { ok: false, reason: `${current.id} gate is not satisfied`, evaluation }
+    const reason = evaluation.invalid ?? `${current.id} gate is not satisfied`
+    return { ok: false, reason, evaluation }
   }
   const terminal = targetStage.next.length === 0
   const nextRun: RunState = {
