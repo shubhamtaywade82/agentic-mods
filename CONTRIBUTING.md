@@ -52,8 +52,10 @@ guard, add a `.catch` that denies, and a test for it.
 ## Adding a new mod
 
 ```bash
-bash scripts/new-mod.sh my-mod
+pnpm create-mod my-mod "one-line description"
 ```
+
+`scripts/new-mod.sh` is legacy and is kept only for reference.
 
 This scaffolds from `mods/mod-template`, renames plugin and commands, and
 registers the mod in `.claude-plugin/marketplace.json`. Then:
@@ -68,9 +70,14 @@ registers the mod in `.claude-plugin/marketplace.json`. Then:
 ## Testing your change
 
 ```bash
+pnpm check:offline           # build, bundle and registry drift, unit tests, lint, validate: no session needed
+pnpm test:core               # unit tests for packages/core alone
 bash scripts/check.sh        # offline: JSON, shell, structure, stub type-check
 CI=1 bash scripts/check.sh   # full: needs the Claude CLI; validate + test every mod
 ```
+
+Commit regenerated hook bundles and registry files with the source that changed them. CI fails if the
+committed files differ from a fresh build.
 
 What the offline pass checks: JSON manifests parse; shell scripts pass `bash -n`;
 every mod has manifest/hooks/README/tests; names match directories; the

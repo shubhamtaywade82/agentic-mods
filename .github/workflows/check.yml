@@ -15,21 +15,35 @@ concurrency:
 
 jobs:
   offline:
-    name: Offline checks (JSON, shell, stub tsc)
+    name: Release gate (offline)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Install pinned tooling
         run: |
           sudo apt-get update && sudo apt-get install -y jq shellcheck
-          npm install -g typescript@5.9
+          npm install -g pnpm@12.23.0 typescript@5.9
+
+      - name: Install dependencies from the lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Lint shell scripts
         run: shellcheck --severity=error scripts/*.sh mods/*/scripts/*.sh
 
-      - name: Offline structure + type checks
+      # Build from source, then fail if any committed hook bundle or registry file differs: the
+      # committed bundle is what users install, so it must be the build of the committed source.
+      - name: Release gate without an engine session
+        env:
+          CI: '1'
+        run: pnpm check:offline
+
+      - name: Structure and stub type checks
         env:
           OFFLINE: '1'
         run: bash scripts/check.sh
@@ -62,3 +76,31 @@ jobs:
         env:
           CI: '1'
         run: bash scripts/check.sh
+
+  # Loads every mod into a headless Claude Code session and runs each registered command. It runs on
+  # demand only, because it needs the credentials the CLI requires in CI, which this workflow does not
+  # supply by default. Set the ANTHROPIC_API_KEY repository secret before dispatching it.
+  live-smoke:
+    name: Live smoke (manual)
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pinned tooling and Claude Code
+        run: |
+          npm install -g pnpm@12.23.0 @anthropic-ai/claude-code@2.1.330
+
+      - name: Install dependencies from the lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Live smoke test
+        run: pnpm smoke:live

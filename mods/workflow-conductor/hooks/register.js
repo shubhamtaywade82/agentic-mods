@@ -117,13 +117,25 @@ function parseGates(input) {
 function stageOf(definition, id) {
   return definition.stages.find((stage) => stage.id === id);
 }
+function gateOf(gates, id) {
+  return Object.hasOwn(gates, id) ? gates[id] : void 0;
+}
 function evaluateGate(gate, facts, exceptions) {
+  if (gate.facts.length === 0) {
+    return {
+      allowed: false,
+      missing: [],
+      failing: [],
+      deferred: [],
+      invalid: `gate ${gate.id} declares no facts and cannot be satisfied`
+    };
+  }
   const excepted = exceptions.some((item) => item.gate === gate.id);
   const missing = [];
   const failing = [];
   const deferred = [];
   for (const fact of gate.facts) {
-    const value = facts[fact] ?? "UNKNOWN";
+    const value = Object.hasOwn(facts, fact) ? facts[fact] ?? "UNKNOWN" : "UNKNOWN";
     if (value === "PASS") continue;
     if (value === "FAIL") failing.push(fact);
     else if (value === "DEFERRED" && excepted) deferred.push(fact);
@@ -135,6 +147,30 @@ function evaluateGate(gate, facts, exceptions) {
     failing,
     deferred
   };
+}
+function validateCatalogue(workflows, gates) {
+  const problems = [];
+  const workflowIds = /* @__PURE__ */ new Set();
+  for (const workflow of workflows) {
+    if (workflowIds.has(workflow.id)) problems.push(`duplicate workflow id ${workflow.id}`);
+    workflowIds.add(workflow.id);
+    const stageIds = /* @__PURE__ */ new Set();
+    for (const stage of workflow.stages) {
+      if (stageIds.has(stage.id)) {
+        problems.push(`workflow ${workflow.id} defines stage ${stage.id} more than once`);
+      }
+      stageIds.add(stage.id);
+      if (stage.gate !== null && gateOf(gates, stage.gate) === void 0) {
+        problems.push(
+          `workflow ${workflow.id} stage ${stage.id} references gate ${stage.gate}, which is not in the gate catalogue`
+        );
+      }
+    }
+  }
+  for (const [id, gate] of Object.entries(gates)) {
+    if (gate.facts.length === 0) problems.push(`gate ${id} declares no facts`);
+  }
+  return problems;
 }
 function startRun(definition, runId, taskId, at) {
   return {
@@ -158,14 +194,21 @@ function advanceRun(definition, gates, run, target, facts, at) {
   const targetStage = stageOf(definition, target);
   if (targetStage === void 0)
     return { ok: false, reason: `${target} is not a stage`, evaluation: null };
-  const gateId = current.gate;
-  const evaluation = gateId === null ? null : evaluateGate(
-    gates[gateId] ?? { id: gateId, description: "", facts: [] },
-    facts,
-    run.exceptions
-  );
+  let evaluation = null;
+  if (current.gate !== null) {
+    const gate = gateOf(gates, current.gate);
+    if (gate === void 0) {
+      return {
+        ok: false,
+        reason: `${current.id} references gate ${current.gate}, which is not in the gate catalogue`,
+        evaluation: null
+      };
+    }
+    evaluation = evaluateGate(gate, facts, run.exceptions);
+  }
   if (evaluation !== null && !evaluation.allowed) {
-    return { ok: false, reason: `${current.id} gate is not satisfied`, evaluation };
+    const reason = evaluation.invalid ?? `${current.id} gate is not satisfied`;
+    return { ok: false, reason, evaluation };
   }
   const terminal = targetStage.next.length === 0;
   const nextRun = {
@@ -632,12 +675,22 @@ var RAW_WORKFLOWS = [
   incident_response_default
 ];
 var WORKFLOWS = /* @__PURE__ */ new Map();
+var CATALOGUE_PROBLEMS = [];
 for (const raw of RAW_WORKFLOWS) {
   const parsed = parseWorkflow(raw);
-  if (parsed.ok) WORKFLOWS.set(parsed.value.id, parsed.value);
+  if (!parsed.ok) {
+    CATALOGUE_PROBLEMS.push(parsed.error);
+    continue;
+  }
+  if (WORKFLOWS.has(parsed.value.id)) {
+    CATALOGUE_PROBLEMS.push(`duplicate workflow id ${parsed.value.id}`);
+  }
+  WORKFLOWS.set(parsed.value.id, parsed.value);
 }
 var GATES_RESULT = parseGates(gates_default);
+if (!GATES_RESULT.ok) CATALOGUE_PROBLEMS.push(GATES_RESULT.error);
 var GATES = GATES_RESULT.ok ? GATES_RESULT.value : {};
+CATALOGUE_PROBLEMS.push(...validateCatalogue([...WORKFLOWS.values()], GATES));
 var IDLE = {
   active: false,
   workflow: "",
@@ -759,7 +812,7 @@ async function factsOf($) {
 function withDeferrals(facts, exceptions) {
   const out = { ...facts };
   for (const item of exceptions) {
-    const gate = GATES[item.gate];
+    const gate = gateOf(GATES, item.gate);
     if (gate === void 0) continue;
     for (const fact of gate.facts) {
       const value = out[fact];
@@ -796,10 +849,11 @@ async function blockersOf($, run, definition) {
   if (run === null || definition === void 0 || run.status !== "active") return [];
   const stage = stageOf(definition, run.currentStage);
   if (stage === void 0 || stage.gate === null) return [];
-  const gate = GATES[stage.gate];
-  if (gate === void 0) return [];
+  const gate = gateOf(GATES, stage.gate);
+  if (gate === void 0) return [`${stage.gate}: gate is not in the catalogue`];
   const facts = withDeferrals(await factsOf($), run.exceptions);
   const evaluation = evaluateGate(gate, facts, run.exceptions);
+  if (evaluation.invalid !== void 0) return [evaluation.invalid];
   return [...evaluation.missing, ...evaluation.failing].map((fact) => `${stage.gate}: ${fact}`);
 }
 async function ensureArtifact($, task, file, title) {
@@ -866,6 +920,12 @@ function register(on) {
   on("command.run", { command: "workflow" }, async ($, e) => {
     const [subcommand = "status", ...rest] = e.args.trim().split(/\s+/).filter((word) => word.length > 0);
     const run = await loadRun($);
+    if (CATALOGUE_PROBLEMS.length > 0 && subcommand !== "status") {
+      return {
+        text: `workflow-conductor refused: the workflow catalogue is invalid.
+${CATALOGUE_PROBLEMS.map((p) => `  ${p}`).join("\n")}`
+      };
+    }
     if (subcommand === "start") {
       const [workflowId = "", ...taskParts] = rest;
       const task = taskParts.join("-").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60);
@@ -890,7 +950,13 @@ function register(on) {
     if (definition === void 0) return { text: `Workflow ${run.workflowId} is not available.` };
     if (subcommand === "status") {
       await $.ui.open({ id: PANE, title: "Workflow" });
-      return { text: statusText(definition, run, await blockersOf($, run, definition)) };
+      const status = statusText(definition, run, await blockersOf($, run, definition));
+      if (CATALOGUE_PROBLEMS.length === 0) return { text: status };
+      return {
+        text: `${status}
+Catalogue invalid, so start, advance and defer are refused:
+${CATALOGUE_PROBLEMS.map((p) => `  ${p}`).join("\n")}`
+      };
     }
     if (subcommand === "advance") {
       const current = stageOf(definition, run.currentStage);
@@ -919,7 +985,7 @@ function register(on) {
     if (subcommand === "defer") {
       const [gateId = "", ...reasonWords] = rest;
       const reason = truncate(reasonWords.join(" ").trim(), 300);
-      if (GATES[gateId] === void 0 || reason === "") {
+      if (gateOf(GATES, gateId) === void 0 || reason === "") {
         return {
           text: "Usage: /workflow defer <gate-id> <reason>. The reason is recorded with its approver."
         };

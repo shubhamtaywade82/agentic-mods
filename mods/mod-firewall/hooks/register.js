@@ -53,6 +53,358 @@ function isCheckName(value) {
   return typeof value === "string" && CHECKS.includes(value);
 }
 
+// plugins/sdlc-guard/policies/command-parser.ts
+function isBlank(c) {
+  return c === " " || c === "	";
+}
+function readQuoted(input, start, quote) {
+  let out = "";
+  let i = start;
+  while (i < input.length && input[i] !== quote) {
+    if (quote === '"' && input[i] === "\\" && i + 1 < input.length) {
+      out += input[i + 1];
+      i += 2;
+      continue;
+    }
+    out += input[i];
+    i += 1;
+  }
+  return [out, i + 1];
+}
+function separatorAt(input, i) {
+  const c = input[i];
+  if (c === "|") {
+    if (input[i + 1] === "|") return { value: "seq", width: 2 };
+    if (input[i + 1] === "&") return { value: "pipe", width: 2 };
+    return { value: "pipe", width: 1 };
+  }
+  if (c === "&") return { value: "seq", width: input[i + 1] === "&" ? 2 : 1 };
+  if (c === ";" || c === "(" || c === ")" || c === "`" || c === "\n") {
+    return { value: "seq", width: 1 };
+  }
+  return null;
+}
+function tokenize(input) {
+  const tokens = [];
+  let word = "";
+  let inWord = false;
+  const flush = () => {
+    if (inWord) tokens.push({ kind: "word", value: word });
+    word = "";
+    inWord = false;
+  };
+  let i = 0;
+  while (i < input.length) {
+    const c = input[i];
+    if (c === '"' || c === "'") {
+      const [text, next] = readQuoted(input, i + 1, c);
+      word += text;
+      inWord = true;
+      i = next;
+      continue;
+    }
+    if (c === "\\" && i + 1 < input.length) {
+      word += input[i + 1];
+      inWord = true;
+      i += 2;
+      continue;
+    }
+    const sep = separatorAt(input, i);
+    if (sep) {
+      flush();
+      tokens.push({ kind: "sep", value: sep.value });
+      i += sep.width;
+      continue;
+    }
+    if (isBlank(c) || c === "\r") {
+      flush();
+    } else {
+      word += c;
+      inWord = true;
+    }
+    i += 1;
+  }
+  flush();
+  return tokens;
+}
+function parseCommand(input) {
+  const commands = [];
+  let argv = [];
+  let piped = false;
+  const endCommand = () => {
+    if (argv.length > 0) commands.push({ argv, piped });
+    argv = [];
+  };
+  for (const token of tokenize(input)) {
+    if (token.kind === "word") {
+      argv.push(token.value);
+      continue;
+    }
+    endCommand();
+    piped = token.value === "pipe";
+  }
+  endCommand();
+  return commands;
+}
+
+// plugins/sdlc-guard/policies/classify.ts
+var WRAPPERS = /* @__PURE__ */ new Set([
+  "sudo",
+  "doas",
+  "env",
+  "time",
+  "nohup",
+  "nice",
+  "command",
+  "exec",
+  "builtin",
+  "timeout"
+]);
+var SHELLS = /* @__PURE__ */ new Set(["sh", "bash", "zsh", "dash", "ksh"]);
+var MAX_DEPTH = 4;
+function classifyCommand(command) {
+  return classifyText(command, 0);
+}
+function classifyText(text, depth) {
+  if (depth > MAX_DEPTH) {
+    return [{ category: "shell.unparsed", impact: "local", scope: { paths: [] } }];
+  }
+  return parseCommand(text).flatMap((cmd) => classifySimple(cmd, depth));
+}
+function baseName(program) {
+  return program.split("/").pop() ?? program;
+}
+function isAssignment(token) {
+  return /^[A-Za-z_][A-Za-z0-9_]*=/.test(token);
+}
+function unwrap(argv) {
+  let rest = argv;
+  let production = false;
+  for (; ; ) {
+    while (rest[0] !== void 0 && isAssignment(rest[0])) {
+      if (/^(RAILS|NODE)_ENV=production$/.test(rest[0])) production = true;
+      rest = rest.slice(1);
+    }
+    const head = rest[0];
+    if (head === void 0 || !WRAPPERS.has(baseName(head))) return { argv: rest, production };
+    rest = rest.slice(1);
+    while (rest[0] !== void 0 && (rest[0].startsWith("-") || isAssignment(rest[0]) || /^\d+(\.\d+)?$/.test(rest[0]))) {
+      if (/^(RAILS|NODE)_ENV=production$/.test(rest[0])) production = true;
+      rest = rest.slice(1);
+    }
+  }
+}
+function classifySimple(cmd, depth) {
+  const { argv, production } = unwrap(cmd.argv);
+  const [program, ...args] = argv;
+  if (program === void 0) return [];
+  const name = baseName(program);
+  if (name === "xargs") return classifySimple({ argv: skipXargsOptions(args), piped: false }, depth);
+  if (name === "eval") return classifyText(args.join(" "), depth + 1);
+  if (SHELLS.has(name)) return classifyShell(args, cmd.piped, depth);
+  return classifyProgram(name, args, production);
+}
+function skipXargsOptions(args) {
+  let i = 0;
+  while (i < args.length && args[i].startsWith("-")) {
+    i += ["-I", "-n", "-P", "-L", "-d", "-s", "-E"].includes(args[i]) ? 2 : 1;
+  }
+  return args.slice(i);
+}
+function classifyShell(args, piped, depth) {
+  const cIndex = args.findIndex((a) => /^-[a-zA-Z]*c[a-zA-Z]*$/.test(a));
+  if (cIndex !== -1) return classifyText(args[cIndex + 1] ?? "", depth + 1);
+  if (piped) return [{ category: "shell.remote-exec", impact: "local", scope: { paths: [] } }];
+  return [];
+}
+function action(category, impact, paths = []) {
+  return { category, impact, scope: { paths } };
+}
+function shortFlagLetters(args) {
+  const letters = /* @__PURE__ */ new Set();
+  for (const a of args) {
+    if (/^-[A-Za-z]+$/.test(a)) for (const ch of a.slice(1)) letters.add(ch);
+  }
+  return letters;
+}
+function classifyProgram(name, args, production) {
+  switch (name) {
+    case "rm":
+      return classifyRm(args);
+    case "find":
+      return args.includes("-delete") ? [action("file.delete", "local")] : [];
+    case "git":
+      return classifyGit(args);
+    case "psql":
+    case "mysql":
+    case "sqlite3":
+    case "mongosh":
+      return classifySql(args, production);
+    case "rails":
+    case "rake":
+      return classifyDbTask(args, production);
+    case "prisma":
+    case "knex":
+    case "sequelize":
+      return args.includes("migrate") ? [action("db.migrate", "local")] : [];
+    case "npm":
+    case "pnpm":
+    case "yarn":
+      return args[0] === "publish" ? [action("release.publish", "production")] : [];
+    case "kubectl":
+      return ["apply", "delete", "replace", "patch"].includes(args[0] ?? "") ? [action("release.deploy", "production")] : [];
+    case "helm":
+      return ["install", "upgrade", "uninstall"].includes(args[0] ?? "") ? [action("release.deploy", "production")] : [];
+    case "terraform":
+      return ["apply", "destroy"].includes(args[0] ?? "") ? [action("release.deploy", "production")] : [];
+    default:
+      return [];
+  }
+}
+function classifyRm(args) {
+  const recursive = args.includes("--recursive") || shortFlagLetters(args).has("r") || shortFlagLetters(args).has("R");
+  if (!recursive) return [];
+  return [
+    action(
+      "file.delete",
+      "local",
+      args.filter((a) => !a.startsWith("-"))
+    )
+  ];
+}
+function classifySql(args, production) {
+  const text = args.join(" ");
+  if (!/\b(DROP\s+(TABLE|DATABASE|SCHEMA)|TRUNCATE)\b/i.test(text)) return [];
+  const prodTarget = production || /prod/i.test(text);
+  return [
+    action(
+      prodTarget ? "db.mutate-production" : "db.mutate-dev",
+      prodTarget ? "production" : "local"
+    )
+  ];
+}
+function classifyDbTask(args, production) {
+  const task = args.find((a) => a.startsWith("db:"));
+  if (task === void 0) return [];
+  if (/^db:(migrate|rollback|schema:load)/.test(task)) {
+    return production ? [action("db.mutate-production", "production")] : [action("db.migrate", "local")];
+  }
+  if (/^db:(drop|reset|seed|truncate)/.test(task)) {
+    return [
+      action(
+        production ? "db.mutate-production" : "db.mutate-dev",
+        production ? "production" : "local"
+      )
+    ];
+  }
+  return [];
+}
+function gitSubcommand(args) {
+  let i = 0;
+  while (i < args.length && args[i].startsWith("-")) {
+    i += ["-C", "-c"].includes(args[i]) ? 2 : 1;
+  }
+  const sub = args[i];
+  return sub === void 0 ? null : { sub, rest: args.slice(i + 1) };
+}
+function classifyGit(args) {
+  const parsed = gitSubcommand(args);
+  if (parsed === null) return [];
+  const { sub, rest } = parsed;
+  const letters = shortFlagLetters(rest);
+  switch (sub) {
+    case "push":
+      return isForcePush(rest) ? [action("git.force-push", "shared-branch")] : [];
+    case "rebase":
+      return [action("git.rebase", "shared-branch")];
+    case "reset":
+      return rest.includes("--hard") ? [action("git.destructive", "local")] : [];
+    case "clean":
+      return letters.has("f") || rest.includes("--force") ? [action("git.destructive", "local")] : [];
+    case "checkout":
+      return rest.includes("--") || rest.includes("-f") || rest.includes("--force") ? [action("git.destructive", "local")] : [];
+    case "restore":
+      return rest.includes("--staged") && !rest.includes("--worktree") ? [] : [action("git.destructive", "local")];
+    case "branch":
+      return letters.has("D") ? [action("git.destructive", "local")] : [];
+    case "stash":
+      return rest[0] === "drop" || rest[0] === "clear" ? [action("git.destructive", "local")] : [];
+    default:
+      return [];
+  }
+}
+function isForcePush(rest) {
+  if (rest.some(
+    (a) => a === "--force" || a.startsWith("--force-") || a === "--mirror" || a === "--delete"
+  ))
+    return true;
+  if (rest.some((a) => a.startsWith("+") || a.startsWith(":") && a.length > 1)) return true;
+  return shortFlagLetters(rest).has("f") || shortFlagLetters(rest).has("d");
+}
+
+// plugins/sdlc-guard/policies/types.ts
+var DESTRUCTIVE_CATEGORIES = [
+  "file.delete",
+  "file.bulk-modify",
+  "file.sensitive-modify",
+  "db.migrate",
+  "db.mutate-dev",
+  "db.mutate-production",
+  "git.force-push",
+  "git.rebase",
+  "git.destructive",
+  "shell.remote-exec",
+  "shell.unparsed",
+  "release.publish",
+  "release.deploy"
+];
+function isDestructive(action2) {
+  return DESTRUCTIVE_CATEGORIES.includes(action2.category);
+}
+
+// plugins/sdlc-guard/policies/evaluator.ts
+function evaluateAction(action2, context) {
+  if (!isDestructive(action2)) {
+    return { verdict: "allow", reason: "non-destructive action" };
+  }
+  if (!context.interactive) {
+    return {
+      verdict: "deny",
+      reason: `${action2.category}: destructive action denied (non-interactive, fail-closed)`
+    };
+  }
+  return {
+    verdict: "require-approval",
+    reason: `${action2.category}: destructive action requires approval`
+  };
+}
+
+// plugins/sdlc-guard/policies/decision.ts
+function decideBash(command, context = { interactive: true }) {
+  let pending = null;
+  for (const action2 of classifyCommand(command)) {
+    const evaluation = evaluateAction(action2, context);
+    if (evaluation.verdict === "deny")
+      return { kind: "deny", reason: `sdlc-guard: ${evaluation.reason}` };
+    if (evaluation.verdict === "require-approval") pending ??= `sdlc-guard: ${evaluation.reason}`;
+  }
+  return pending === null ? { kind: "allow" } : { kind: "ask", reason: pending };
+}
+
+// packages/core/src/command-policy.ts
+function quoteArgv(argv) {
+  return argv.map((arg) => `'${arg.replace(/'/g, `'\\''`)}'`).join(" ");
+}
+function decideProcess(argv) {
+  if (argv.length === 0 || (argv[0] ?? "") === "") {
+    return { kind: "deny", reason: "process policy: empty command, nothing was run" };
+  }
+  if (argv.some((arg) => arg.includes("\0"))) {
+    return { kind: "deny", reason: "process policy: argument contains a NUL byte, nothing was run" };
+  }
+  return decideBash(quoteArgv(argv), { interactive: false });
+}
+
 // packages/core/src/util.ts
 function errorMessage(error) {
   if (error instanceof Error) return error.message;
@@ -486,6 +838,21 @@ function register(on) {
     (_$, e, next) => next.called ? next(e) : { deny: "mod-firewall failed closed on an outbound request." }
   );
   on("process.run", async ($, e, next) => {
+    if (next.origin.plugin !== "engine") {
+      const policy = decideProcess(e.argv);
+      if (policy.kind !== "allow") {
+        await audit($, {
+          plugin: PLUGIN,
+          kind: "process",
+          origin: next.origin.plugin,
+          target: executableOf(e.argv),
+          allowed: false,
+          mode: "policy",
+          reason: policy.reason
+        });
+        return { deny: `mod-firewall: ${policy.reason}` };
+      }
+    }
     const denial = await decide(
       $,
       "process",

@@ -1,40 +1,17 @@
 import type { On } from 'claude-code'
 import {
-  verifyEngine,
-  type ClassifyInput,
-  type EscalationPolicy,
-  type RunOutcome,
-  type VerificationResult,
-} from './lib/verification'
-import type { RoutingPolicy } from './lib/routing'
-import {
-  DEFAULT_POLICY,
-  heuristicClassify,
-  heuristicClassifyFailure,
-  predicateCheck,
-  renderOutcome,
-  renderStatus,
-  runChecks,
-} from './lib/policy'
-import { registerCommand } from '@agentic-mods/core'
+  configuredChecks,
+  loadConfig,
+  registerCommand,
+  renderCheckRun,
+  renderCheckRuns,
+  runSelectedCheck,
+  selectCheck,
+  type CheckRun,
+} from '@agentic-mods/core'
 
-const runs: RunOutcome[] = []
-
-interface CommandRun {
-  exitCode: number
-  output: string
-}
-
-// The failure text is what heuristicClassifyFailure reads, so a "timed out" in stderr retries.
-const exitZeroCheck = predicateCheck(
-  'exit-code-0',
-  (output) => (output as CommandRun).exitCode === 0,
-  'command exited non-zero',
-)
-
-function failureDetail(run: CommandRun): string {
-  return `exit ${run.exitCode}: ${run.output.trim().slice(-200)}`
-}
+// Verification results for this session. Reset when the session starts.
+const runs: CheckRun[] = []
 
 function strField(e: unknown, key: string): string | undefined {
   if (typeof e !== 'object' || e === null) return undefined
@@ -42,20 +19,12 @@ function strField(e: unknown, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
-function pickInitialRoute(
-  effort: RoutingPolicy['effort'],
-  policy: EscalationPolicy,
-): RoutingPolicy {
-  const match = policy.fallbackRoutes.find((r) => r.effort === effort)
-  return match ?? policy.fallbackRoutes[0] ?? { model: 'claude-3-7-sonnet', effort: 'medium' }
-}
-
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await registerCommand($, {
       name: 'verify-run',
       description:
-        'Run a command and verify it exits 0, retrying transient failures: /verify-run <command> [args...]',
+        'Run a check declared under evidence.commands and pass only when every command exits 0: /verify-run <check>',
     })
     await registerCommand($, {
       name: 'verify-status',
@@ -66,34 +35,34 @@ export function register(on: On): void {
   })
 
   on('command.run', { command: 'verify-run' }, async ($, e) => {
-    const task = strField(e, 'args') ?? ''
-    if (task.trim().length === 0) return { text: 'usage: /verify-run <command> [args...]' }
+    // Only operator-declared commands run. The text after the command is a check name, never argv,
+    // so nothing typed or generated in the session reaches the process API.
+    const config = (await loadConfig((path) => $.fs.read(path))).value
+    const requested = strField(e, 'args') ?? ''
+    if (requested.trim() === '') {
+      const names = configuredChecks(config)
+      return {
+        text:
+          names.length === 0
+            ? 'usage: /verify-run <check>. No check can run: declare commands under evidence.commands in .agentic-mods/config.json.'
+            : `usage: /verify-run <check>. Declared checks: ${names.join(', ')}`,
+      }
+    }
 
-    const classifyInput: ClassifyInput = { task, agentType: 'main' }
-    const classification = heuristicClassify(classifyInput)
-    const initial: RoutingPolicy = pickInitialRoute(classification.effort, DEFAULT_POLICY)
+    const selection = selectCheck(config, requested)
+    if (!selection.ok) return { text: `verify: ${selection.reason}` }
 
-    const outcome = await verifyEngine.run({
-      initial,
-      policy: DEFAULT_POLICY,
-      classifyFailure: (f: VerificationResult) => heuristicClassifyFailure(f),
-      // Split into argv and run without a shell, so the task text cannot chain extra commands.
-      execute: async (): Promise<CommandRun> => {
-        const argv = task.split(/\s+/).filter((word) => word.length > 0)
-        const res = await $.process.run(argv)
-        return { exitCode: res.exitCode ?? 1, output: `${res.stdout ?? ''}${res.stderr ?? ''}` }
-      },
-      verify: async (output: unknown) => {
-        const result = await runChecks(output, [exitZeroCheck])
-        if (result.passed) return result
-        return { ...result, failures: [failureDetail(output as CommandRun)] }
-      },
+    // Each declared command runs once, through the engine's process API, so mod-firewall and the
+    // process policy see it. A failure is reported; it is never retried.
+    const run = await runSelectedCheck(selection, async (argv) => {
+      const res = await $.process.run([...argv])
+      return { exitCode: res.exitCode ?? 1, output: `${res.stdout ?? ''}${res.stderr ?? ''}` }
     })
-    runs.push(outcome)
-    return { text: renderOutcome(outcome) }
+    runs.push(run)
+    return { text: renderCheckRun(run) }
   })
 
   on('command.run', { command: 'verify-status' }, async () => {
-    return { text: renderStatus(runs) }
+    return { text: renderCheckRuns(runs) }
   })
 }

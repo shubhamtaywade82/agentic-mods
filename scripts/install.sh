@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# LEGACY: this copies native mod folders without resolving dependencies and does not install the
+# vendored plugins. Install with the marketplace instead (see README.md, "Install").
 # Install mods from this library into a Claude Code plugin directory.
 # Usage: bash scripts/install.sh <target-claude-dir> [--mod name1,name2 | --all]
 #          --mod  comma-separated list of mod names (default: all)
