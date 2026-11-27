@@ -23,3 +23,4 @@ mods/*/.claude-plugin/types/
 
 # engine-written declarations inside vendored plugins (never committed)
 plugins/*/.claude-plugin/types/
+.omc
