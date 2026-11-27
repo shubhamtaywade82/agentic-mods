@@ -43,9 +43,16 @@ The harness copies it into a fresh git repository and commits it before the kit 
 
 ## Recorded runs
 
-- 2026-11-27, `slugify`, one run, kit 0.9.1 built from the kit repo with the permission fix (Edit rules,
-  `acceptEdits` when writes are granted): converged. Red, green and refactor each took one attempt, with 0
-  denied tool calls, 6,801 output tokens, 30 uncached input tokens and 44 s. Before the fix, the same task
-  did not converge: every write was refused, and the kit's evidence gate rejected the red phase.
+Kit 0.9.1 built from the kit repo with the permission fix (Edit rules, `acceptEdits` when writes are
+granted). Golden task `slugify`, four live runs on 2026-11-27:
 
-One run says little about variance. Repeat each task several times before comparing kit versions.
+| run | converged | red / green / refactor attempts | denied calls | output tokens | uncached input | wall clock |
+| --- | --------- | ------------------------------- | ------------ | ------------- | -------------- | ---------- |
+| 1   | yes       | 1 / 1 / 1                       | 0            | 6,801         | 30             | 44 s       |
+| 2   | yes       | 1 / 1 / 1                       | 0            | 5,967         | 30             | 44 s       |
+| 3   | yes       | 1 / 1 / 1                       | 0            | 6,958         | 32             | 45 s       |
+| 4   | yes       | 1 / 1 / 1                       | 0            | 6,525         | 32             | 43 s       |
+
+Before the permission fix, the same task did not converge: every write was refused, and the kit's evidence
+gate rejected the red phase. Four runs of one small task show little variance, but they say nothing about
+harder tasks. Add larger golden tasks before comparing kit versions.
