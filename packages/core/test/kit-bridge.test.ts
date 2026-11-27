@@ -8,6 +8,7 @@ import assert from 'node:assert/strict'
 import {
   deniedPlanCommands,
   executesVerification,
+  kitOrchestrationArgv,
   kitPhaseArgv,
   parseKitNextAction,
   parseKitVersion,
@@ -134,6 +135,17 @@ test('builds the run-level argv, and none once the run is finished', () => {
 test('fix runs use the fix command family', () => {
   const red = parsed(JSON.stringify(RED_PAYLOAD))
   assert.equal(kitPhaseArgv('fix', 'FEATURE-001', red)?.[1], 'fix')
+})
+
+test('the orchestration argv runs the kit loop for a valid run id only', () => {
+  assert.deepEqual(kitOrchestrationArgv('feature', 'FEATURE-001'), [
+    'kit',
+    'feature',
+    'FEATURE-001',
+    'run',
+  ])
+  assert.deepEqual(kitOrchestrationArgv('fix', 'BUG-101'), ['kit', 'fix', 'BUG-101', 'run'])
+  assert.equal(kitOrchestrationArgv('feature', 'FEATURE-001; rm -rf /'), null)
 })
 
 test('argv never comes from nextInvocation: a tampered string changes nothing', () => {

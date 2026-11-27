@@ -181,6 +181,16 @@ export function kitPhaseArgv(
   }
 }
 
+/**
+ * The argv that starts the kit's own orchestration loop for a run (`kit <mode> <id> run`, ADR-0019 Mode 1).
+ * The kit drives an agent through its TDD state machine and its evidence gate. It runs the plan's
+ * verification commands itself, so the caller must run the plan check first.
+ */
+export function kitOrchestrationArgv(mode: KitMode, featureId: string): readonly string[] | null {
+  if (!KIT_ID_PATTERN.test(featureId)) return null
+  return ['kit', mode, featureId, 'run']
+}
+
 /** True for the phases that execute the plan's verification commands. */
 export function executesVerification(action: KitNextAction): boolean {
   return action.requiredAction !== 'feature.start' && action.requiredAction !== 'run.completed'

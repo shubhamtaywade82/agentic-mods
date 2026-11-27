@@ -27,6 +27,7 @@ import {
   kitAvailable,
   kitModeOf,
   kitNext,
+  runKitOrchestration,
   runKitPhase,
   startKitRun,
   type KitState,
@@ -468,6 +469,16 @@ async function kitSubcommand(
     const verdict = outcome.ok ? '' : '\nThe phase did not pass. Fix the work and advance again.'
     return `${outcome.text}${verdict}\n${after.ok ? renderKitAction(after.action, mode) : after.message}`
   }
+  if (subcommand === 'run') {
+    // The kit drives an agent through the whole loop. It can spend model calls: this runs only on an explicit /workflow run.
+    const state = await currentKit($, featureId)
+    if (!state.ok) return state.message
+    if (state.action.requiredAction === 'run.completed') return `Kit run ${featureId} is complete.`
+    const outcome = await runKitOrchestration(kitLaunch($), kitReadFile($), mode, featureId)
+    const after = await currentKit($, featureId)
+    await publishKit($, workflow, featureId, after)
+    return `${outcome.text}\n${after.ok ? renderKitAction(after.action, mode) : after.message}`
+  }
   if (subcommand === 'defer') {
     return "A kit run has no deferrals: the kit's evidence gate decides when a phase passes."
   }
@@ -477,7 +488,7 @@ async function kitSubcommand(
   if (subcommand === 'start') {
     return `Kit run ${featureId} is active. Advance it, or let it complete, before starting another.`
   }
-  return 'Usage: /workflow status|advance for a kit run, or start|status|advance|defer|cancel for the other workflows.'
+  return 'Usage: /workflow status|advance|run for a kit run, or start|status|advance|defer|cancel for the other workflows.'
 }
 
 export function register(on: On): void {

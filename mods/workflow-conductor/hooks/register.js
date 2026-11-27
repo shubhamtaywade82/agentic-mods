@@ -526,6 +526,10 @@ function kitPhaseArgv(mode, featureId, action2) {
     }
   }
 }
+function kitOrchestrationArgv(mode, featureId) {
+  if (!KIT_ID_PATTERN.test(featureId)) return null;
+  return ["kit", mode, featureId, "run"];
+}
 function executesVerification(action2) {
   return action2.requiredAction !== "feature.start" && action2.requiredAction !== "run.completed";
 }
@@ -826,6 +830,17 @@ async function runKitPhase(launch, readFile, mode, action2) {
   }
   const result = await safeLaunch(launch, argv);
   const header2 = `${argv.join(" ")} -> exit ${result.exitCode}`;
+  const body = tail(result.stdout || result.stderr);
+  return { ok: result.exitCode === 0, text: body === "" ? header2 : `${header2}
+${body}` };
+}
+async function runKitOrchestration(launch, readFile, mode, featureId) {
+  const argv = kitOrchestrationArgv(mode, featureId);
+  if (argv === null) return { ok: false, text: `${featureId} is not a valid run id.` };
+  const refusal = await planRefusal(readFile, featureId);
+  if (refusal !== null) return { ok: false, text: refusal };
+  const result = await safeLaunch(launch, argv);
+  const header2 = result.exitCode === 3 ? `${argv.join(" ")} -> blocked (exit 3)` : `${argv.join(" ")} -> exit ${result.exitCode}`;
   const body = tail(result.stdout || result.stderr);
   return { ok: result.exitCode === 0, text: body === "" ? header2 : `${header2}
 ${body}` };
@@ -1603,6 +1618,16 @@ async function kitSubcommand($, subcommand, rest, stored) {
     return `${outcome.text}${verdict}
 ${after.ok ? renderKitAction(after.action, mode) : after.message}`;
   }
+  if (subcommand === "run") {
+    const state = await currentKit($, featureId);
+    if (!state.ok) return state.message;
+    if (state.action.requiredAction === "run.completed") return `Kit run ${featureId} is complete.`;
+    const outcome = await runKitOrchestration(kitLaunch($), kitReadFile($), mode, featureId);
+    const after = await currentKit($, featureId);
+    await publishKit($, workflow, featureId, after);
+    return `${outcome.text}
+${after.ok ? renderKitAction(after.action, mode) : after.message}`;
+  }
   if (subcommand === "defer") {
     return "A kit run has no deferrals: the kit's evidence gate decides when a phase passes.";
   }
@@ -1612,7 +1637,7 @@ ${after.ok ? renderKitAction(after.action, mode) : after.message}`;
   if (subcommand === "start") {
     return `Kit run ${featureId} is active. Advance it, or let it complete, before starting another.`;
   }
-  return "Usage: /workflow status|advance for a kit run, or start|status|advance|defer|cancel for the other workflows.";
+  return "Usage: /workflow status|advance|run for a kit run, or start|status|advance|defer|cancel for the other workflows.";
 }
 function register(on) {
   on("session.start", async ($, e, next) => {
