@@ -28,6 +28,13 @@
 
 - Unit tests for `packages/core` (`pnpm test:core`, 22 cases): process policy and argv quoting, workflow
   gate failure modes, the shipped workflow and gate catalogues, and declared-check verification.
+- Behaviour tests through the engine hooks, 25 cases: `verify` runs only declared checks, once, and
+  refuses destructive or undeclared ones (`verify/tests/declared-checks.test.ts`); `command-guard` refuses
+  always-block commands and secret-file reads and holds confirm-level commands for approval
+  (`command-guard/tests/guard-behaviour.test.ts`); `guardian` refuses a write that carries a secret and
+  redacts secrets in results (`guardian/tests/secret-hooks.test.ts`); `workflow-conductor` will not
+  advance past an unmet gate and refuses unknown workflows and stages (`workflow-conductor/tests/gates.test.ts`).
+  Disabling the guard in each case makes its tests fail.
 
 ### Design
 

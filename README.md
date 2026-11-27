@@ -116,7 +116,7 @@ observability-verifier, release-conductor, ci-triage.
 **Presentation:** boss-fight, code-pet, session-wrapped, commentary.
 
 **Integrated local mods:** guardian (secret redaction and destructive-command approval), trace (run tree of
-agents, tools and files), verify (route, verify and escalate a task), pulse (tool-call and context
+agents, tools and files), verify (run the declared checks and report pass or fail, without retries), pulse (tool-call and context
 readout), sdlc (8-stage lifecycle commands), design-patterns (GoF pattern reference), mod-template
 (starter to copy).
 
