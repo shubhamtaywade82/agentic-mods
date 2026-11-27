@@ -47,38 +47,41 @@ async function workflow($: Driver, args: string): Promise<string> {
   return answer.text
 }
 
+// The legacy engine still runs the workflows the kit does not own. `regression` has one gated stage:
+// `assess` has no gate, and `run` requires the verification gate before it can be left.
+
 test('a stage without a gate advances, and the next stage is the one shown', async ($, on) => {
   stubEngine(on)
   // The status text marks the current stage with "> ".
-  expect(await workflow($, 'start feature-development T-1')).toContain('> Discover')
+  expect(await workflow($, 'start regression T-1')).toContain('> Assess risk')
   const advanced = await workflow($, 'advance')
-  expect(advanced).toContain('> Specify')
-  expect(advanced).not.toContain('> Discover')
+  expect(advanced).toContain('> Run scope')
+  expect(advanced).not.toContain('> Assess risk')
 })
 
 test('a stage with an unmet gate cannot advance and names the missing evidence', async ($, on) => {
   stubEngine(on)
-  await workflow($, 'start feature-development T-1')
-  await workflow($, 'advance') // discover has no gate: now at specify, which has one
+  await workflow($, 'start regression T-1')
+  await workflow($, 'advance') // assess has no gate: now at run, which has one
   const refused = await workflow($, 'advance')
-  expect(refused).toContain('specify gate is not satisfied')
-  expect(refused).toContain('missing evidence: specification')
+  expect(refused).toContain('run gate is not satisfied')
+  expect(refused).toContain('missing evidence: evidence, regression')
 })
 
 test('the blocker list keeps the unmet gate visible after a refused advance', async ($, on) => {
   stubEngine(on)
-  await workflow($, 'start feature-development T-1')
+  await workflow($, 'start regression T-1')
   await workflow($, 'advance')
   await workflow($, 'advance')
   const status = await workflow($, 'status')
-  expect(status).toContain('specification-gate: specification')
+  expect(status).toContain('verification-gate: evidence')
 })
 
 test('a stage cannot jump to a target it does not declare', async ($, on) => {
   stubEngine(on)
-  await workflow($, 'start feature-development T-1')
-  const refused = await workflow($, 'advance release')
-  expect(refused).toContain('discover cannot move to release')
+  await workflow($, 'start regression T-1')
+  const refused = await workflow($, 'advance complete')
+  expect(refused).toContain('assess cannot move to complete')
 })
 
 test('an unknown workflow is refused and nothing starts', async ($, on) => {

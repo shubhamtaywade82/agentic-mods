@@ -9,6 +9,15 @@
   its command, `engineering-cockpit` brings its eight dependencies, and the `essential` preset
   installs all 13 plugins.
 
+### Changed
+
+- `workflow-conductor`: `feature-development` and `bug-fix` are run by the Agentic SDLC Kit (CLI
+  0.9.1 or later, `npm install -g @agentic-sdlc-kit/cli`). The kit owns their run state, phases and
+  evidence. This mod reads the kit's `next --json` answer, runs the phase command it names as argv, and
+  keeps one pointer to the run. It checks every verification command in `plan.json` before a phase that
+  executes it. The other seven workflows still run on this mod's stage engine. Two engines remain until
+  those workflows are moved or retired.
+
 ### Fixed
 
 - `verify`: `/verify-run` runs only the commands declared under `evidence.commands` in
