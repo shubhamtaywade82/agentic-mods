@@ -32,12 +32,20 @@ type Kit = {
   available: boolean
   /** What `kit next FEAT-1 --json` answers now: a payload, or a blocked/error exit. */
   next: { exitCode: number; stdout: string; stderr: string }
+  /** What `kit <mode> FEAT-1 run` answers. */
+  run: { exitCode: number; stdout: string; stderr: string }
   files: Record<string, string>
   launches: string[][]
 }
 
 function kitAnswering(next: Kit['next'], files: Record<string, string>): Kit {
-  return { available: true, next, files, launches: [] }
+  return {
+    available: true,
+    next,
+    run: { exitCode: 0, stdout: 'kit loop finished', stderr: '' },
+    files,
+    launches: [],
+  }
 }
 
 function workflowInput(args: string) {
@@ -84,6 +92,7 @@ function stubEngine(on: Stub, kit: Kit): void {
         : { value: { stdout: '', stderr: 'kit: not found', exitCode: 127 } }
     }
     if (key === 'kit next FEAT-1 --json') return { value: kit.next }
+    if (argv[0] === 'kit' && argv[3] === 'run') return { value: kit.run }
     if (argv[0] === 'kit' && argv[3] === 'start') {
       return { value: { stdout: `TDD run started for ${argv[2]}.`, stderr: '', exitCode: 0 } }
     }
@@ -181,6 +190,36 @@ test('a workflow id that only names an Object.prototype member is not a kit work
   stubEngine(on, kit)
   expect(await workflow($, 'start constructor FEAT-1')).toContain('Unknown workflow')
   expect(kit.launches.length).toBe(0)
+})
+
+test('run starts the kit loop with exact argv, after the plan is checked', async ($, on) => {
+  const kit = kitAnswering(ready(), { 'docs/plans/FEAT-1/plan.json': SAFE_PLAN })
+  stubEngine(on, kit)
+  await workflow($, 'start feature-development FEAT-1')
+  const text = await workflow($, 'run')
+  expect(kit.launches).toContainEqual(['kit', 'feature', 'FEAT-1', 'run'])
+  expect(text).toContain('kit feature FEAT-1 run -> exit 0')
+})
+
+test('run is refused when the plan hides a destructive command, and the kit loop does not start', async ($, on) => {
+  const kit = kitAnswering(ready(), { 'docs/plans/FEAT-1/plan.json': HOSTILE_PLAN })
+  stubEngine(on, kit)
+  await workflow($, 'start feature-development FEAT-1')
+  const text = await workflow($, 'run')
+  expect(text).toContain('verification commands are not allowed')
+  expect(kit.launches.some((argv) => argv[3] === 'run')).toBe(false)
+})
+
+test('run shows the kit blocked answer (exit 3), for example when no agent runtime is installed', async ($, on) => {
+  const kit: Kit = {
+    ...kitAnswering(ready(), { 'docs/plans/FEAT-1/plan.json': SAFE_PLAN }),
+    run: { exitCode: 3, stdout: '', stderr: 'AGENT_PROVIDER_UNAVAILABLE: claude is not installed' },
+  }
+  stubEngine(on, kit)
+  await workflow($, 'start feature-development FEAT-1')
+  const text = await workflow($, 'run')
+  expect(text).toContain('blocked (exit 3)')
+  expect(text).toContain('AGENT_PROVIDER_UNAVAILABLE')
 })
 
 test('a run id that is not a plain identifier is refused before any launch', async ($, on) => {

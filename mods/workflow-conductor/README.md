@@ -10,6 +10,7 @@ These need the kit CLI on PATH: `npm install -g @agentic-sdlc-kit/cli`. Without 
 - `/workflow start bug-fix <id>` runs `kit fix <id> start`, under the same rules.
 - `/workflow status` shows the kit's next action: the phase it waits for and the command that checks it.
 - `/workflow advance` runs the phase the kit names, as argv built from the kit's structured answer. Before a phase that executes verification, every verification command in `plan.json` is checked against the process policy. A denied or unreadable plan is refused, and no phase runs.
+- `/workflow run` starts the kit's own loop for the run (`kit <mode> <id> run`). The kit drives an agent through the red, green and refactor phases and checks each one with its evidence gate, so the loop runs inside the kit and not in this mod's turns. It can spend model calls, so it runs only when you type it. The kit's agent is launched with its permissions derived from the granted capabilities: no bypass mode, subagents denied, network off unless granted. If no Claude Code runtime is installed, the kit reports blocked (exit 3) and nothing runs. The plan check applies before it starts.
 - `/workflow defer` and `/workflow cancel` are refused for a kit run. The kit's evidence gate decides when a phase passes, and the kit owns the run state.
 
 This mod keeps one pointer in its store: the workflow id and the run id. It keeps no other run state.

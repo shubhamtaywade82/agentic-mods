@@ -1,0 +1,20 @@
+{
+  "featureId": "GOLDEN-001",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "description": "Implement slugify in src/slug.js, with its tests in tests/slug.test.js",
+      "acceptanceCriteria": ["ACC-001", "ACC-002", "REQ-001", "REQ-002", "REQ-003"],
+      "verification": {
+        "command": ["node", "--test", "tests/slug.test.js"],
+        "expectedStatus": "passed"
+      },
+      "dependencies": [],
+      "likelyFiles": ["src/slug.js", "tests/slug.test.js"],
+      "estimatedScope": "s",
+      "risk": "low"
+    }
+  ],
+  "edges": [],
+  "verticalSlices": [["TASK-001"]]
+}

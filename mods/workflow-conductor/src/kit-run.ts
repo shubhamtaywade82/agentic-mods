@@ -7,6 +7,7 @@ import {
   executesVerification,
   KIT_BACKED_WORKFLOWS,
   KIT_ID_PATTERN,
+  kitOrchestrationArgv,
   kitPhaseArgv,
   parseKitNextAction,
   parseKitVersion,
@@ -142,6 +143,30 @@ export async function runKitPhase(
   }
   const result = await safeLaunch(launch, argv)
   const header = `${argv.join(' ')} -> exit ${result.exitCode}`
+  const body = tail(result.stdout || result.stderr)
+  return { ok: result.exitCode === 0, text: body === '' ? header : `${header}\n${body}` }
+}
+
+/**
+ * Starts the kit's own loop for a run: the kit drives an agent through the TDD phases and checks each with
+ * its evidence gate. The kit runs the plan's verification commands itself, so the plan is checked first.
+ * Exit 3 is the kit's blocked answer, for example when the agent runtime is not installed.
+ */
+export async function runKitOrchestration(
+  launch: Launch,
+  readFile: ReadFile,
+  mode: KitMode,
+  featureId: string,
+): Promise<PhaseOutcome> {
+  const argv = kitOrchestrationArgv(mode, featureId)
+  if (argv === null) return { ok: false, text: `${featureId} is not a valid run id.` }
+  const refusal = await planRefusal(readFile, featureId)
+  if (refusal !== null) return { ok: false, text: refusal }
+  const result = await safeLaunch(launch, argv)
+  const header =
+    result.exitCode === 3
+      ? `${argv.join(' ')} -> blocked (exit 3)`
+      : `${argv.join(' ')} -> exit ${result.exitCode}`
   const body = tail(result.stdout || result.stderr)
   return { ok: result.exitCode === 0, text: body === '' ? header : `${header}\n${body}` }
 }

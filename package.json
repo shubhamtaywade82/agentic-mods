@@ -24,7 +24,8 @@
     "check": "node packages/tooling/check.mjs",
     "check:offline": "node packages/tooling/check.mjs --offline",
     "test:core": "node packages/tooling/test-core.mjs",
-    "smoke:live": "node packages/tooling/smoke-live.mjs"
+    "smoke:live": "node packages/tooling/smoke-live.mjs",
+    "measure:kit": "node packages/tooling/measure-kit-loop.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

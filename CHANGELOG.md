@@ -9,6 +9,19 @@
   its command, `engineering-cockpit` brings its eight dependencies, and the `essential` preset
   installs all 13 plugins.
 
+### Added (kit loop measurement)
+
+- `pnpm measure:kit`: runs golden tasks (`measurements/kit-loop/golden/`) through the kit's orchestration loop
+  and reports convergence, attempts per phase, denied tool calls, tokens and time. `--dry-run` prepares each
+  project and starts its feature without an agent. A live run spends model calls. The summary is in
+  `packages/core/src/kit-measure.ts`, and unreported fields come back as `not reported`, never as zero.
+
+### Added (kit loop)
+
+- `/workflow run` on a kit-backed run starts the kit's own orchestration loop (`kit feature|fix <id> run`).
+  The kit drives an agent through the TDD phases and checks each with its evidence gate. The plan is checked
+  first, and a blocked kit (no agent runtime installed) is reported as blocked, not as a failure.
+
 ### Changed
 
 - `workflow-conductor`: `feature-development` and `bug-fix` are run by the Agentic SDLC Kit (CLI
