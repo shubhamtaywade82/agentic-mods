@@ -18,7 +18,22 @@ import {
   type WorkflowDefinition,
   truncate,
   registerCommand,
+  KIT_ID_PATTERN,
+  renderKitAction,
+  type KitNextAction,
 } from '@agentic-mods/core'
+import {
+  KIT_INSTALL_HINT,
+  kitAvailable,
+  kitModeOf,
+  kitNext,
+  runKitPhase,
+  startKitRun,
+  type KitState,
+  type Launch,
+  type ReadFile,
+  type StoredKitRun,
+} from './kit-run'
 import type { EvidenceStatus } from '../../evidence-gate/types'
 import type { ContractStatus } from '../../change-contract/types'
 import type { ReviewGate } from '../../review-tracker/types'
@@ -334,6 +349,137 @@ function statusText(
   return lines.join('\n')
 }
 
+// ---- kit-backed workflows: the kit owns the run; this mod keeps only a pointer to it ----
+
+const KIT_KEY = 'kitRun'
+
+async function loadKitRun($: EngineInterface): Promise<StoredKitRun | null> {
+  const value: unknown = await $.store.get(KIT_KEY)
+  if (typeof value !== 'object' || value === null) return null
+  const { workflow, featureId } = value as { workflow?: unknown; featureId?: unknown }
+  if (typeof workflow !== 'string' || kitModeOf(workflow) === undefined) return null
+  if (typeof featureId !== 'string' || !KIT_ID_PATTERN.test(featureId)) return null
+  return { workflow, featureId }
+}
+
+function kitLaunch($: EngineInterface): Launch {
+  return async (argv) => {
+    const res = await $.process.run([...argv])
+    return { exitCode: res.exitCode ?? 1, stdout: res.stdout ?? '', stderr: res.stderr ?? '' }
+  }
+}
+
+function kitReadFile($: EngineInterface): ReadFile {
+  return (path) => $.fs.read(path)
+}
+
+/** The kit's answer for a run. A failed answer is re-checked: a missing kit is reported as such. */
+async function currentKit($: EngineInterface, featureId: string): Promise<KitState> {
+  const state = await kitNext(kitLaunch($), featureId)
+  if (state.ok) return state
+  if (await kitAvailable(kitLaunch($))) return state
+  return { ok: false, message: `workflow-conductor refused: ${KIT_INSTALL_HINT}` }
+}
+
+/** Shows the kit's state in the pane. The pane is a view: the kit is the source. */
+async function publishKit(
+  $: EngineInterface,
+  workflow: string,
+  featureId: string,
+  state: KitState,
+): Promise<void> {
+  await update($, conductor, () => {
+    if (!state.ok) {
+      return {
+        active: true,
+        workflow,
+        task: featureId,
+        stage: '',
+        status: 'active' as const,
+        blockers: [state.message],
+      }
+    }
+    const action: KitNextAction = state.action
+    const completed = action.requiredAction === 'run.completed'
+    return {
+      active: !completed,
+      workflow,
+      task: featureId,
+      stage:
+        action.taskId !== undefined
+          ? `${action.taskId} ${action.phase ?? ''}`.trim()
+          : action.requiredAction,
+      status: completed ? ('completed' as const) : ('active' as const),
+      blockers: [...action.blockingQuestions],
+    }
+  })
+}
+
+async function startKitWorkflow(
+  $: EngineInterface,
+  rest: readonly string[],
+  stored: StoredKitRun | null,
+  legacy: RunState | null,
+): Promise<string> {
+  const [workflow = '', ...idParts] = rest
+  const featureId = idParts.join('-')
+  if (legacy !== null && legacy.status === 'active') {
+    return `Task ${legacy.taskId} is active. Cancel it or complete it first.`
+  }
+  if (stored !== null) {
+    const current = await currentKit($, stored.featureId)
+    if (current.ok && current.action.requiredAction !== 'run.completed') {
+      return `Kit run ${stored.featureId} is active. Advance it, or let it complete, before starting another.`
+    }
+  }
+  if (!(await kitAvailable(kitLaunch($)))) return `workflow-conductor refused: ${KIT_INSTALL_HINT}`
+  const started = await startKitRun(kitLaunch($), workflow, featureId)
+  if (started.started === null) return started.text
+  await $.store.set(KIT_KEY, started.started)
+  const state = await currentKit($, featureId)
+  await publishKit($, workflow, featureId, state)
+  return state.ok
+    ? `${started.text}\n${renderKitAction(state.action, kitModeOf(workflow) ?? 'feature')}`
+    : `${started.text}\n${state.message}`
+}
+
+async function kitSubcommand(
+  $: EngineInterface,
+  subcommand: string,
+  rest: readonly string[],
+  stored: StoredKitRun,
+): Promise<string> {
+  const { workflow, featureId } = stored
+  const mode = kitModeOf(workflow) ?? 'feature'
+  if (subcommand === 'status') {
+    const state = await currentKit($, featureId)
+    await publishKit($, workflow, featureId, state)
+    return state.ok ? renderKitAction(state.action, mode) : state.message
+  }
+  if (subcommand === 'advance') {
+    if (rest.length > 0)
+      return 'A kit run advances by itself. Run /workflow advance with no target.'
+    const state = await currentKit($, featureId)
+    if (!state.ok) return state.message
+    if (state.action.requiredAction === 'run.completed') return `Kit run ${featureId} is complete.`
+    const outcome = await runKitPhase(kitLaunch($), kitReadFile($), mode, state.action)
+    const after = await currentKit($, featureId)
+    await publishKit($, workflow, featureId, after)
+    const verdict = outcome.ok ? '' : '\nThe phase did not pass. Fix the work and advance again.'
+    return `${outcome.text}${verdict}\n${after.ok ? renderKitAction(after.action, mode) : after.message}`
+  }
+  if (subcommand === 'defer') {
+    return "A kit run has no deferrals: the kit's evidence gate decides when a phase passes."
+  }
+  if (subcommand === 'cancel') {
+    return 'A kit run cannot be cancelled from here. This mod keeps only a pointer to the run; the kit owns its state.'
+  }
+  if (subcommand === 'start') {
+    return `Kit run ${featureId} is active. Advance it, or let it complete, before starting another.`
+  }
+  return 'Usage: /workflow status|advance for a kit run, or start|status|advance|defer|cancel for the other workflows.'
+}
+
 export function register(on: On): void {
   on('session.start', async ($, e, next) => {
     await registerCommand($, {
@@ -357,6 +503,13 @@ export function register(on: On): void {
       .split(/\s+/)
       .filter((word) => word.length > 0)
     const run = await loadRun($)
+
+    // Kit-backed workflows and any active kit run are handled by the kit, before the legacy engine.
+    const stored = await loadKitRun($)
+    if (subcommand === 'start' && kitModeOf(rest[0] ?? '') !== undefined) {
+      return { text: await startKitWorkflow($, rest, stored, run) }
+    }
+    if (stored !== null) return { text: await kitSubcommand($, subcommand, rest, stored) }
 
     // A catalogue that does not validate has no trustworthy gates. Starting, advancing and deferring
     // are refused until it is fixed; status still shows the problems.

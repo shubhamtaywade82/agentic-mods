@@ -1,7 +1,7 @@
 {
   "name": "workflow-conductor",
   "version": "0.2.0",
-  "description": "Runs a delivery workflow (feature, TDD, bug fix, regression, refactoring, pull request, release, hotfix, incident) stage by stage. A stage advances only when its gate's evidence is current, or an approved deferral is recorded. Artifacts and the decision log are written under .agentic-mods/tasks.",
+  "description": "Runs delivery workflows. Feature development and bug fixes are run by the Agentic SDLC Kit, which owns their state and evidence; this mod asks the kit what is next and runs the phase it names. Regression, refactoring, pull request, release, hotfix, incident and TDD workflows run on this mod's stage engine, where a stage advances only when its gate's evidence is current or an approved deferral is recorded.",
   "types": "./types/index.d.ts",
   "dependencies": [
     "evidence-gate",
