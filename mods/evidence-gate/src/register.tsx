@@ -21,6 +21,15 @@ import {
   type Verdict,
   workingTreeChanges,
   registerCommand,
+  detectStrengthCommand,
+  type MutationTool,
+  mutableFilesOf,
+  mutationToolOfArgv,
+  parseStrengthOutput,
+  resolveStrengthStatus,
+  strengthFileArgs,
+  strengthTrend,
+  type StrengthRun,
 } from '@agentic-mods/core'
 import type { EvidenceStatus } from '../types'
 import { band, card, chip, empty, header, verdictLook } from '../../../packages/core/src/ui'
@@ -28,6 +37,8 @@ import { band, card, chip, empty, header, verdictLook } from '../../../packages/
 const PANE = 'evidence-gate'
 const MAX_RECORDS = 50
 const MAX_TIMEOUT_MS = 600_000
+/** Mutation runs sit after the test check in the chain; everything else keeps its order. */
+const CHECK_ORDER: readonly CheckName[] = ['build', 'test', 'strength', 'lint', 'typecheck', 'security']
 
 const IDLE: EvidenceStatus = { overall: 'UNKNOWN', checks: [], fingerprint: null }
 const status = atom({ plugin: 'evidence-gate', key: 'status' } as const, IDLE, {
@@ -106,6 +117,8 @@ async function publish($: EngineInterface, snap: Snapshot): Promise<void> {
       verdict: item.verdict,
       reason: item.reason,
       ranAt: item.record?.ranAt ?? null,
+      score: item.record?.strength?.score ?? null,
+      tool: item.record?.strength?.tool ?? null,
     })),
   }))
 }
@@ -144,12 +157,213 @@ async function runCheck(
   }
 }
 
-function summaryOf(snap: Snapshot): string {
+/** The manifest files strength detection reads. Absent files read as null. Dotnet projects
+ * are detected by their project files, which needs a directory listing the engine does not
+ * provide: there the strength command is declared, not detected. */
+async function projectFilesOf($: EngineInterface) {
+  return {
+    packageJson: await readOrNull($, 'package.json'),
+    pyproject: await readOrNull($, 'pyproject.toml'),
+    requirements: await readOrNull($, 'requirements.txt'),
+    gemfile: await readOrNull($, 'Gemfile'),
+    goMod: await readOrNull($, 'go.mod'),
+    cargoToml: await readOrNull($, 'Cargo.toml'),
+    dotnet: null,
+  }
+}
+
+const bounded = (summary: string) => summary.slice(0, 300)
+
+/**
+ * Runs the mutation tool once, under the configured budget, and records the parsed score.
+ * A run that exceeds its budget, that cannot launch, or whose output cannot be parsed is
+ * `incomplete`: recorded, never skipped, and never a fabricated score.
+ */
+async function runStrength(
+  $: EngineInterface,
+  config: AgenticConfig,
+): Promise<CheckRecord> {
+  const settings = config.evidence.strength
+  const startedAt = await $.clock.now()
+  const run = runnerOf($)
+  let argv: string[]
+  let tool: MutationTool | null
+  let scopeNote = ''
+
+  const declared = config.evidence.commands.strength ?? []
+  if (declared.length > 0) {
+    // Operator-declared argv wins over detection, consistent with every other check.
+    argv = declared[0] ?? []
+    tool = mutationToolOfArgv(argv)
+  } else {
+    const detected = detectStrengthCommand(await projectFilesOf($))
+    if (detected === null) {
+      const endedAt = await $.clock.now()
+      return {
+        check: 'strength',
+        argv: [],
+        exitCode: null,
+        fingerprint: await repoFingerprint($),
+        ranAt: endedAt,
+        durationMs: endedAt - startedAt,
+        source: 'run',
+        strength: {
+          tool: null,
+          status: 'incomplete',
+          score: null,
+          counts: null,
+          scope: settings.scope,
+          threshold: settings.threshold,
+          budgetMs: settings.budgetMs,
+          durationMs: endedAt - startedAt,
+          summary:
+            'no mutation tool detected for this stack; declare evidence.commands.strength',
+        },
+      }
+    }
+    tool = detected.tool
+    argv = [...detected.argv]
+  }
+
+  if (settings.scope === 'diff') {
+    const changes = await workingTreeChanges(run)
+    const mutable = mutableFilesOf((changes ?? []).map((change) => change.path))
+    const fileArgs = tool === null ? null : strengthFileArgs(tool, mutable)
+    if (mutable.length === 0) {
+      // Nothing changed means nothing to certify: a full-suite run would waste the budget
+      // and claim a measurement this scope never made.
+      const endedAt = await $.clock.now()
+      return {
+        check: 'strength',
+        argv,
+        exitCode: null,
+        fingerprint: await repoFingerprint($),
+        ranAt: endedAt,
+        durationMs: endedAt - startedAt,
+        source: 'run',
+        strength: {
+          tool,
+          status: 'incomplete',
+          score: null,
+          counts: null,
+          scope: settings.scope,
+          threshold: settings.threshold,
+          budgetMs: settings.budgetMs,
+          durationMs: endedAt - startedAt,
+          summary: 'diff scope: no changed source files to mutate',
+        },
+      }
+    }
+    if (fileArgs !== null) argv = [...argv, ...fileArgs]
+    else scopeNote = 'diff scope: the tool has no file selection, full target set mutated'
+  }
+
+  const budgetMs = Math.min(settings.budgetMs, MAX_TIMEOUT_MS)
+  let exitCode: number | null
+  let stdout: string
+  try {
+    const result = await $.process.run(argv, { timeoutMs: budgetMs })
+    exitCode = result.exitCode
+    stdout = result.stdout
+  } catch {
+    // A budget that kills the run is an incomplete result, never a pass and never silent.
+    const endedAt = await $.clock.now()
+    const durationMs = endedAt - startedAt
+    return {
+      check: 'strength',
+      argv,
+      exitCode: null,
+      fingerprint: await repoFingerprint($),
+      ranAt: endedAt,
+      durationMs,
+      source: 'run',
+      strength: {
+        tool,
+        status: 'incomplete',
+        score: null,
+        counts: null,
+        scope: settings.scope,
+        threshold: settings.threshold,
+        budgetMs: settings.budgetMs,
+        durationMs,
+        summary: `budget of ${settings.budgetMs} ms exceeded`,
+      },
+    }
+  }
+  const endedAt = await $.clock.now()
+  const durationMs = endedAt - startedAt
+
+  const parsed = parseStrengthOutput(tool, stdout)
+  let strength: StrengthRun
+  if (durationMs > settings.budgetMs) {
+    strength = {
+      tool,
+      status: 'incomplete',
+      score: null,
+      counts: null,
+      scope: settings.scope,
+      threshold: settings.threshold,
+      budgetMs: settings.budgetMs,
+      durationMs,
+      summary: `budget of ${settings.budgetMs} ms exceeded`,
+    }
+  } else if (parsed.score === null) {
+    strength = {
+      tool,
+      status: 'incomplete',
+      score: null,
+      counts: null,
+      scope: settings.scope,
+      threshold: settings.threshold,
+      budgetMs: settings.budgetMs,
+      durationMs,
+      summary:
+        exitCode === null
+          ? 'mutation tool did not produce an exit code'
+          : `mutation tool exited ${exitCode} without a parsable score`,
+    }
+  } else {
+    const status = resolveStrengthStatus(parsed.score, settings.threshold)
+    const summary =
+      status === 'incomplete'
+        ? 'no measurable mutation score'
+        : `mutation score ${parsed.score}% against threshold ${settings.threshold}%` +
+          (parsed.counts === null
+            ? ''
+            : ` (${parsed.counts.mutantsKilled}/${parsed.counts.mutantsGenerated} mutants killed)`)
+    strength = {
+      tool,
+      status,
+      score: parsed.score,
+      counts: parsed.counts,
+      scope: settings.scope,
+      threshold: settings.threshold,
+      budgetMs: settings.budgetMs,
+      durationMs,
+      summary: bounded(scopeNote === '' ? summary : `${summary}; ${scopeNote}`),
+    }
+  }
+
+  return {
+    check: 'strength',
+    argv,
+    exitCode,
+    fingerprint: await repoFingerprint($),
+    ranAt: endedAt,
+    durationMs,
+    source: 'run',
+    strength,
+  }
+}
+
+function summaryOf(snap: Snapshot, records: readonly CheckRecord[]): string {
   const lines = snap.statuses.map((item) => `${item.check}: ${item.verdict} (${item.reason})`)
+  const trend = strengthTrend(records)
+  const trendLine = trend === '' ? [] : [`strength trend: ${trend}`]
   const notice = snap.configured
     ? []
     : ['No evidence commands are configured in .agentic-mods/config.json, so git gates only warn.']
-  return [`evidence: ${snap.overall}`, ...lines, ...notice].join('\n')
+  return [`evidence: ${snap.overall}`, ...lines, ...trendLine, ...notice].join('\n')
 }
 
 export function register(on: On): void {
@@ -176,23 +390,27 @@ export function register(on: On): void {
     if (subcommand === 'run') {
       const requested = rest.filter(isCheckName)
       const before = await snapshotOf($)
-      const targets = requested.length > 0 ? requested : before.config.evidence.required
+      const targets =
+        requested.length > 0 ? requested : before.config.evidence.required
+      // Strength runs after the test check in the chain: passing first, strength second.
+      const ordered = CHECK_ORDER.filter((check) => targets.includes(check))
       let records = await storedRecords($)
-      for (const check of targets) {
-        const record = await runCheck($, before.config, check)
+      for (const check of ordered) {
+        const record =
+          check === 'strength' ? await runStrength($, before.config) : await runCheck($, before.config, check)
         records = appendCapped(records, record, MAX_RECORDS)
         await $.store.set('records', records)
       }
       const after = await snapshotOf($)
       await publish($, after)
-      return { text: summaryOf(after) }
+      return { text: summaryOf(after, records) }
     }
 
     if (subcommand === 'status') {
       const snap = await snapshotOf($)
       await publish($, snap)
       await $.ui.open({ id: PANE, title: 'Evidence' })
-      return { text: summaryOf(snap) }
+      return { text: summaryOf(snap, await storedRecords($)) }
     }
 
     return { text: `Usage: /evidence [run [${CHECKS.join('|')}...] | clear]` }
@@ -227,7 +445,11 @@ export function register(on: On): void {
       'evidence',
       current.checks.map((item) => {
         const look = verdictLook(item.verdict)
-        return { text: `${look.glyph} ${item.check}`, tone: look.tone }
+        const label =
+          item.check === 'strength' && item.score !== null && item.score !== undefined
+            ? `${item.check} ${item.score}%`
+            : item.check
+        return { text: `${look.glyph} ${label}`, tone: look.tone }
       }),
     )
   })
@@ -249,7 +471,10 @@ export function register(on: On): void {
         {current.checks.map((item) =>
           card(kit, {
             key: item.check,
-            title: `${item.check}  ${item.verdict}`,
+            title:
+              item.check === 'strength' && item.score !== null && item.score !== undefined
+                ? `${item.check}  ${item.verdict}  ${item.score}%`
+                : `${item.check}  ${item.verdict}`,
             look: verdictLook(item.verdict),
             lines: [item.reason],
           }),

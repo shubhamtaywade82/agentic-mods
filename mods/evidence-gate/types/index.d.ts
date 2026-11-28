@@ -1,8 +1,12 @@
 export type EvidenceCheck = {
-  check: 'build' | 'test' | 'lint' | 'typecheck' | 'security'
+  check: 'build' | 'test' | 'strength' | 'lint' | 'typecheck' | 'security'
   verdict: 'PASS' | 'FAIL' | 'STALE' | 'UNKNOWN'
   reason: string
   ranAt: number | null
+  /** Mutation score percentage for the strength check, null for every other check. */
+  score?: number | null
+  /** The mutation tool that produced the score, null when none ran. */
+  tool?: string | null
 }
 
 export type EvidenceStatus = {

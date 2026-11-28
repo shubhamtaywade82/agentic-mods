@@ -17,5 +17,11 @@
     "sdlc-guard",
     "secret-guard",
     "review-tracker"
-  ]
+  ],
+  "config": {
+    "evidence": {
+      "required": ["build", "test", "strength", "lint", "typecheck"],
+      "strength": { "enabled": true, "threshold": 60, "budgetMs": 120000, "scope": "diff" }
+    }
+  }
 }

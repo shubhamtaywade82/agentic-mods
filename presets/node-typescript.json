@@ -17,5 +17,11 @@
     "migration-sentinel",
     "dependency-radar",
     "performance-budget"
-  ]
+  ],
+  "config": {
+    "evidence": {
+      "required": ["build", "test", "strength", "lint", "typecheck"],
+      "strength": { "enabled": true, "threshold": 60, "budgetMs": 120000, "scope": "diff" }
+    }
+  }
 }

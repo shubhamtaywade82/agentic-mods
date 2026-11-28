@@ -149,8 +149,9 @@ and their defaults used.
 {
   "guard": { "confirmTier": "button" },
   "evidence": {
-    "required": ["build", "test", "lint", "typecheck"],
+    "required": ["build", "test", "strength", "lint", "typecheck"],
     "commands": { "test": [["npm", "test"]], "typecheck": [["npx", "tsc", "--noEmit"]] },
+    "strength": { "enabled": true, "threshold": 60, "budgetMs": 120000, "scope": "diff" },
     "maxAgeMinutes": 30,
     "gateMode": "enforce"
   },
@@ -163,10 +164,31 @@ and their defaults used.
 Commands are argv arrays and run without a shell. Other state files live under `.agentic-mods/`
 (see `docs/architecture.md`).
 
+### Strength evidence (mutation score)
+
+`evidence.strength` adds an optional mutation-score verdict to the evidence chain, after the
+test check. It runs the stack's mutation tool under a hard `budgetMs` — StrykerJS for node
+projects (it must be a declared devDependency), mutmut for python (declared in pyproject or
+requirements), mutant for ruby (in the Gemfile), go-mutesting/gremlins for go, cargo-mutants
+for rust; `evidence.commands.strength` overrides detection with a declared argv. `scope: diff`
+mutates only the changed source files (the tools that support file selection get them; the
+others run the full target set and the summary says so). `gateMode: enforce` blocks git gates
+below `threshold`; `warn` logs only. With the section disabled the chain is unchanged, and a
+`required` list that names `strength` without enabling it is reported and skipped — never a
+gate that cannot pass.
+
 ## Limits to know
 
 - Evidence is only PASS after a configured command exits 0 under `/evidence run`. Observed tool
   output is never treated as a pass, because the engine's Bash result carries no exit code.
+- The mutation score is a PROXY, not proof: it measures how many generated mutants the suite
+  killed on that run, with that tool. A strength run that exceeds its budget, that cannot
+  launch, or whose output cannot be parsed is recorded `incomplete` — the score is UNKNOWN,
+  never silently 0 and never silently skipped.
+- `scope: diff` mutates only the changed files. A cross-file escape — a mutant in file A
+  caught only by a test of file B — can be missed when B is outside the diff.
+- Mutation tools are never auto-installed. A stack whose tool is not declared records
+  `incomplete` and tells you to declare `evidence.commands.strength`.
 - With no evidence commands configured, git gates warn instead of blocking. Configure `evidence.commands`
   and the gate enforces `gateMode`.
 - Completion of a turn cannot be blocked. Gates attach to git commit, push and PR creation instead.
