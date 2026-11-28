@@ -129,8 +129,8 @@
     },
     {
       "name": "evidence-gate",
-      "version": "0.2.0",
-      "description": "Runs the configured build, test, lint, type-check and security commands, records their exit codes against a fingerprint of the repository, and holds git commit, push and PR creation until the required checks are current.",
+      "version": "0.3.0",
+      "description": "Runs the configured build, test, lint, type-check and security commands, records their exit codes against a fingerprint of the repository, and holds git commit, push and PR creation until the required checks are current. An opt-in strength check runs the stack's mutation tool under a budget and records the mutation score, so a weak suite no longer passes exactly as fast as a rigorous one.",
       "types": "./types/index.d.ts",
       "path": "mods/evidence-gate"
     },
@@ -317,7 +317,7 @@
     {
       "name": "trace",
       "version": "0.1.0",
-      "description": "Execution observability mod: builds a bounded hierarchical runtime tree (main agent -> subagents -> tool calls) from session/turn/agent.spawn/tool events, and exposes /trace-tree and /trace-summary commands",
+      "description": "Execution observability mod: builds a bounded hierarchical runtime tree (main agent -> subagents -> tool calls) from session/turn/agent/tool events, and exposes /trace-tree and /trace-summary commands",
       "path": "mods/trace"
     },
     {
