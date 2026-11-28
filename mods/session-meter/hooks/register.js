@@ -27,10 +27,18 @@ var DEFAULT_PROTECTED_EXCEPTIONS = [
 ];
 
 // packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+var CHECKS = ["build", "test", "strength", "lint", "typecheck", "security"];
 function isCheckName(value) {
   return typeof value === "string" && CHECKS.includes(value);
 }
+
+// packages/core/src/strength.ts
+var DEFAULT_STRENGTH_SETTINGS = {
+  enabled: false,
+  threshold: 60,
+  budgetMs: 12e4,
+  scope: "diff"
+};
 
 // packages/core/src/util.ts
 function isJsonObject(value) {
@@ -56,7 +64,8 @@ function defaultConfig() {
       commands: {},
       maxAgeMinutes: 30,
       gateMode: "enforce",
-      runTimeoutMs: 3e5
+      runTimeoutMs: 3e5,
+      strength: { ...DEFAULT_STRENGTH_SETTINGS }
     },
     contract: {
       objective: "",
@@ -115,6 +124,10 @@ function parseConfig(input) {
   const asStrings = (candidate) => Array.isArray(candidate) && candidate.every((item) => typeof item === "string") ? [...candidate] : void 0;
   const asMode = (candidate) => candidate === "observe" || candidate === "warn" || candidate === "enforce" ? candidate : void 0;
   const asTier = (candidate) => GUARD_TIERS.find((tier) => tier === candidate);
+  const asBoolean = (candidate) => typeof candidate === "boolean" ? candidate : void 0;
+  const asThreshold = (candidate) => typeof candidate === "number" && Number.isInteger(candidate) && candidate >= 0 && candidate <= 100 ? candidate : void 0;
+  const asBudgetMs = (candidate) => typeof candidate === "number" && Number.isInteger(candidate) && candidate > 0 ? candidate : void 0;
+  const asStrengthScope = (candidate) => candidate === "diff" || candidate === "suite" ? candidate : void 0;
   const guard = section(input, "guard");
   value.guard.confirmTier = read2(guard, "guard", "confirmTier", asTier, value.guard.confirmTier);
   value.guard.protectedPaths = read2(
@@ -132,7 +145,7 @@ function parseConfig(input) {
     value.guard.protectedExceptions
   );
   const evidence = section(input, "evidence");
-  value.evidence.required = read2(
+  const requiredRaw = read2(
     evidence,
     "evidence",
     "required",
@@ -142,6 +155,21 @@ function parseConfig(input) {
     },
     value.evidence.required
   );
+  const strengthSection = section(evidence, "strength");
+  value.evidence.strength = {
+    enabled: read2(strengthSection, "evidence.strength", "enabled", asBoolean, DEFAULT_STRENGTH_SETTINGS.enabled),
+    threshold: read2(strengthSection, "evidence.strength", "threshold", asThreshold, DEFAULT_STRENGTH_SETTINGS.threshold),
+    budgetMs: read2(strengthSection, "evidence.strength", "budgetMs", asBudgetMs, DEFAULT_STRENGTH_SETTINGS.budgetMs),
+    scope: read2(strengthSection, "evidence.strength", "scope", asStrengthScope, DEFAULT_STRENGTH_SETTINGS.scope)
+  };
+  if (requiredRaw.includes("strength") && !value.evidence.strength.enabled) {
+    errors.push(
+      'evidence.required names "strength" but evidence.strength is not enabled; the strength check is skipped'
+    );
+    value.evidence.required = requiredRaw.filter((check) => check !== "strength");
+  } else {
+    value.evidence.required = requiredRaw;
+  }
   value.evidence.maxAgeMinutes = read2(
     evidence,
     "evidence",
