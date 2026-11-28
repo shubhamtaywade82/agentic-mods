@@ -1,6 +1,7 @@
 import { CHECKS, type CheckName, isCheckName } from './classify'
 import { DEFAULT_PROTECTED_EXCEPTIONS, DEFAULT_PROTECTED_GLOBS, STATE_DIR } from './paths'
 import type { Mode } from './policy'
+import { DEFAULT_STRENGTH_SETTINGS, type StrengthScope, type StrengthSettings } from './strength'
 import { isJsonObject, type JsonObject } from './util'
 
 /** How a confirm-level dangerous command is held. Always-block commands are never run. */
@@ -31,6 +32,9 @@ export type AgenticConfig = {
     maxAgeMinutes: number
     gateMode: Mode
     runTimeoutMs: number
+    /** Opt-in mutation-score evidence. Disabled until configured: a disabled section
+     * leaves the chain exactly as it was. */
+    strength: StrengthSettings
   }
   contract: {
     objective: string
@@ -72,6 +76,7 @@ export function defaultConfig(): AgenticConfig {
       maxAgeMinutes: 30,
       gateMode: 'enforce',
       runTimeoutMs: 300_000,
+      strength: { ...DEFAULT_STRENGTH_SETTINGS },
     },
     contract: {
       objective: '',
@@ -160,6 +165,19 @@ export function parseConfig(input: unknown): ConfigParse {
       : undefined
   const asTier = (candidate: unknown): GuardTier | undefined =>
     GUARD_TIERS.find((tier) => tier === candidate)
+  const asBoolean = (candidate: unknown): boolean | undefined =>
+    typeof candidate === 'boolean' ? candidate : undefined
+  const asThreshold = (candidate: unknown): number | undefined =>
+    typeof candidate === 'number' && Number.isInteger(candidate) && candidate >= 0 &&
+      candidate <= 100
+      ? candidate
+      : undefined
+  const asBudgetMs = (candidate: unknown): number | undefined =>
+    typeof candidate === 'number' && Number.isInteger(candidate) && candidate > 0
+      ? candidate
+      : undefined
+  const asStrengthScope = (candidate: unknown): StrengthScope | undefined =>
+    candidate === 'diff' || candidate === 'suite' ? candidate : undefined
 
   const guard = section(input, 'guard')
   value.guard.confirmTier = read(guard, 'guard', 'confirmTier', asTier, value.guard.confirmTier)
@@ -179,7 +197,7 @@ export function parseConfig(input: unknown): ConfigParse {
   )
 
   const evidence = section(input, 'evidence')
-  value.evidence.required = read(
+  const requiredRaw = read(
     evidence,
     'evidence',
     'required',
@@ -189,6 +207,24 @@ export function parseConfig(input: unknown): ConfigParse {
     },
     value.evidence.required,
   )
+  const strengthSection = section(evidence, 'strength')
+  value.evidence.strength = {
+    enabled: read(strengthSection, 'evidence.strength', 'enabled', asBoolean, DEFAULT_STRENGTH_SETTINGS.enabled),
+    threshold: read(strengthSection, 'evidence.strength', 'threshold', asThreshold, DEFAULT_STRENGTH_SETTINGS.threshold),
+    budgetMs: read(strengthSection, 'evidence.strength', 'budgetMs', asBudgetMs, DEFAULT_STRENGTH_SETTINGS.budgetMs),
+    scope: read(strengthSection, 'evidence.strength', 'scope', asStrengthScope, DEFAULT_STRENGTH_SETTINGS.scope),
+  }
+  // A required strength check with the section disabled would block every git gate on a
+  // check that can never pass. That is a config mistake, so it is reported and the check
+  // is skipped instead of enforced.
+  if (requiredRaw.includes('strength') && !value.evidence.strength.enabled) {
+    errors.push(
+      'evidence.required names "strength" but evidence.strength is not enabled; the strength check is skipped',
+    )
+    value.evidence.required = requiredRaw.filter((check) => check !== 'strength')
+  } else {
+    value.evidence.required = requiredRaw
+  }
   value.evidence.maxAgeMinutes = read(
     evidence,
     'evidence',
