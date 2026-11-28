@@ -1,9 +1,13 @@
 import type { CheckName } from './classify'
 import { type Decision, type Mode, type Verdict, violation, worstVerdict } from './policy'
+import type { StrengthRun } from './strength'
 
 /**
  * One recorded run of a check. `source` is `run` only when this mod executed the configured
  * argv itself and read its exit code. Observed tool output never carries an exit code here.
+ *
+ * A `strength` record carries the mutation run: a strength pass depends on the score against
+ * the threshold, not only on the exit code, so the parsed result travels with the record.
  */
 export type CheckRecord = {
   check: CheckName
@@ -13,6 +17,7 @@ export type CheckRecord = {
   ranAt: number
   durationMs: number
   source: 'run' | 'observed'
+  strength?: StrengthRun
 }
 
 export type CheckStatus = {
@@ -32,6 +37,10 @@ export type CheckStatus = {
  *  - fingerprint differs    -> STALE (files changed after the run)
  *  - older than max age     -> STALE
  *  - otherwise              -> PASS
+ *
+ * A `strength` record is judged on its recorded mutation run first: `incomplete` (timeout,
+ * missing tool, unparsable output) is UNKNOWN — the score is unknown, never silently skipped —
+ * and a score below the threshold is FAIL before the freshness rules apply.
  */
 export function evaluateChecks(
   required: readonly CheckName[],
@@ -47,6 +56,40 @@ export function evaluateChecks(
     }
     if (record.source !== 'run') {
       return { check, verdict: 'UNKNOWN', reason: 'observed only; never a pass', record }
+    }
+    if (check === 'strength') {
+      const strength = record.strength
+      if (strength === undefined) {
+        return { check, verdict: 'UNKNOWN', reason: 'no mutation result recorded', record }
+      }
+      const tally =
+        strength.counts === null
+          ? ''
+          : ` (${strength.counts.mutantsKilled}/${strength.counts.mutantsGenerated} mutants killed)`
+      // An incomplete run (budget exceeded, tool missing, unparsable output) is UNKNOWN:
+      // the score is unknown and never silently skipped. A known score below the threshold
+      // is FAIL regardless of the exit code; at or above it, the freshness rules apply.
+      if (strength.status === 'incomplete') {
+        return { check, verdict: 'UNKNOWN', reason: `incomplete: ${strength.summary}`, record }
+      }
+      if (strength.status === 'failed') {
+        return {
+          check,
+          verdict: 'FAIL',
+          reason: `mutation score ${strength.score}%${tally} below threshold ${strength.threshold}%`,
+          record,
+        }
+      }
+      if (currentFingerprint === null) {
+        return { check, verdict: 'UNKNOWN', reason: 'repository state unreadable', record }
+      }
+      if (record.fingerprint !== currentFingerprint) {
+        return { check, verdict: 'STALE', reason: 'files changed after the run', record }
+      }
+      if (nowMs - record.ranAt > maxAgeMs) {
+        return { check, verdict: 'STALE', reason: 'older than the configured age', record }
+      }
+      return { check, verdict: 'PASS', reason: `mutation score ${strength.score}%${tally}`, record }
     }
     if (record.exitCode === null) {
       return { check, verdict: 'UNKNOWN', reason: 'exit code unavailable', record }

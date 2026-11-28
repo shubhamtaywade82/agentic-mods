@@ -1,7 +1,7 @@
 import { isProtectedPath } from './paths'
 
 /** The checks a repository can be verified with. Evidence is recorded per check. */
-export const CHECKS = ['build', 'test', 'lint', 'typecheck', 'security'] as const
+export const CHECKS = ['build', 'test', 'strength', 'lint', 'typecheck', 'security'] as const
 export type CheckName = (typeof CHECKS)[number]
 
 export function isCheckName(value: unknown): value is CheckName {
@@ -114,12 +114,20 @@ function checkOf(argv: readonly string[]): CheckName | null {
       const tool = (positional[0] ?? '').replace(/^.*\//, '')
       if (tool === 'jest' || tool === 'vitest') return 'test'
       if (tool === 'eslint') return 'lint'
+      if (tool === 'stryker') return 'strength'
       if (tool === 'tsc') return argv.includes('--noEmit') ? 'typecheck' : 'build'
       return null
     }
     case 'jest':
     case 'vitest':
       return 'test'
+    case 'stryker':
+      return 'strength'
+    case 'mutmut':
+    case 'mutant':
+    case 'go-mutesting':
+    case 'gremlins':
+      return 'strength'
     case 'tsc':
       return argv.includes('--noEmit') ? 'typecheck' : 'build'
     case 'eslint':
@@ -157,6 +165,7 @@ function checkOf(argv: readonly string[]): CheckName | null {
       if (second === 'clippy') return 'lint'
       if (second === 'check') return 'typecheck'
       if (second === 'audit') return 'security'
+      if (second === 'mutants') return 'strength'
       return null
     case 'mvn':
     case 'mvnw':
@@ -171,6 +180,7 @@ function checkOf(argv: readonly string[]): CheckName | null {
     case 'dotnet':
       if (second === 'test') return 'test'
       if (second === 'build') return 'build'
+      if (second === 'stryker') return 'strength'
       if (second === 'format' && argv.includes('--verify-no-changes')) return 'lint'
       return null
     case 'make':
