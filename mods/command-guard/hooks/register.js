@@ -83,7 +83,7 @@ function isProtectedPath(path, protectedGlobs = DEFAULT_PROTECTED_GLOBS, excepti
 }
 
 // packages/core/src/classify.ts
-var CHECKS = ["build", "test", "lint", "typecheck", "security"];
+var CHECKS = ["build", "test", "strength", "lint", "typecheck", "security"];
 function isCheckName(value) {
   return typeof value === "string" && CHECKS.includes(value);
 }
@@ -165,12 +165,20 @@ function checkOf(argv) {
       const tool = (positional[0] ?? "").replace(/^.*\//, "");
       if (tool === "jest" || tool === "vitest") return "test";
       if (tool === "eslint") return "lint";
+      if (tool === "stryker") return "strength";
       if (tool === "tsc") return argv.includes("--noEmit") ? "typecheck" : "build";
       return null;
     }
     case "jest":
     case "vitest":
       return "test";
+    case "stryker":
+      return "strength";
+    case "mutmut":
+    case "mutant":
+    case "go-mutesting":
+    case "gremlins":
+      return "strength";
     case "tsc":
       return argv.includes("--noEmit") ? "typecheck" : "build";
     case "eslint":
@@ -208,6 +216,7 @@ function checkOf(argv) {
       if (second === "clippy") return "lint";
       if (second === "check") return "typecheck";
       if (second === "audit") return "security";
+      if (second === "mutants") return "strength";
       return null;
     case "mvn":
     case "mvnw":
@@ -222,6 +231,7 @@ function checkOf(argv) {
     case "dotnet":
       if (second === "test") return "test";
       if (second === "build") return "build";
+      if (second === "stryker") return "strength";
       if (second === "format" && argv.includes("--verify-no-changes")) return "lint";
       return null;
     case "make":
@@ -425,6 +435,14 @@ function sortDangers(dangers) {
   );
 }
 
+// packages/core/src/strength.ts
+var DEFAULT_STRENGTH_SETTINGS = {
+  enabled: false,
+  threshold: 60,
+  budgetMs: 12e4,
+  scope: "diff"
+};
+
 // packages/core/src/util.ts
 function errorMessage(error) {
   if (error instanceof Error) return error.message;
@@ -463,7 +481,8 @@ function defaultConfig() {
       commands: {},
       maxAgeMinutes: 30,
       gateMode: "enforce",
-      runTimeoutMs: 3e5
+      runTimeoutMs: 3e5,
+      strength: { ...DEFAULT_STRENGTH_SETTINGS }
     },
     contract: {
       objective: "",
@@ -522,6 +541,10 @@ function parseConfig(input) {
   const asStrings = (candidate) => Array.isArray(candidate) && candidate.every((item) => typeof item === "string") ? [...candidate] : void 0;
   const asMode = (candidate) => candidate === "observe" || candidate === "warn" || candidate === "enforce" ? candidate : void 0;
   const asTier = (candidate) => GUARD_TIERS.find((tier) => tier === candidate);
+  const asBoolean = (candidate) => typeof candidate === "boolean" ? candidate : void 0;
+  const asThreshold = (candidate) => typeof candidate === "number" && Number.isInteger(candidate) && candidate >= 0 && candidate <= 100 ? candidate : void 0;
+  const asBudgetMs = (candidate) => typeof candidate === "number" && Number.isInteger(candidate) && candidate > 0 ? candidate : void 0;
+  const asStrengthScope = (candidate) => candidate === "diff" || candidate === "suite" ? candidate : void 0;
   const guard = section(input, "guard");
   value.guard.confirmTier = read2(guard, "guard", "confirmTier", asTier, value.guard.confirmTier);
   value.guard.protectedPaths = read2(
@@ -539,7 +562,7 @@ function parseConfig(input) {
     value.guard.protectedExceptions
   );
   const evidence = section(input, "evidence");
-  value.evidence.required = read2(
+  const requiredRaw = read2(
     evidence,
     "evidence",
     "required",
@@ -549,6 +572,21 @@ function parseConfig(input) {
     },
     value.evidence.required
   );
+  const strengthSection = section(evidence, "strength");
+  value.evidence.strength = {
+    enabled: read2(strengthSection, "evidence.strength", "enabled", asBoolean, DEFAULT_STRENGTH_SETTINGS.enabled),
+    threshold: read2(strengthSection, "evidence.strength", "threshold", asThreshold, DEFAULT_STRENGTH_SETTINGS.threshold),
+    budgetMs: read2(strengthSection, "evidence.strength", "budgetMs", asBudgetMs, DEFAULT_STRENGTH_SETTINGS.budgetMs),
+    scope: read2(strengthSection, "evidence.strength", "scope", asStrengthScope, DEFAULT_STRENGTH_SETTINGS.scope)
+  };
+  if (requiredRaw.includes("strength") && !value.evidence.strength.enabled) {
+    errors.push(
+      'evidence.required names "strength" but evidence.strength is not enabled; the strength check is skipped'
+    );
+    value.evidence.required = requiredRaw.filter((check) => check !== "strength");
+  } else {
+    value.evidence.required = requiredRaw;
+  }
   value.evidence.maxAgeMinutes = read2(
     evidence,
     "evidence",
